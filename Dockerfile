@@ -4,6 +4,9 @@ FROM golang:1.22-alpine as builder
 # Set the Current Working Directory inside the container
 WORKDIR /app
 
+# Install CompileDaemon
+RUN go install github.com/githubnemo/CompileDaemon@latest
+
 # Copy the go module files
 COPY go.mod go.sum ./
 
@@ -14,21 +17,20 @@ RUN go mod download
 COPY . .
 
 # Build the Go app within the specified subdirectory
-RUN  go build -o main ./cmd/sportlink/main.go
+RUN go build -o main ./cmd/sportlink/main.go
 
 # Stage 2: Setup the runtime container
-#FROM alpine:latest
 FROM golang:1.22-alpine
 
 # Set work directory in the new stage
-WORKDIR /root/
+WORKDIR /app
 
 # Copy the pre-built binary file from the previous stage
 COPY --from=builder /app/main .
+COPY --from=builder /go/bin/CompileDaemon /usr/bin/
 
 # Expose port 8080 to the outside world
 EXPOSE 8080
 
-# Command to run the executable, which is the server
-CMD ["./main"]
-#CMD ["CompileDaemon", "-command=./main"]
+# Command to run CompileDaemon
+CMD ["CompileDaemon", "-log-prefix=false", "-directory=/app", "-build=go build -o main ./cmd/sportlink/main.go", "-command=./main"]
