@@ -14,10 +14,11 @@ RUN go mod download
 COPY . .
 
 # Build the Go app within the specified subdirectory
-RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o main ./cmd/sportlink/main.go
+RUN  go build -o main ./cmd/sportlink/main.go
 
 # Stage 2: Setup the runtime container
-FROM alpine:latest
+#FROM alpine:latest
+FROM golang:1.22-alpine
 
 # Set work directory in the new stage
 WORKDIR /root/
@@ -30,3 +31,4 @@ EXPOSE 8080
 
 # Command to run the executable, which is the server
 CMD ["./main"]
+#CMD ["CompileDaemon", "-command=./main"]
