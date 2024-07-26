@@ -1,4 +1,4 @@
-# Stage 1: Build the Go application
+# Stage 1: Build the Go app
 FROM golang:1.22-alpine as builder
 
 # Set the Current Working Directory inside the container

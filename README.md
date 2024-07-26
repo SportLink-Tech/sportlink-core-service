@@ -23,20 +23,19 @@ serves as the entry point.
 
 This directory contains the internal components of the application, which are not meant to be exposed outside.
 
-#### `app`
+#### _app_
 
-- **Subdirectory**: `application`
-    - **Responsibilities**:
-        - Orchestrating the flow of data between the domain layer and the infrastructure.
-        - Implementing application-specific logic (use cases).
+- **Responsibilities**:
+  - Orchestrating the flow of data between the domain layer and the infrastructure.
+  - Implementing application-specific logic (use cases).
 
-#### `domain`
+#### _domain_
 
 - **Responsibilities**:
     - Containing all the business logic and business rules.
     - Defining interfaces (ports) that describe the operations that can be performed with domain objects.
 
-#### `infrastructure`
+#### _infrastructure_
 
 Contains all the external concerns and details such as database access, file handling, external APIs, and web
 frameworks.
