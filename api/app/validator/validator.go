@@ -20,15 +20,18 @@ var (
 func GetInstance() *v10validator.Validate {
 	once.Do(func() {
 		validator = v10validator.New()
-		english := en.New()
-		spanish := es.New()
-		uni = ut.New(english, english, spanish)
-
-		translator, _ := uni.GetTranslator("en")
-		validator.RegisterValidation("category", customCategoryValidation)
+		translator := getTranslator()
 		registerCustomTranslations(validator, translator)
 	})
 	return validator
+}
+
+func getTranslator() ut.Translator {
+	english := en.New()
+	spanish := es.New()
+	uni = ut.New(english, english, spanish)
+	translator, _ := uni.GetTranslator("en")
+	return translator
 }
 
 func registerCustomTranslations(v *v10validator.Validate, trans ut.Translator) {
@@ -38,22 +41,4 @@ func registerCustomTranslations(v *v10validator.Validate, trans ut.Translator) {
 		t, _ := ut.T("category", fe.Field(), fmt.Sprintf("%v", fe.Value()), fe.Tag())
 		return t
 	})
-}
-
-// customCategoryValidation checks if the Category is among the accepted values.
-func customCategoryValidation(fl v10validator.FieldLevel) bool {
-	if fl.Field().IsZero() {
-		return true
-	}
-
-	category, ok := fl.Field().Interface().(string)
-	if !ok {
-		return false
-	}
-
-	allowedCategories := map[string]bool{"L1": true, "L2": true, "L3": true, "L4": true}
-	if _, exists := allowedCategories[category]; exists {
-		return true
-	}
-	return false
 }
