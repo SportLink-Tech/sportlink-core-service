@@ -14,8 +14,8 @@ func Routes(router *gin.Engine) {
 	customValidator := validator.GetInstance()
 
 	// Team
-	createTeam := uteam.NewCreateTeamUC(customValidator)
-	teamController := cteam.NewController(createTeam)
+	createTeam := uteam.NewCreateTeamUC()
+	teamController := cteam.NewController(createTeam, customValidator)
 
 	router.POST("/team", teamController.TeamCreationHandler)
 	RegisterMetricsRoute(router)

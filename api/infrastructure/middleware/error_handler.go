@@ -17,7 +17,7 @@ func ErrorHandler() gin.HandlerFunc {
 			if errors.As(err.Err, &appErr) {
 				status := http.StatusInternalServerError
 				switch appErr.Code {
-				case appErrors.InvalidRequestDataErrorCode:
+				case appErrors.InvalidRequestFormatErrorCode, appErrors.RequestValidationFailedErrorCode:
 					status = http.StatusBadRequest
 				case appErrors.NotFoundErrorCode:
 					status = http.StatusNotFound

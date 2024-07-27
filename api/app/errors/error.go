@@ -3,10 +3,11 @@ package errors
 type ErrorCode string
 
 const (
-	InvalidRequestDataErrorCode ErrorCode = "invalid_request_data"
-	NotFoundErrorCode           ErrorCode = "not_found"
-	UnauthorizedErrorCode       ErrorCode = "unauthorized"
-	UnexpectedErrorCode         ErrorCode = "unexpected_error"
+	InvalidRequestFormatErrorCode    ErrorCode = "invalid_request_format"
+	RequestValidationFailedErrorCode ErrorCode = "request_validation_failed"
+	NotFoundErrorCode                ErrorCode = "not_found"
+	UnauthorizedErrorCode            ErrorCode = "unauthorized"
+	UnexpectedErrorCode              ErrorCode = "unexpected_error"
 )
 
 type AppError struct {
