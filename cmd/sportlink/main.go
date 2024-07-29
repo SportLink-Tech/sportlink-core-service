@@ -9,12 +9,9 @@ import (
 func main() {
 	r := gin.Default()
 
-	// Register the error.go handling middleware
 	r.Use(middleware.ErrorHandler())
 
-	// Define routes
 	rest.Routes(r)
 
-	// Start the server
-	r.Run()
+	r.Run() // Inicia el servidor
 }

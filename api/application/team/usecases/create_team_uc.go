@@ -8,10 +8,13 @@ import (
 )
 
 type CreateTeamUC struct {
+	playerRepository player.Repository
 }
 
-func NewCreateTeamUC() *CreateTeamUC {
-	return &CreateTeamUC{}
+func NewCreateTeamUC(playerRepository player.Repository) *CreateTeamUC {
+	return &CreateTeamUC{
+		playerRepository: playerRepository,
+	}
 }
 
 func (uc *CreateTeamUC) Invoke(input team.NewTeamRequest) (*dteam.Entity, error) {

@@ -6,7 +6,5 @@ type Repository interface {
 	Find(query DomainQuery) ([]Entity, error)
 }
 
-type DomainQuery struct {
-	CategoryID string
-	SportID    string
+type DomainQuery interface {
 }

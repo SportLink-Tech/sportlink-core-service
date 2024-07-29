@@ -1,33 +1,15 @@
 AWSTemplateFormatVersion: '2010-09-09'
-Description: Ejemplo de tabla de DynamoDB con GSI en CloudFormation
+Description: SportLinkCore dynamodb table.
 
 Resources:
   UserDynamoDBTable:
     Type: AWS::DynamoDB::Table
     Properties:
-      TableName: RoadlinkCore
+      TableName: SportLinkCore
       AttributeDefinitions:
         - AttributeName: EntityId
           AttributeType: S
-        - AttributeName: DriverId
-          AttributeType: S
         - AttributeName: Id
-          AttributeType: S
-        - AttributeName: Rating
-          AttributeType: N
-        - AttributeName: ReceiverId
-          AttributeType: S
-        - AttributeName: ReviewerId
-          AttributeType: S
-        - AttributeName: Email
-          AttributeType: S
-        - AttributeName: UserName
-          AttributeType: S
-        - AttributeName: AddressedId
-          AttributeType: S
-        - AttributeName: RequesterId
-          AttributeType: S
-        - AttributeName: SolicitudeStatus
           AttributeType: S
       KeySchema:
         - AttributeName: EntityId
@@ -37,84 +19,3 @@ Resources:
       ProvisionedThroughput:
         ReadCapacityUnits: 5
         WriteCapacityUnits: 5
-      GlobalSecondaryIndexes:
-        - IndexName: VehicleDriverIdGSI
-          KeySchema:
-            - AttributeName: DriverId
-              KeyType: HASH
-          Projection:
-            ProjectionType: ALL
-          ProvisionedThroughput:
-            ReadCapacityUnits: 5
-            WriteCapacityUnits: 5
-        - IndexName: RatingGSI
-          KeySchema:
-            - AttributeName: Rating
-              KeyType: HASH
-          Projection:
-            ProjectionType: ALL
-          ProvisionedThroughput:
-            ReadCapacityUnits: 5
-            WriteCapacityUnits: 5
-        - IndexName: RequesterIdGSI
-          KeySchema:
-            - AttributeName: RequesterId
-              KeyType: HASH
-          Projection:
-            ProjectionType: ALL
-          ProvisionedThroughput:
-            ReadCapacityUnits: 5
-            WriteCapacityUnits: 5
-        - IndexName: AddressedIdGSI
-          KeySchema:
-            - AttributeName: AddressedId
-              KeyType: HASH
-          Projection:
-            ProjectionType: ALL
-          ProvisionedThroughput:
-            ReadCapacityUnits: 5
-            WriteCapacityUnits: 5
-        - IndexName: AddressedIdFeedbackStatusGSI
-          KeySchema:
-            - AttributeName: AddressedId
-              KeyType: HASH
-            - AttributeName: SolicitudeStatus
-              KeyType: RANGE
-          Projection:
-            ProjectionType: ALL
-          ProvisionedThroughput:
-            ReadCapacityUnits: 5
-            WriteCapacityUnits: 5
-      LocalSecondaryIndexes:
-        - IndexName: ReceiverIdLSI
-          KeySchema:
-            - AttributeName: EntityId
-              KeyType: HASH
-            - AttributeName: ReceiverId
-              KeyType: RANGE
-          Projection:
-            ProjectionType: ALL
-        - IndexName: ReviewerIdLSI
-          KeySchema:
-            - AttributeName: EntityId
-              KeyType: HASH
-            - AttributeName: ReviewerId
-              KeyType: RANGE
-          Projection:
-            ProjectionType: ALL
-        - IndexName: EmailLSI
-          KeySchema:
-            - AttributeName: EntityId
-              KeyType: HASH
-            - AttributeName: Email
-              KeyType: RANGE
-          Projection:
-            ProjectionType: ALL
-        - IndexName: UserNameLSI
-          KeySchema:
-            - AttributeName: EntityId
-              KeyType: HASH
-            - AttributeName: UserName
-              KeyType: RANGE
-          Projection:
-            ProjectionType: ALL
