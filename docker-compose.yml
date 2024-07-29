@@ -9,7 +9,7 @@ services:
     environment:
       - GIN_MODE=release
     volumes:
-      - .:/app
+      - .:/application
     restart: unless-stopped
 
   localstack:

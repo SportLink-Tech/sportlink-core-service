@@ -3,7 +3,7 @@ package middleware
 import (
 	"errors"
 	"net/http"
-	appErrors "sportlink/api/app/errors"
+	appErrors "sportlink/api/application/errors"
 
 	"github.com/gin-gonic/gin"
 )

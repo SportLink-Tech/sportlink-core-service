@@ -2,14 +2,15 @@ package rest
 
 import (
 	"github.com/gin-gonic/gin"
-	uteam "sportlink/api/app/usecase/team"
-	"sportlink/api/app/validator"
+	uteam "sportlink/api/application/team/use_cases"
+	"sportlink/api/infrastructure/rest/monitoring"
 	cteam "sportlink/api/infrastructure/rest/team"
+	"sportlink/api/infrastructure/validator"
 )
 
 func Routes(router *gin.Engine) {
-	router.GET("/livez", livenessHandler)
-	router.GET("/readyz", readinessHandler)
+	router.GET("/livez", monitoring.LivenessHandler)
+	router.GET("/readyz", monitoring.ReadinessHandler)
 
 	customValidator := validator.GetInstance()
 
@@ -18,5 +19,5 @@ func Routes(router *gin.Engine) {
 	teamController := cteam.NewController(createTeam, customValidator)
 
 	router.POST("/team", teamController.TeamCreationHandler)
-	RegisterMetricsRoute(router)
+	monitoring.RegisterMetricsRoute(router)
 }

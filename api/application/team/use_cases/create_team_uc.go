@@ -1,4 +1,4 @@
-package team
+package use_cases
 
 import (
 	"sportlink/api/domain/common"

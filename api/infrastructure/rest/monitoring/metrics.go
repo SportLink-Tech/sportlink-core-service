@@ -1,4 +1,4 @@
-package rest
+package monitoring
 
 import (
 	"github.com/gin-gonic/gin"

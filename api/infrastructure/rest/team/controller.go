@@ -4,8 +4,8 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
 	"net/http"
-	"sportlink/api/app/errors"
-	"sportlink/api/app/usecase"
+	"sportlink/api/application"
+	"sportlink/api/application/errors"
 	"sportlink/api/domain/team"
 )
 
@@ -17,12 +17,12 @@ type NewTeamRequest struct {
 }
 
 type Controller struct {
-	createTeamUc usecase.UseCase[NewTeamRequest, team.Entity]
+	createTeamUc application.UseCase[NewTeamRequest, team.Entity]
 	validator    *validator.Validate
 }
 
 func NewController(
-	createTeamUc usecase.UseCase[NewTeamRequest, team.Entity],
+	createTeamUc application.UseCase[NewTeamRequest, team.Entity],
 	validator *validator.Validate,
 ) *Controller {
 	return &Controller{
