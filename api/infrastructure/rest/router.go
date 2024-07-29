@@ -2,7 +2,7 @@ package rest
 
 import (
 	"github.com/gin-gonic/gin"
-	uteam "sportlink/api/application/team/use_cases"
+	uteam "sportlink/api/application/team/usecases"
 	"sportlink/api/infrastructure/rest/monitoring"
 	cteam "sportlink/api/infrastructure/rest/team"
 	"sportlink/api/infrastructure/validator"

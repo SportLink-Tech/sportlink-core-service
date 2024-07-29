@@ -26,8 +26,8 @@ This directory contains the internal components of the application, which are no
 #### _app_
 
 - **Responsibilities**:
-  - Orchestrating the flow of data between the domain layer and the infrastructure.
-  - Implementing application-specific logic (use cases).
+    - Orchestrating the flow of data between the domain layer and the infrastructure.
+    - Implementing application-specific logic (use cases).
 
 #### _domain_
 
@@ -52,6 +52,23 @@ frameworks.
     - `config`
         - **Responsibilities**:
             - Managing configuration settings from files or environment variables.
+
+### `dev`
+
+The `dev/` directory contains all configurations and scripts specifically used for the development environment. This
+includes local setups, mock services, and other development-only utilities that are not part of the production
+deployment. Key components include:
+
+- **LocalStack**: This subdirectory houses configuration files and scripts for LocalStack, which simulates AWS cloud
+  services locally. It allows developers to test cloud applications by using cloud APIs offline.
+
+    - **CloudFormation Templates**: Located under `dev/localstack/cloudformation/`, these YAML files are used to set up
+      AWS resources such as DynamoDB tables in the LocalStack environment. They provide a reliable and repeatable way to
+      configure necessary services for development tests.
+
+This structure ensures that development-specific tools and configurations are neatly organized and separated from the
+production codebase, reducing the risk of deploying development artifacts to production environments and enhancing
+overall project maintainability.
 
 ## Getting Started
 

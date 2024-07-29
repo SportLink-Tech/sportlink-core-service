@@ -23,8 +23,8 @@ services:
       - SERVICES=secretsmanager,dynamodb,ssm,cf:cloudformation
       - AWS_DEFAULT_REGION=us-west-2
     volumes:
-      - ./infrastructure/src/main/resources/scripts/localstack:/etc/localstack/init/ready.d
-      - ./infrastructure/src/main/resources/cloudformation/core-dynamo-table.yml:/opt/code/localstack/core-dynamo-table.yml
+      - ./dev/localstack/cloudformation/core-dynamo-table.yml:/etc/localstack/init/ready.d
+      - ./api/infrastructure/src/main/resources/cloudformation/core-dynamo-table.yml:/opt/code/localstack/core-dynamo-table.yml
       - /var/run/docker.sock:/var/run/docker.sock
     healthcheck:
       test: "curl --silent --fail localstack:4566/_localstack/health || exit 1"
