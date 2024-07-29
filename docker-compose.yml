@@ -9,7 +9,7 @@ services:
     environment:
       - GIN_MODE=release
     volumes:
-      - .:/app
+      - .:/application
     restart: unless-stopped
 
   localstack:
@@ -19,12 +19,13 @@ services:
       - '4575:4575'
     environment:
       - DOCKER_HOST=unix:///var/run/docker.sock
-      # Make sure that all the services that you use in init-aws.sh script are present here. Otherwise, the container could not start well.
+      # Make sure that all the services that you use in init-config.sh script are present here. Otherwise, the container could not start well.
       - SERVICES=secretsmanager,dynamodb,ssm,cf:cloudformation
       - AWS_DEFAULT_REGION=us-west-2
     volumes:
-      - ./infrastructure/src/main/resources/scripts/localstack:/etc/localstack/init/ready.d
-      - ./infrastructure/src/main/resources/cloudformation/core-dynamo-table.yml:/opt/code/localstack/core-dynamo-table.yml
+      - ./dev/localstack/cloudformation/core-dynamo-table.yml:/opt/code/localstack/core-dynamo-table.yml
+      # Ensure that all script files within `dev/docker/scripts/` have executable permissions. If a script does not have the necessary permissions, you can set them using the following command: chmod +x dev/docker/scripts/init.sh
+      - ./dev/docker/scripts:/etc/localstack/init/ready.d
       - /var/run/docker.sock:/var/run/docker.sock
     healthcheck:
       test: "curl --silent --fail localstack:4566/_localstack/health || exit 1"

@@ -1,4 +1,4 @@
-# Stage 1: Build the Go app
+# Stage 1: Build the Go application
 FROM golang:1.22-alpine as builder
 
 # Set the Current Working Directory inside the container
@@ -16,7 +16,7 @@ RUN go mod download
 # Copy the source code into the container
 COPY . .
 
-# Build the Go app within the specified subdirectory
+# Build the Go application within the specified subdirectory
 RUN go build -o main ./cmd/sportlink/main.go
 
 # Stage 2: Setup the runtime container
