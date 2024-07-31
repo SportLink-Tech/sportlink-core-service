@@ -16,7 +16,7 @@ func NewCreatePlayerUc(repository player.Repository) CreatePlayerUc {
 }
 
 func (uc *CreatePlayerUc) Invoke(input player.Entity) (*player.Entity, error) {
-	err := uc.repository.Insert(input)
+	err := uc.repository.Save(input)
 	if err != nil {
 		return nil, fmt.Errorf("error while inserting player in database: %w", err)
 	}
