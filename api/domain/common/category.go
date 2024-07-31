@@ -6,7 +6,8 @@ import "fmt"
 type Category int
 
 const (
-	L1 Category = iota + 1
+	Unranked Category = 0
+	L1       Category = iota + 1
 	L2
 	L3
 	L4

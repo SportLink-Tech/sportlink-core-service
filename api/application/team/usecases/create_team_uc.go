@@ -18,6 +18,7 @@ func NewCreateTeamUC(playerRepository player.Repository) *CreateTeamUC {
 }
 
 func (uc *CreateTeamUC) Invoke(input team.NewTeamRequest) (*dteam.Entity, error) {
+
 	category := uc.getCategoryOrDefault(input)
 	stats := *common.NewStats(0, 0, 0)
 	sport := common.Sport(input.Sport)
