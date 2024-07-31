@@ -15,4 +15,5 @@ type DomainQuery struct {
 
 func NewDomainQuery(ID string, category common.Category, sport common.Sport) *DomainQuery {
 	return &DomainQuery{ID: ID, Category: category, Sport: sport}
+
 }
