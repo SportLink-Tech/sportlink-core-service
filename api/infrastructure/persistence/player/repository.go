@@ -40,6 +40,7 @@ func (repo *DynamoDBRepository) Save(entity player.Entity) error {
 	return err
 }
 
+// Find TODO improve this code
 func (repo *DynamoDBRepository) Find(query player.DomainQuery) ([]player.Entity, error) {
 	keyCond := expression.KeyEqual(expression.Key("EntityId"), expression.Value("Entity#Player"))
 
