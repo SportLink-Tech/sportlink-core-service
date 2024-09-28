@@ -22,6 +22,8 @@ func Routes(router *gin.Engine) {
 
 	// Team
 	createTeam := uteam.NewCreateTeamUC(playerRepository)
+
+	// Controller
 	teamController := cteam.NewController(createTeam, customValidator)
 
 	router.POST("/team", teamController.TeamCreationHandler)
