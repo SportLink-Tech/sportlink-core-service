@@ -6,15 +6,15 @@ import "fmt"
 type Category int
 
 const (
-	Unranked Category = 0
-	L1       Category = iota + 1
-	L2
-	L3
-	L4
-	L5
-	L6
-	L7
-	MaxCategory
+	Unranked    Category = 0
+	L1                   = 1
+	L2                   = 2
+	L3                   = 3
+	L4                   = 4
+	L5                   = 5
+	L6                   = 6
+	L7                   = 7
+	MaxCategory          = 7
 )
 
 func GetCategory(value int) (Category, error) {

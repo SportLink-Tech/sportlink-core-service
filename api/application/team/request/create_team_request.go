@@ -4,6 +4,6 @@ package request
 type NewTeamRequest struct {
 	Sport    string   `json:"sport" validate:"required,oneof=football paddle"`
 	Name     string   `json:"name" validate:"required"`
-	Category int      `json:"category" validate:"omitempty,category"`
+	Category int      `json:"category" validate:"omitempty"`
 	Players  []string `json:"players" validate:"omitempty"`
 }
