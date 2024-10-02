@@ -45,6 +45,7 @@ func TestCreateTeamUC_Invoke(t *testing.T) {
 func TestNewCreateTeamUC(t *testing.T) {
 	type args struct {
 		playerRepository player.Repository
+		teamRepository   team.Repository
 	}
 	tests := []struct {
 		name string
@@ -55,7 +56,7 @@ func TestNewCreateTeamUC(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := NewCreateTeamUC(tt.args.playerRepository); !reflect.DeepEqual(got, tt.want) {
+			if got := NewCreateTeamUC(tt.args.playerRepository, tt.args.teamRepository); !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("NewCreateTeamUC() = %v, want %v", got, tt.want)
 			}
 		})

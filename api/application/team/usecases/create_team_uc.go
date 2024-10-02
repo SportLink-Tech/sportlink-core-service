@@ -11,9 +11,10 @@ type CreateTeamUC struct {
 	teamRepository   team.Repository
 }
 
-func NewCreateTeamUC(playerRepository player.Repository) *CreateTeamUC {
+func NewCreateTeamUC(playerRepository player.Repository, teamRepository team.Repository) *CreateTeamUC {
 	return &CreateTeamUC{
 		playerRepository: playerRepository,
+		teamRepository:   teamRepository,
 	}
 }
 
