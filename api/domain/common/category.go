@@ -3,7 +3,7 @@ package common
 import "fmt"
 
 //go:generate stringer -type=Category
-type Category int
+type Category uint32
 
 const (
 	Unranked    Category = 0
@@ -14,11 +14,11 @@ const (
 	L5                   = 5
 	L6                   = 6
 	L7                   = 7
-	MaxCategory          = 7
+	MaxCategory          = L7
 )
 
 func GetCategory(value int) (Category, error) {
-	if value < int(L1) || value >= int(MaxCategory) {
+	if value < int(Unranked) || value > int(MaxCategory) {
 		return 0, fmt.Errorf("invalid category value: %d", value)
 	}
 	return Category(value), nil
