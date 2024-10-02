@@ -5,6 +5,8 @@ import (
 	uteam "sportlink/api/application/team/usecases"
 	"sportlink/api/infrastructure/config"
 	iplayer "sportlink/api/infrastructure/persistence/player"
+	iteam "sportlink/api/infrastructure/persistence/team"
+
 	"sportlink/api/infrastructure/rest/monitoring"
 	cteam "sportlink/api/infrastructure/rest/team"
 	"sportlink/api/infrastructure/validator"
@@ -21,7 +23,10 @@ func Routes(router *gin.Engine) {
 	playerRepository := iplayer.NewDynamoDBRepository(dynamoDbClient, "SportLinkCore")
 
 	// Team
-	createTeam := uteam.NewCreateTeamUC(playerRepository)
+	teamRepository := iteam.NewDynamoDBRepository(dynamoDbClient, "SportLinkCore")
+	createTeam := uteam.NewCreateTeamUC(playerRepository, teamRepository)
+
+	// Controller
 	teamController := cteam.NewController(createTeam, customValidator)
 
 	router.POST("/team", teamController.TeamCreationHandler)

@@ -1,40 +1,27 @@
 package usecases
 
 import (
-	"sportlink/api/domain/common"
+	"fmt"
 	"sportlink/api/domain/player"
-	dteam "sportlink/api/domain/team"
-	"sportlink/api/infrastructure/rest/team"
+	"sportlink/api/domain/team"
 )
 
 type CreateTeamUC struct {
 	playerRepository player.Repository
+	teamRepository   team.Repository
 }
 
-func NewCreateTeamUC(playerRepository player.Repository) *CreateTeamUC {
+func NewCreateTeamUC(playerRepository player.Repository, teamRepository team.Repository) *CreateTeamUC {
 	return &CreateTeamUC{
 		playerRepository: playerRepository,
+		teamRepository:   teamRepository,
 	}
 }
 
-func (uc *CreateTeamUC) Invoke(input team.NewTeamRequest) (*dteam.Entity, error) {
-
-	category := uc.getCategoryOrDefault(input)
-	stats := *common.NewStats(0, 0, 0)
-	sport := common.Sport(input.Sport)
-
-	return dteam.NewTeam(
-		input.Name,
-		category,
-		stats,
-		sport,
-		[]player.Entity{},
-	), nil
-}
-
-func (uc *CreateTeamUC) getCategoryOrDefault(input team.NewTeamRequest) common.Category {
-	var category common.Category
-
-	category = common.Category(input.Category)
-	return category
+func (uc *CreateTeamUC) Invoke(input team.Entity) (*team.Entity, error) {
+	err := uc.teamRepository.Save(input)
+	if err != nil {
+		return nil, fmt.Errorf("error while inserting team in database: %w", err)
+	}
+	return &input, nil
 }
