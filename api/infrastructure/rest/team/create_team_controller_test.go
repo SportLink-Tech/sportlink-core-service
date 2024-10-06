@@ -13,6 +13,7 @@ import (
 	"sportlink/api/application/team/usecases"
 	pmocks "sportlink/api/domain/player/mocks"
 	tmocks "sportlink/api/domain/team/mocks"
+	"sportlink/api/infrastructure/middleware"
 	"testing"
 )
 
@@ -27,33 +28,52 @@ func TestTeamCreationHandlerWithEmptyFields(t *testing.T) {
 
 	gin.SetMode(gin.TestMode)
 	router := gin.Default()
+	router.Use(middleware.ErrorHandler())
 	router.POST("/team", controller.TeamCreationHandler)
 
-	// Crear varios casos de prueba para diferentes combinaciones de campos vacíos
 	testCases := []struct {
-		description  string
-		payload      request2.NewTeamRequest
-		expectedCode int
+		name           string
+		payloadRequest request2.NewTeamRequest
+		expectedCode   int
 	}{
 		{
-			description:  "empty name",
-			payload:      request2.NewTeamRequest{Sport: "football", Name: "Boca Juniors", Category: 1},
-			expectedCode: http.StatusCreated,
+			name:           "create a new team successfully",
+			payloadRequest: request2.NewTeamRequest{Sport: "football", Name: "Boca Juniors", Category: 1},
+			expectedCode:   http.StatusCreated,
+		},
+		{
+			name:           "fails when create a new team with invalid category",
+			payloadRequest: request2.NewTeamRequest{Sport: "football", Name: "Boca Juniors", Category: 9},
+			expectedCode:   http.StatusBadRequest,
+		},
+		{
+			name:           "fails when create a new team with invalid sport",
+			payloadRequest: request2.NewTeamRequest{Sport: "fuchibol", Name: "River Plate", Category: 2},
+			expectedCode:   http.StatusBadRequest,
+		},
+		{
+			name:           "create a new team successfully",
+			payloadRequest: request2.NewTeamRequest{Sport: "football", Name: "", Category: 1},
+			expectedCode:   http.StatusBadRequest,
 		},
 	}
 
 	for _, tc := range testCases {
-		t.Run(tc.description, func(t *testing.T) {
+		t.Run(tc.name, func(t *testing.T) {
+			// given
 			teamRepository.On("Save", mock.Anything).Return(nil)
 
-			jsonData, _ := json.Marshal(tc.payload)
+			jsonData, _ := json.Marshal(tc.payloadRequest)
 			req, _ := http.NewRequest("POST", "/team", bytes.NewBuffer(jsonData))
 			resp := httptest.NewRecorder()
 
-			// Perform the test
+			// when
 			router.ServeHTTP(resp, req)
 
-			// Assertions
+			// then
+			var response map[string]string
+			json.Unmarshal(resp.Body.Bytes(), &response)
+			assert.Contains(t, response["message"], "Err: Key: 'NewTeamRequest.Name' Error:Field validation for 'Name' failed on the 'required' tag")
 			assert.Equal(t, tc.expectedCode, resp.Code, "Expected HTTP status matches the expected")
 		})
 	}
