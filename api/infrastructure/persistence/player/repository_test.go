@@ -1,9 +1,10 @@
-package player
+package player_test
 
 import (
 	"context"
 	"sportlink/api/domain/common"
 	"sportlink/api/domain/player"
+	iplayer "sportlink/api/infrastructure/persistence/player"
 	"sportlink/dev/testcontainer"
 	"testing"
 )
@@ -12,10 +13,10 @@ const tableName = "SportLinkCore"
 
 func TestDynamoDBRepository_Save(t *testing.T) {
 	ctx := context.Background()
-	container := testcontainer.LocalStackContainer(t, ctx)
+	container := testcontainer.ContainerWithSportLinkDynamoDb(t, ctx)
 	defer container.Terminate(ctx)
 	dynamoDbClient := testcontainer.GetDynamoDbClient(t, container, ctx)
-	repository := NewDynamoDBRepository(dynamoDbClient, tableName)
+	repository := iplayer.NewDynamoDBRepository(dynamoDbClient, tableName)
 
 	tests := []struct {
 		name    string
@@ -63,10 +64,10 @@ func TestDynamoDBRepository_Save(t *testing.T) {
 
 func TestDynamoDBRepository_Find(t *testing.T) {
 	ctx := context.Background()
-	container := testcontainer.LocalStackContainer(t, ctx)
+	container := testcontainer.ContainerWithSportLinkDynamoDb(t, ctx)
 	defer container.Terminate(ctx)
 	dynamoDbClient := testcontainer.GetDynamoDbClient(t, container, ctx)
-	repository := NewDynamoDBRepository(dynamoDbClient, tableName)
+	repository := iplayer.NewDynamoDBRepository(dynamoDbClient, tableName)
 
 	tests := []struct {
 		name                    string
