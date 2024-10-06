@@ -11,5 +11,4 @@ type DomainQuery struct {
 
 func NewDomainQuery(ID []string) *DomainQuery {
 	return &DomainQuery{ID: ID}
-
 }

@@ -6,7 +6,7 @@ import (
 	"testing"
 )
 
-func LocalStackContainer(t *testing.T, ctx context.Context) testcontainers.Container {
+func ContainerWithSportLinkDynamoDb(t *testing.T, ctx context.Context) testcontainers.Container {
 	containerRequest := requestWithDynamoDbAndCfServices()
 	return createContainer(t, ctx, containerRequest)
 }

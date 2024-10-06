@@ -38,6 +38,18 @@ func TestTeamCreationHandlerWithEmptyFields(t *testing.T) {
 		assertions     func(t *testing.T, responseCode int, response map[string]interface{})
 	}{
 		{
+			name: "create a new Boca Juniors team with player ids successfully",
+			payloadRequest: request2.NewTeamRequest{
+				Sport:     "football",
+				Name:      "Boca Juniors",
+				Category:  1,
+				PlayerIds: []string{"1", "2"},
+			},
+			assertions: func(t *testing.T, responseCode int, response map[string]interface{}) {
+				assert.Equal(t, http.StatusCreated, responseCode)
+			},
+		},
+		{
 			name:           "create a new Boca Juniors team successfully",
 			payloadRequest: request2.NewTeamRequest{Sport: "football", Name: "Boca Juniors", Category: 1},
 			assertions: func(t *testing.T, responseCode int, response map[string]interface{}) {
@@ -99,7 +111,6 @@ func TestTeamCreationHandlerWithEmptyFields(t *testing.T) {
 			// then
 			response := createMapResponse(resp)
 			tc.assertions(t, resp.Code, response)
-
 		})
 	}
 }
