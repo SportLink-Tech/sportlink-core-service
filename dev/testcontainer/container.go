@@ -6,9 +6,8 @@ import (
 	"testing"
 )
 
-func ContainerWithSportLinkDynamoDb(t *testing.T, ctx context.Context) testcontainers.Container {
-	containerRequest := requestWithDynamoDbAndCfServices()
-	return createContainer(t, ctx, containerRequest)
+func SportLinkContainer(t *testing.T, ctx context.Context) testcontainers.Container {
+	return createContainer(t, ctx, containerRequest())
 }
 
 func getContainerEndpoint(t *testing.T, container testcontainers.Container, ctx context.Context) string {
