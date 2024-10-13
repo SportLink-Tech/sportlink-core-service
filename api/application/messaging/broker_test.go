@@ -54,7 +54,7 @@ func TestSQSMessageBroker_SendMessage(t *testing.T) {
 // ```shell
 // awslocal sqs get-queue-attributes --queue-url=http://localhost:4566/000000000000/sportlink-news --attribute-names ApproximateNumberOfMessages
 // ```
-func TestSQSMessageBroker_SendMessages(t *testing.T) {
+func TestSQSMessageBroker_SendMessagesInParallel(t *testing.T) {
 
 	ctx := context.TODO()
 	container := testcontainer.SportLinkContainer(t, ctx)
@@ -63,89 +63,14 @@ func TestSQSMessageBroker_SendMessages(t *testing.T) {
 	broker := messaging.NewBroker(sqsClient, fmt.Sprintf("http://localhost:4566/000000000000/%s", sqsQueueName))
 
 	testCases := []struct {
-		name       string
-		batch      []messaging.Message
-		assertions func(t *testing.T, err error)
+		name                 string
+		batch                []messaging.Message
+		expectedSentMessages int
+		numIterations        int
+		assertions           func(t *testing.T, err error)
 	}{
 		{
-			name: "send a batch of messages successfully",
-			batch: []messaging.Message{
-				{
-					Id:      "1",
-					Message: `{"description":"Sport link core service"}`,
-				},
-				{
-					Id:      "2",
-					Message: `{"description":"Sport link core service"}`,
-				},
-				{
-					Id:      "3",
-					Message: `{"description":"Sport link core service"}`,
-				},
-				{
-					Id:      "4",
-					Message: `{"description":"Sport link core service"}`,
-				},
-			},
-			assertions: func(t *testing.T, err error) {
-				assert.Nil(t, err)
-			},
-		},
-		{
-			name: "send a batch of messages with more than the max amount of messages available",
-			batch: []messaging.Message{
-				{
-					Id:      "1",
-					Message: `{"description":"Sport link core service"}`,
-				},
-				{
-					Id:      "2",
-					Message: `{"description":"Sport link core service"}`,
-				},
-				{
-					Id:      "3",
-					Message: `{"description":"Sport link core service"}`,
-				},
-				{
-					Id:      "4",
-					Message: `{"description":"Sport link core service"}`,
-				},
-				{
-					Id:      "5",
-					Message: `{"description":"Sport link core service"}`,
-				},
-				{
-					Id:      "6",
-					Message: `{"description":"Sport link core service"}`,
-				},
-				{
-					Id:      "7",
-					Message: `{"description":"Sport link core service"}`,
-				},
-				{
-					Id:      "8",
-					Message: `{"description":"Sport link core service"}`,
-				},
-				{
-					Id:      "9",
-					Message: `{"description":"Sport link core service"}`,
-				},
-				{
-					Id:      "10",
-					Message: `{"description":"Sport link core service"}`,
-				},
-				{
-					Id:      "11",
-					Message: `{"description":"Sport link core service"}`,
-				},
-			},
-			assertions: func(t *testing.T, err error) {
-				assert.Error(t, err)
-				assert.Contains(t, err.Error(), "batch size exceeds SQS limit of 10 messages per batch")
-			},
-		},
-		{
-			name: "send a batch of messages with the max amount of messages successfully",
+			name: "send a batch of messages in parallel with the max amount of messages successfully 2 times",
 			batch: []messaging.Message{
 				{
 					Id:      "1",
@@ -188,18 +113,34 @@ func TestSQSMessageBroker_SendMessages(t *testing.T) {
 					Message: `{"description":"Sport link core service"}`,
 				},
 			},
+			numIterations:        2,
+			expectedSentMessages: 2 * 10,
 			assertions: func(t *testing.T, err error) {
 				assert.Nil(t, err)
 			},
 		},
 		{
-			name: "send a batch of messages with a single message successfully",
+			name: "send a batch of messages in parallel successfully 20 times",
 			batch: []messaging.Message{
 				{
 					Id:      "1",
 					Message: `{"description":"Sport link core service"}`,
 				},
+				{
+					Id:      "2",
+					Message: `{"description":"Sport link core service"}`,
+				},
+				{
+					Id:      "3",
+					Message: `{"description":"Sport link core service"}`,
+				},
+				{
+					Id:      "4",
+					Message: `{"description":"Sport link core service"}`,
+				},
 			},
+			numIterations:        20,
+			expectedSentMessages: 4 * 20,
 			assertions: func(t *testing.T, err error) {
 				assert.Nil(t, err)
 			},
@@ -207,11 +148,44 @@ func TestSQSMessageBroker_SendMessages(t *testing.T) {
 	}
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
+			errChan := make(chan error, testCase.numIterations)
+			outputChan := make(chan messaging.SendMessagesOutput, testCase.numIterations)
+
 			// when
-			err := broker.SendMessages(ctx, testCase.batch)
+			for i := 0; i < testCase.numIterations; i++ {
+				go func() {
+					// when
+					output, err := broker.SendMessages(ctx, testCase.batch)
+					if err != nil {
+						errChan <- err
+					} else {
+						outputChan <- output
+					}
+				}()
+			}
 
 			// then
-			testCase.assertions(t, err)
+			totalFailed, totalSucceeded := collectResultFromChannel(t, testCase.numIterations, errChan, outputChan)
+			assert.Equal(t, testCase.expectedSentMessages, totalSucceeded)
+			assert.Equal(t, 0, totalFailed, "Expected 0 failed messages")
 		})
 	}
+}
+
+func collectResultFromChannel(t *testing.T, numIterations int, errChan chan error, outputChan chan messaging.SendMessagesOutput) (int, int) {
+	totalSucceeded := 0
+	totalFailed := 0
+	for i := 0; i < numIterations; i++ {
+		select {
+		case err := <-errChan:
+			if err != nil {
+				t.Errorf("Error sending messages: %v", err)
+				totalFailed++
+			}
+		case output := <-outputChan:
+			totalSucceeded += output.Succeeded
+			totalFailed += output.Failed
+		}
+	}
+	return totalFailed, totalSucceeded
 }

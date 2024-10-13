@@ -13,7 +13,7 @@ import (
 // Broker interface with methods to send and receive messages
 type Broker interface {
 	SendMessage(ctx context.Context, message string) error
-	SendMessages(ctx context.Context, batch []Message) error
+	SendMessages(ctx context.Context, batch []Message) (SendMessagesOutput, error)
 	ReceiveMessages(ctx context.Context, batchSize int) ([]string, error)
 }
 
@@ -51,10 +51,9 @@ func (broker *SQSMessageBroker) SendMessage(ctx context.Context, message string)
 	return nil
 }
 
-// SendMessages sends a pre-formed batch of messages to the SQS queue
-func (broker *SQSMessageBroker) SendMessages(ctx context.Context, batch []Message) error {
+func (broker *SQSMessageBroker) SendMessages(ctx context.Context, batch []Message) (SendMessagesOutput, error) {
 	if len(batch) > 10 {
-		return fmt.Errorf("batch size exceeds SQS limit of 10 messages per batch")
+		return SendMessagesOutput{}, fmt.Errorf("batch size exceeds SQS limit of 10 messages per batch")
 	}
 
 	entries := make([]types.SendMessageBatchRequestEntry, len(batch))
@@ -72,20 +71,25 @@ func (broker *SQSMessageBroker) SendMessages(ctx context.Context, batch []Messag
 
 	result, err := broker.client.SendMessageBatch(ctx, msg)
 	if err != nil {
-		return fmt.Errorf("failed to send batch of messages: %w", err)
+		return SendMessagesOutput{}, fmt.Errorf("failed to send batch of messages: %w", err)
 	}
 
 	if len(result.Failed) > 0 {
 		for _, failure := range result.Failed {
 			log.Printf("Failed to send message ID: %s, Reason: %s", *failure.Id, *failure.Message)
 		}
-		return fmt.Errorf("some messages failed to send")
+		return SendMessagesOutput{
+			Succeeded: len(result.Successful),
+			Failed:    len(result.Failed),
+		}, fmt.Errorf("some messages failed to send")
 	}
 
-	return nil
+	return SendMessagesOutput{
+		Succeeded: len(result.Successful),
+		Failed:    len(result.Failed),
+	}, nil
 }
 
-// ReceiveMessages receives a batch of messages from the SQS queue
 func (broker *SQSMessageBroker) ReceiveMessages(ctx context.Context, batchSize int) ([]string, error) {
 	input := &sqs.ReceiveMessageInput{
 		QueueUrl:            aws.String(broker.queueUrl),
