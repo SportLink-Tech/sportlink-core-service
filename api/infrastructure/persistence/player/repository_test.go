@@ -13,7 +13,7 @@ const tableName = "SportLinkCore"
 
 func TestDynamoDBRepository_Save(t *testing.T) {
 	ctx := context.Background()
-	container := testcontainer.ContainerWithSportLinkDynamoDb(t, ctx)
+	container := testcontainer.SportLinkContainer(t, ctx)
 	defer container.Terminate(ctx)
 	dynamoDbClient := testcontainer.GetDynamoDbClient(t, container, ctx)
 	repository := iplayer.NewDynamoDBRepository(dynamoDbClient, tableName)
@@ -64,7 +64,7 @@ func TestDynamoDBRepository_Save(t *testing.T) {
 
 func TestDynamoDBRepository_Find(t *testing.T) {
 	ctx := context.Background()
-	container := testcontainer.ContainerWithSportLinkDynamoDb(t, ctx)
+	container := testcontainer.SportLinkContainer(t, ctx)
 	defer container.Terminate(ctx)
 	dynamoDbClient := testcontainer.GetDynamoDbClient(t, container, ctx)
 	repository := iplayer.NewDynamoDBRepository(dynamoDbClient, tableName)

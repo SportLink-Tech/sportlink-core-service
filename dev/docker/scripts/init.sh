@@ -11,6 +11,7 @@ print_banner() {
     echo "$line"
 }
 
+
 print_banner "======================================= Creating Dynamo Table ==========================================================="
 
 awslocal cloudformation create-stack \
@@ -19,8 +20,19 @@ awslocal cloudformation create-stack \
   --region "${AWS_REGION}" \
   --output table
 
-print_banner "Waiting for the CloudFormation stack to be created..."
+
+print_banner "========================================= Creating SQS Queue ============================================================"
+
+awslocal cloudformation create-stack \
+  --stack-name "sqs-queue-stack" \
+  --template-body file://sqs-queue.yml \
+  --region "${AWS_REGION}" \
+  --output table
+
+print_banner "Waiting for DyanamoDb CloudFormation stack to be created..."
 
 awslocal cloudformation wait stack-create-complete --stack-name core-dynamo-table-stack
 
 print_banner "======================================= Localstack Setup Ends ==========================================================="
+
+echo "All services created."

@@ -7,16 +7,23 @@ import (
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
+	"github.com/aws/aws-sdk-go-v2/service/sqs"
 	"github.com/testcontainers/testcontainers-go"
 	"testing"
 )
 
 // DynamoDb
-
 func GetDynamoDbClient(t *testing.T, container testcontainers.Container, ctx context.Context) *dynamodb.Client {
-	endpoint := getContainerEndpoint(t, container, ctx)
+	endpoint := GetContainerEndpoint(t, container, ctx)
 	awsCfg := GetAwsConfig(t, ctx, endpoint)
 	return dynamodb.NewFromConfig(awsCfg)
+}
+
+// Sqs
+func GetSqsClient(t *testing.T, container testcontainers.Container, ctx context.Context) *sqs.Client {
+	endpoint := GetContainerEndpoint(t, container, ctx)
+	awsCfg := GetAwsConfig(t, ctx, endpoint)
+	return sqs.NewFromConfig(awsCfg)
 }
 
 func ClearDynamoDbTable(t *testing.T, dynamoDbClient *dynamodb.Client, tableName string) {

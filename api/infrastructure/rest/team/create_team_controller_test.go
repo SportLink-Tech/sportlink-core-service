@@ -98,6 +98,7 @@ func TestTeamCreationHandlerWithEmptyFields(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
 			// given
 			teamRepository.On("Save", mock.Anything).Return(nil)
 

@@ -7,13 +7,12 @@ import (
 	"sportlink/api/infrastructure/persistence/player"
 	"sportlink/dev/testcontainer"
 	"testing"
-	"time"
 )
 
 func TestDynamoDb_Save(t *testing.T) {
 
 	ctx := context.Background()
-	container := testcontainer.ContainerWithSportLinkDynamoDb(t, ctx)
+	container := testcontainer.SportLinkContainer(t, ctx)
 	defer container.Terminate(ctx)
 	dynamoDbClient := testcontainer.GetDynamoDbClient(t, container, ctx)
 	repository := dynamodb.NewDynamoDb[player.Dto](*dynamoDbClient, "SportLinkCore")
@@ -72,11 +71,10 @@ func TestDynamoDb_Save(t *testing.T) {
 func TestDynamoDb_SaveAll(t *testing.T) {
 
 	ctx := context.Background()
-	container := testcontainer.ContainerWithSportLinkDynamoDb(t, ctx)
+	container := testcontainer.SportLinkContainer(t, ctx)
 	defer container.Terminate(ctx)
 	dynamoDbClient := testcontainer.GetDynamoDbClient(t, container, ctx)
 	repository := dynamodb.NewDynamoDb[player.Dto](*dynamoDbClient, "SportLinkCore")
-	time.Sleep(5 * time.Second)
 
 	testCases := []struct {
 		name        string

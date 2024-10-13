@@ -6,12 +6,11 @@ import (
 	"testing"
 )
 
-func ContainerWithSportLinkDynamoDb(t *testing.T, ctx context.Context) testcontainers.Container {
-	containerRequest := requestWithDynamoDbAndCfServices()
-	return createContainer(t, ctx, containerRequest)
+func SportLinkContainer(t *testing.T, ctx context.Context) testcontainers.Container {
+	return createContainer(t, ctx, containerRequest())
 }
 
-func getContainerEndpoint(t *testing.T, container testcontainers.Container, ctx context.Context) string {
+func GetContainerEndpoint(t *testing.T, container testcontainers.Container, ctx context.Context) string {
 	endpoint, err := container.PortEndpoint(ctx, "4566/tcp", "http")
 	if err != nil {
 		t.Fatalf("Failed to get container endpoint: %s", err)

@@ -10,7 +10,8 @@ env-up:
 
 .PHONY: test
 test:
-	go test -cover ./...
+	go clean --testcache
+	go test -cover -parallel 4 ./... | grep -v '?'
 
 .PHONY: generate-mocks
 generate-mocks:
