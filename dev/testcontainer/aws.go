@@ -13,16 +13,15 @@ import (
 )
 
 // DynamoDb
-
 func GetDynamoDbClient(t *testing.T, container testcontainers.Container, ctx context.Context) *dynamodb.Client {
-	endpoint := getContainerEndpoint(t, container, ctx)
+	endpoint := GetContainerEndpoint(t, container, ctx)
 	awsCfg := GetAwsConfig(t, ctx, endpoint)
 	return dynamodb.NewFromConfig(awsCfg)
 }
 
 // Sqs
 func GetSqsClient(t *testing.T, container testcontainers.Container, ctx context.Context) *sqs.Client {
-	endpoint := getContainerEndpoint(t, container, ctx)
+	endpoint := GetContainerEndpoint(t, container, ctx)
 	awsCfg := GetAwsConfig(t, ctx, endpoint)
 	return sqs.NewFromConfig(awsCfg)
 }

@@ -13,14 +13,14 @@ services:
     restart: unless-stopped
 
   localstack:
-    image: localstack/localstack:1.3.0
+    image: localstack/localstack:3.0.2
     ports:
       - '4566:4566'
       - '4575:4575'
     environment:
       - DOCKER_HOST=unix:///var/run/docker.sock
       # Make sure that all the services that you use in init-config.sh script are present here. Otherwise, the container could not start well.
-      - SERVICES=sqs,dynamodb,ssm,cf:cloudformation
+      - SERVICES=sqs,dynamodb,ssm,cloudformation
       - AWS_DEFAULT_REGION=us-west-2
     volumes:
       - ./dev/localstack/cloudformation/core-dynamo-table.yml:/opt/code/localstack/core-dynamo-table.yml

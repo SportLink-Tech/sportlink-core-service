@@ -12,12 +12,12 @@ import (
 
 // Broker interface with methods to send and receive messages
 type Broker interface {
-	SendMessages(ctx context.Context, batch []BatchMessage) error
+	SendMessage(ctx context.Context, message string) error
+	SendMessages(ctx context.Context, batch []Message) error
 	ReceiveMessages(ctx context.Context, batchSize int) ([]string, error)
 }
 
-// BatchMessage represents a single message in a batch
-type BatchMessage struct {
+type Message struct {
 	Id      string
 	Message string
 }
@@ -34,8 +34,25 @@ func NewBroker(client *sqs.Client, queueUrl string) Broker {
 	}
 }
 
+func (broker *SQSMessageBroker) SendMessage(ctx context.Context, message string) error {
+	if message == "" {
+		return fmt.Errorf("message is empty")
+	}
+	sendMsgInput := &sqs.SendMessageInput{
+		QueueUrl:    &broker.queueUrl,
+		MessageBody: &message,
+	}
+
+	_, err := broker.client.SendMessage(ctx, sendMsgInput)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 // SendMessages sends a pre-formed batch of messages to the SQS queue
-func (broker *SQSMessageBroker) SendMessages(ctx context.Context, batch []BatchMessage) error {
+func (broker *SQSMessageBroker) SendMessages(ctx context.Context, batch []Message) error {
 	if len(batch) > 10 {
 		return fmt.Errorf("batch size exceeds SQS limit of 10 messages per batch")
 	}
@@ -49,7 +66,7 @@ func (broker *SQSMessageBroker) SendMessages(ctx context.Context, batch []BatchM
 	}
 
 	msg := &sqs.SendMessageBatchInput{
-		QueueUrl: aws.String(broker.queueUrl),
+		QueueUrl: &broker.queueUrl,
 		Entries:  entries,
 	}
 
