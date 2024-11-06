@@ -5,23 +5,23 @@ import (
 	"net/http"
 	"sportlink/api/application/errors"
 	"sportlink/api/application/team/mapper"
-	request2 "sportlink/api/application/team/request"
+	"sportlink/api/application/team/request"
 )
 
 // TeamCreationHandler handles the POST request to add or modify sports data.
 func (sc *Controller) TeamCreationHandler(c *gin.Context) {
-	var request request2.NewTeamRequest
-	if err := c.ShouldBindJSON(&request); err != nil {
+	var newTeamRequest request.NewTeamRequest
+	if err := c.ShouldBindJSON(&newTeamRequest); err != nil {
 		c.Error(errors.InvalidRequestFormat())
 		return
 	}
 
-	if err := sc.validator.Struct(request); err != nil {
+	if err := sc.validator.Struct(newTeamRequest); err != nil {
 		c.Error(errors.RequestValidationFailed(err.Error()))
 		return
 	}
 
-	input, err := mapper.CreationRequestToEntity(request)
+	input, err := mapper.CreationRequestToEntity(newTeamRequest)
 	if err != nil {
 		c.Error(errors.RequestValidationFailed(err.Error()))
 		return

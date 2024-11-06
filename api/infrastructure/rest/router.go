@@ -24,6 +24,8 @@ func Routes(router *gin.Engine) {
 
 	// Team
 	teamRepository := iteam.NewDynamoDBRepository(dynamoDbClient, "SportLinkCore")
+
+	// Use Cases
 	createTeam := uteam.NewCreateTeamUC(playerRepository, teamRepository)
 
 	// Controller

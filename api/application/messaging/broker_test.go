@@ -12,7 +12,6 @@ import (
 const sqsQueueName = "sportlink-news"
 
 func TestSQSMessageBroker_SendMessage(t *testing.T) {
-
 	ctx := context.TODO()
 	container := testcontainer.SportLinkContainer(t, ctx)
 	defer container.Terminate(ctx)
@@ -50,10 +49,6 @@ func TestSQSMessageBroker_SendMessage(t *testing.T) {
 	}
 }
 
-// Use the following command in order to see the amount of messages:
-// ```shell
-// awslocal sqs get-queue-attributes --queue-url=http://localhost:4566/000000000000/sportlink-news --attribute-names ApproximateNumberOfMessages
-// ```
 func TestSQSMessageBroker_SendMessagesInParallel(t *testing.T) {
 
 	ctx := context.TODO()

@@ -85,7 +85,7 @@ func TestDynamoDBRepository_Find(t *testing.T) {
 				},
 			},
 			query: player.DomainQuery{
-				ID: "jorgejcabrera",
+				Id: "jorgejcabrera",
 			},
 			expectedAmountOfPlayers: 1,
 		},
@@ -99,7 +99,7 @@ func TestDynamoDBRepository_Find(t *testing.T) {
 				},
 			},
 			query: player.DomainQuery{
-				ID: "jorgejcabrera",
+				Id: "jorgejcabrera",
 			},
 			expectedAmountOfPlayers: 0,
 		},

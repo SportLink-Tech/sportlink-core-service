@@ -44,8 +44,8 @@ func (repo *DynamoDBRepository) Save(entity player.Entity) error {
 func (repo *DynamoDBRepository) Find(query player.DomainQuery) ([]player.Entity, error) {
 	keyCond := expression.KeyEqual(expression.Key("EntityId"), expression.Value("Entity#Player"))
 
-	if query.ID != "" {
-		keyCond = expression.KeyAnd(keyCond, expression.KeyEqual(expression.Key("Id"), expression.Value(query.ID)))
+	if query.Id != "" {
+		keyCond = expression.KeyAnd(keyCond, expression.KeyEqual(expression.Key("Id"), expression.Value(query.Id)))
 	}
 
 	builder := expression.NewBuilder().WithKeyCondition(keyCond)

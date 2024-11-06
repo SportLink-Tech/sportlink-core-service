@@ -76,7 +76,7 @@ func (broker *SQSMessageBroker) SendMessages(ctx context.Context, batch []Messag
 
 	if len(result.Failed) > 0 {
 		for _, failure := range result.Failed {
-			log.Printf("Failed to send message ID: %s, Reason: %s", *failure.Id, *failure.Message)
+			log.Printf("Failed to send message Id: %s, Reason: %s", *failure.Id, *failure.Message)
 		}
 		return SendMessagesOutput{
 			Succeeded: len(result.Successful),

@@ -6,11 +6,11 @@ import (
 )
 
 type Entity struct {
-	name     string
-	category common.Category
-	stats    common.Stats
-	sport    common.Sport
-	members  []player.Entity
+	Name     string
+	Category common.Category
+	Stats    common.Stats
+	Sport    common.Sport
+	Members  []player.Entity
 }
 
 func NewTeam(
@@ -21,10 +21,10 @@ func NewTeam(
 	members []player.Entity,
 ) *Entity {
 	return &Entity{
-		name:     name,
-		category: category,
-		stats:    stats,
-		sport:    sport,
-		members:  members,
+		Name:     name,
+		Category: category,
+		Stats:    stats,
+		Sport:    sport,
+		Members:  members,
 	}
 }

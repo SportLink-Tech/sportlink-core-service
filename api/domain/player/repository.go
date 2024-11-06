@@ -8,11 +8,22 @@ type Repository interface {
 }
 
 type DomainQuery struct {
-	ID       string
+	Id       string
+	Ids      []string
 	Category common.Category
 	Sport    common.Sport
 }
 
-func NewDomainQuery(ID string, category common.Category, sport common.Sport) *DomainQuery {
-	return &DomainQuery{ID: ID, Category: category, Sport: sport}
+func NewDomainQuery(
+	id string,
+	ids []string,
+	category common.Category,
+	sport common.Sport,
+) *DomainQuery {
+	return &DomainQuery{
+		Id:       id,
+		Ids:      ids,
+		Category: category,
+		Sport:    sport,
+	}
 }
