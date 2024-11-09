@@ -8,6 +8,13 @@ env-up:
 	-docker rmi sportlink-core-service
 	docker-compose up --build
 
+.PHONY: coverage-report
+coverage-report:
+	go test ./... -coverprofile=coverage_full.out
+	grep -Ev "(/mocks/|/dev/|/cmd/)" coverage_full.out > coverage.out
+	go tool cover -html=coverage.out -o coverage.html
+	rm -f coverage_full.out coverage.out
+
 .PHONY: test
 test:
 	go clean --testcache
