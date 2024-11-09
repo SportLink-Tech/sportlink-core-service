@@ -15,3 +15,10 @@ func RequestValidationFailed(message string) AppError {
 		Message: fmt.Sprintf("request validation failed. Err: %s", message),
 	}
 }
+
+func UseCaseExecutionFailed(message string) AppError {
+	return AppError{
+		Code:    UseCaseExecutionErrorCode,
+		Message: fmt.Sprintf("use case execution failed. Err: %s", message),
+	}
+}

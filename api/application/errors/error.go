@@ -8,6 +8,7 @@ const (
 	NotFoundErrorCode                ErrorCode = "not_found"
 	UnauthorizedErrorCode            ErrorCode = "unauthorized"
 	UnexpectedErrorCode              ErrorCode = "unexpected_error"
+	UseCaseExecutionErrorCode        ErrorCode = "use_case_execution_error"
 )
 
 type AppError struct {

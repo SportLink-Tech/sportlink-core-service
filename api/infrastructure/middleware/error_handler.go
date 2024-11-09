@@ -23,6 +23,8 @@ func ErrorHandler() gin.HandlerFunc {
 					status = http.StatusNotFound
 				case appErrors.UnauthorizedErrorCode:
 					status = http.StatusUnauthorized
+				case appErrors.UseCaseExecutionErrorCode:
+					status = http.StatusConflict
 				}
 
 				c.AbortWithStatusJSON(status, gin.H{

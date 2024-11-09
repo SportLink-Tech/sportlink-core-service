@@ -29,7 +29,7 @@ func (sc *Controller) TeamCreationHandler(c *gin.Context) {
 
 	result, err := sc.createTeamUC.Invoke(input)
 	if err != nil {
-		c.Error(err)
+		c.Error(errors.UseCaseExecutionFailed(err.Error()))
 		return
 	}
 
