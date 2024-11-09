@@ -10,10 +10,11 @@ env-up:
 
 .PHONY: coverage-report
 coverage-report:
-	go test ./... -coverprofile=coverage_full.out
-	grep -Ev "(/mocks/|/dev/|/cmd/)" coverage_full.out > coverage.out
-	go tool cover -html=coverage.out -o coverage.html
-	rm -f coverage_full.out coverage.out
+	@echo "Running tests..."
+	@go test ./... -coverprofile=coverage_full.out > /dev/null 2>&1
+	@grep -Ev "(/mocks/|/dev/|/cmd/)" coverage_full.out > coverage.out
+	@go tool cover -html=coverage.out -o coverage.html > /dev/null 2>&1
+	@echo "Total code coverage: $$(go tool cover -func=coverage.out | grep total: | awk '{print $$3}')" && rm -f coverage_full.out coverage.out
 
 .PHONY: test
 test:
