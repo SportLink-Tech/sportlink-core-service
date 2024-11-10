@@ -34,7 +34,7 @@ coverage-report:
 .PHONY: lint
 lint:
 	@echo "Running GolangCI-Lint..."
-	@-golangci-lint run --out-format json cmd/... api/... > golangci_lint.json
+	@-golangci-lint run -v --fix --out-format json cmd/... api/... > golangci_lint.json
 
 .PHONY: test
 test:
