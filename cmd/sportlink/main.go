@@ -13,5 +13,5 @@ func main() {
 
 	rest.Routes(r)
 
-	r.Run() // Inicia el servidor
+	r.Run()
 }

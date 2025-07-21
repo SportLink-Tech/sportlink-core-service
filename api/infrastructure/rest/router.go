@@ -23,7 +23,7 @@ func Routes(router *gin.Engine) {
 	playerRepository := iplayer.NewDynamoDBRepository(dynamoDbClient, "SportLinkCore")
 
 	// Team
-	teamRepository := iteam.NewDynamoDBRepository(dynamoDbClient, "SportLinkCore")
+	teamRepository := iteam.NewRepository(dynamoDbClient, "SportLinkCore")
 
 	// Use Cases
 	createTeam := uteam.NewCreateTeamUC(playerRepository, teamRepository)
