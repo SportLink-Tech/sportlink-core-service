@@ -33,11 +33,12 @@ func Routes(router *gin.Engine) {
 
 	// Use Cases
 	createTeam := uteam.NewCreateTeamUC(playerRepository, teamRepository)
+	retrieveTeam := uteam.NewRetrieveTeamUC(teamRepository)
 
-	// Controller
-	teamController := cteam.NewController(createTeam, customValidator)
-
-	router.POST("/team", teamController.TeamCreationHandler)
+	// DefaultController
+	teamController := cteam.NewController(createTeam, retrieveTeam, customValidator)
+	router.POST("/team", teamController.CreateTeam)
+	router.GET("/sport/:sport/team/:team", teamController.RetrieveTeam)
 
 	monitoring.RegisterMetricsRoute(router)
 }

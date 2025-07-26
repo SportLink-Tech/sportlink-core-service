@@ -80,7 +80,7 @@ func (repo *RepositoryAdapter) Find(query team.DomainQuery) ([]team.Entity, erro
 
 func From(entity team.Entity) (Dto, error) {
 	if entity.Name == "" {
-		return Dto{}, fmt.Errorf("Id could not be empty")
+		return Dto{}, fmt.Errorf("ID could not be empty")
 	}
 
 	return Dto{
@@ -91,6 +91,7 @@ func From(entity team.Entity) (Dto, error) {
 	}, nil
 }
 
+// TODO improve it
 func includeFilters(query team.DomainQuery, builder *expression.Builder) {
 	if len(query.Categories) > 0 {
 		var categoryValues []expression.OperandBuilder
@@ -99,6 +100,16 @@ func includeFilters(query team.DomainQuery, builder *expression.Builder) {
 		}
 
 		filter := expression.Name("Category").In(categoryValues[0], categoryValues[1:]...)
+		*builder = builder.WithFilter(filter)
+	}
+
+	if len(query.Sports) > 0 {
+		var sportValues []expression.OperandBuilder
+		for _, c := range query.Sports {
+			sportValues = append(sportValues, expression.Value(string(c)))
+		}
+
+		filter := expression.Name("Sport").In(sportValues[0], sportValues[1:]...)
 		*builder = builder.WithFilter(filter)
 	}
 }

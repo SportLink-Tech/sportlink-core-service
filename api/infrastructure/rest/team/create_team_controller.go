@@ -8,8 +8,8 @@ import (
 	"sportlink/api/application/team/request"
 )
 
-// TeamCreationHandler handles the POST request to add or modify sports data.
-func (sc *Controller) TeamCreationHandler(c *gin.Context) {
+// CreateTeam handles the POST request to add or modify sports data.
+func (sc *DefaultController) CreateTeam(c *gin.Context) {
 	var newTeamRequest request.NewTeamRequest
 	if err := c.ShouldBindJSON(&newTeamRequest); err != nil {
 		c.Error(errors.InvalidRequestFormat())

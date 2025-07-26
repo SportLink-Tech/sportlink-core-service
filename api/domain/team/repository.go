@@ -7,8 +7,14 @@ type Repository interface {
 	Find(query DomainQuery) ([]Entity, error)
 }
 
+type ID struct {
+	Name  string
+	Sport common.Sport
+}
+
 type DomainQuery struct {
 	Name       string
 	Ids        []string
 	Categories []common.Category
+	Sports     []common.Sport
 }

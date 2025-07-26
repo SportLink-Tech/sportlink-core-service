@@ -12,7 +12,7 @@ import (
 // NewDynamoDBClient TODO do not use dummy credentials, take it from env variables instead
 func NewDynamoDBClient(dynamoDbCfg DynamoDbCfg) *dynamodb.Client {
 	cfg, err := config.LoadDefaultConfig(context.TODO(),
-		config.WithRegion("us-west-2"),
+		config.WithRegion(dynamoDbCfg.Region),
 		config.WithEndpointResolver(aws.EndpointResolverFunc(
 			func(service, region string) (aws.Endpoint, error) {
 				if service == dynamodb.ServiceID {
