@@ -8,8 +8,10 @@ services:
       - "8080:8080"
     environment:
       - GIN_MODE=release
+      - DYNAMODB_URL=http://localstack:4566
+      - AWS_REGION=us-west-2
     volumes:
-      - .:/application
+      - .:/app
     restart: unless-stopped
 
   localstack:

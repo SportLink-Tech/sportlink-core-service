@@ -1,5 +1,5 @@
 # Stage 1: Build the Go application
-FROM golang:1.22-alpine as builder
+FROM golang:1.24-alpine as builder
 
 # Set the Current Working Directory inside the container
 WORKDIR /app
@@ -20,7 +20,7 @@ COPY . .
 RUN go build -o main ./cmd/sportlink/main.go
 
 # Stage 2: Setup the runtime container
-FROM golang:1.22-alpine
+FROM golang:1.24-alpine
 
 # Set work directory in the new stage
 WORKDIR /app

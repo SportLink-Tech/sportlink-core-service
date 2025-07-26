@@ -10,12 +10,14 @@ import (
 	"sportlink/api/domain/player"
 )
 
+// TODO los métodos save y save all hay que llevarlos a un lugar comun que use generics
+
 type DynamoDBRepository struct {
 	dbClient  *dynamodb.Client
 	tableName string
 }
 
-func NewDynamoDBRepository(client *dynamodb.Client, tableName string) *DynamoDBRepository {
+func NewDynamoDBRepository(client *dynamodb.Client, tableName string) player.Repository {
 	return &DynamoDBRepository{
 		dbClient:  client,
 		tableName: tableName,
