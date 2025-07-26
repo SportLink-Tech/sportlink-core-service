@@ -23,7 +23,7 @@ import (
 
 func TestTeamCreationHandlerWithEmptyFields(t *testing.T) {
 	validator := validator.New()
-	
+
 	testCases := []struct {
 		name           string
 		payloadRequest request2.NewTeamRequest
@@ -167,7 +167,7 @@ func TestTeamCreationHandlerWithEmptyFields(t *testing.T) {
 			gin.SetMode(gin.TestMode)
 			router := gin.Default()
 			router.Use(middleware.ErrorHandler())
-			router.POST("/team", controller.TeamCreationHandler)
+			router.POST("/team", controller.CreateTeam)
 
 			// given
 			tc.on(t, playerRepository, teamRepository)

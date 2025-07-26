@@ -10,16 +10,16 @@ import (
 )
 
 // NewDynamoDBClient TODO do not use dummy credentials, take it from env variables instead
-func NewDynamoDBClient() *dynamodb.Client {
+func NewDynamoDBClient(dynamoDbCfg DynamoDbCfg) *dynamodb.Client {
 	cfg, err := config.LoadDefaultConfig(context.TODO(),
-		config.WithRegion("us-west-2"),
+		config.WithRegion(dynamoDbCfg.Region),
 		config.WithEndpointResolver(aws.EndpointResolverFunc(
 			func(service, region string) (aws.Endpoint, error) {
 				if service == dynamodb.ServiceID {
 					return aws.Endpoint{
 						PartitionID:   "config",
-						URL:           "http://localhost:4566",
-						SigningRegion: "us-west-2",
+						URL:           dynamoDbCfg.Url,
+						SigningRegion: dynamoDbCfg.Region,
 					}, nil
 				}
 				return aws.Endpoint{}, &aws.EndpointNotFoundError{}

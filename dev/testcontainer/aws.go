@@ -12,7 +12,7 @@ import (
 	"testing"
 )
 
-// DynamoDb
+// DynamoDbCfg
 func GetDynamoDbClient(t *testing.T, container testcontainers.Container, ctx context.Context) *dynamodb.Client {
 	endpoint := GetContainerEndpoint(t, container, ctx)
 	awsCfg := GetAwsConfig(t, ctx, endpoint)
