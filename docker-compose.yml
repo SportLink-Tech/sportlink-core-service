@@ -11,7 +11,7 @@ services:
       - DYNAMODB_URL=http://localstack:4566
       - AWS_REGION=us-west-2
     volumes:
-      - .:/app
+      - ./backend:/app
     restart: unless-stopped
 
   localstack:
@@ -25,10 +25,10 @@ services:
       - SERVICES=sqs,dynamodb,ssm,cloudformation
       - AWS_DEFAULT_REGION=us-west-2
     volumes:
-      - ./dev/localstack/cloudformation/core-dynamo-table.yml:/opt/code/localstack/core-dynamo-table.yml
-      - ./dev/localstack/cloudformation/sqs-queue.yml:/opt/code/localstack/sqs-queue.yml
+      - ./backend/dev/localstack/cloudformation/core-dynamo-table.yml:/opt/code/localstack/core-dynamo-table.yml
+      - ./backend/dev/localstack/cloudformation/sqs-queue.yml:/opt/code/localstack/sqs-queue.yml
       # Ensure that all script files within `dev/docker/scripts/` have executable permissions. If a script does not have the necessary permissions, you can set them using the following command: chmod +x dev/docker/scripts/init.sh
-      - ./dev/docker/scripts:/etc/localstack/init/ready.d
+      - ./backend/dev/docker/scripts:/etc/localstack/init/ready.d
       - /var/run/docker.sock:/var/run/docker.sock
     healthcheck:
       test: "curl --silent --fail localstack:4566/_localstack/health || exit 1"

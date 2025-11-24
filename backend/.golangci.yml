@@ -1,0 +1,36 @@
+linters-settings:
+  revive:
+    rules:
+      - name: line-length-limit
+        arguments: [ 120 ]
+      - name: unreachable-code
+      # Ensures that errors are formatted correctly using 'fmt.Errorf', promoting clear and informative error messages.
+      - name: errorf
+      # Detects cases where range variables are unsafely used in closures, preventing logical race conditions.
+      - name: range-val-in-closure
+      # Ensures that sync.WaitGroup instances are not passed by value, preventing synchronization issues.
+      - name: waitgroup-by-value
+      # Detects and flags any empty code blocks, which could indicate incomplete or erroneous logic.
+      - name: empty-block
+      # Checks unnecessary 'else' blocks following 'return' statements, simplifying control flow.
+      - name: superfluous-else
+      # The 'indent-error-flow' rule encourages early returns to minimize nesting and enhance readability,
+      # particularly in error handling.
+      - name: indent-error-flow
+      # Cyclomatic complexity measures the number of linearly independent paths through a program's source code,
+      # indicating its testability and maintainability. Higher values than 10 suggest more complex code.
+      - name: cyclomatic
+        arguments: [ 10 ]
+      # Ensures that methods prefixed with 'Get' do not alter the object's state and only return values.
+      - name: get-return
+
+linters:
+  disable-all: true
+  enable:
+    - revive
+
+issues:
+  exclude-rules:
+    - path: '_test\.go$'
+      linters:
+        - revive

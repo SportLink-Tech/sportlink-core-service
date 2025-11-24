@@ -8,13 +8,13 @@ WORKDIR /app
 RUN go install github.com/githubnemo/CompileDaemon@latest
 
 # Copy the go module files
-COPY go.mod go.sum ./
+COPY backend/go.mod backend/go.sum ./
 
 # Download all dependencies. Dependencies will be cached if the go.mod and go.sum files do not change
 RUN go mod download
 
 # Copy the source code into the container
-COPY . .
+COPY backend/ .
 
 # Build the Go application within the specified subdirectory
 RUN go build -o main ./cmd/sportlink/main.go
