@@ -1,4 +1,4 @@
-package team
+package team_test
 
 import (
 	"context"

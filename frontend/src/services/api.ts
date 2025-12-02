@@ -1,4 +1,9 @@
-import { CreateTeamRequest, Team, ApiError } from '../types/team'
+import { CreateTeamRequest, Team } from '../types/team'
+
+interface ApiError {
+  code: string
+  message: string
+}
 
 const API_BASE_URL = '/api'
 
@@ -26,7 +31,7 @@ class ApiService {
       const data = await response.json()
 
       if (!response.ok) {
-        const error: ApiError = data
+        const error = data as ApiError
         throw new Error(error.message || 'Error en la petición')
       }
 

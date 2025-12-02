@@ -12,12 +12,15 @@ import {
   Container,
   Stack,
   Divider,
+  Paper,
 } from '@mui/material'
 import SportsIcon from '@mui/icons-material/Sports'
 import PersonIcon from '@mui/icons-material/Person'
 import AddCircleIcon from '@mui/icons-material/AddCircle'
-import SearchIcon from '@mui/icons-material/Search'
 import LogoutIcon from '@mui/icons-material/Logout'
+import GroupAddIcon from '@mui/icons-material/GroupAdd'
+import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown'
+import EventIcon from '@mui/icons-material/Event'
 
 interface LayoutProps {
   children: React.ReactNode
@@ -88,7 +91,7 @@ export function Layout({ children }: LayoutProps) {
                 bgcolor: location.pathname === '/' ? 'primary.lighter' : 'transparent'
               }}
             >
-              <SearchIcon />
+              <EventIcon />
             </IconButton>
             <IconButton
               onClick={() => navigate('/create')}
@@ -101,19 +104,31 @@ export function Layout({ children }: LayoutProps) {
             </IconButton>
           </Stack>
 
-          {/* Avatar y Menú de Usuario */}
-          <IconButton onClick={handleMenuOpen} sx={{ p: 0 }}>
+          {/* Avatar y Menú de Usuario - Estilo Facebook */}
+          <Box
+            onClick={handleMenuOpen}
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 0.5,
+              cursor: 'pointer',
+              borderRadius: 2,
+              p: 0.5,
+              '&:hover': {
+                bgcolor: 'rgba(0, 0, 0, 0.04)',
+              },
+            }}
+          >
             <Avatar
               alt={user.name}
               src={user.avatar}
               sx={{ 
                 width: 40, 
                 height: 40,
-                border: '2px solid',
-                borderColor: 'primary.main'
               }}
             />
-          </IconButton>
+            <ArrowDropDownIcon sx={{ color: 'text.secondary', fontSize: 20 }} />
+          </Box>
 
           <Menu
             anchorEl={anchorEl}
@@ -127,45 +142,97 @@ export function Layout({ children }: LayoutProps) {
               vertical: 'top',
               horizontal: 'right',
             }}
-            sx={{ mt: 1 }}
+            PaperProps={{
+              sx: {
+                mt: 1.5,
+                minWidth: 360,
+                maxWidth: 360,
+                borderRadius: 2,
+                boxShadow: '0 8px 24px rgba(0, 0, 0, 0.12)',
+                overflow: 'hidden',
+              },
+            }}
+            MenuListProps={{
+              sx: { py: 0 },
+            }}
           >
-            {/* User Info */}
-            <Box sx={{ px: 2, py: 1.5, minWidth: 200 }}>
+            {/* User Info Header */}
+            <Paper
+              elevation={0}
+              sx={{
+                px: 2,
+                py: 2,
+                bgcolor: 'background.paper',
+                borderBottom: '1px solid',
+                borderColor: 'divider',
+              }}
+            >
               <Stack direction="row" spacing={2} alignItems="center">
-                <Avatar src={user.avatar} sx={{ width: 48, height: 48 }} />
-                <Box>
-                  <Typography variant="subtitle1" fontWeight={600}>
+                <Avatar src={user.avatar} sx={{ width: 56, height: 56 }} />
+                <Box sx={{ flex: 1 }}>
+                  <Typography variant="subtitle1" fontWeight={600} fontSize="1.05rem">
                     {user.name}
                   </Typography>
-                  <Typography variant="body2" color="text.secondary">
+                  <Typography variant="body2" color="text.secondary" fontSize="0.875rem">
                     {user.email}
                   </Typography>
                 </Box>
               </Stack>
-            </Box>
-            
-            <Divider />
+            </Paper>
 
             {/* Menu Items */}
-            <MenuItem onClick={() => handleNavigate('/')}>
-              <SearchIcon sx={{ mr: 1 }} fontSize="small" />
-              Buscar Equipos
-            </MenuItem>
-            <MenuItem onClick={() => handleNavigate('/create')}>
-              <AddCircleIcon sx={{ mr: 1 }} fontSize="small" />
-              Crear Equipo
-            </MenuItem>
-            
+            <Box sx={{ py: 0.5 }}>
+              <MenuItem 
+                onClick={() => handleNavigate('/create')}
+                sx={{ 
+                  py: 1.5,
+                  px: 2,
+                  '&:hover': { bgcolor: 'rgba(0, 0, 0, 0.04)' }
+                }}
+              >
+                <AddCircleIcon sx={{ mr: 2, fontSize: 24, color: 'text.secondary' }} />
+                <Typography variant="body1">Publicar Partido</Typography>
+              </MenuItem>
+              <MenuItem 
+                onClick={() => handleNavigate('/create-team')}
+                sx={{ 
+                  py: 1.5,
+                  px: 2,
+                  '&:hover': { bgcolor: 'rgba(0, 0, 0, 0.04)' }
+                }}
+              >
+                <GroupAddIcon sx={{ mr: 2, fontSize: 24, color: 'text.secondary' }} />
+                <Typography variant="body1">Agregar equipo</Typography>
+              </MenuItem>
+            </Box>
+
             <Divider />
 
-            <MenuItem onClick={handleMenuClose}>
-              <PersonIcon sx={{ mr: 1 }} fontSize="small" />
-              Mi Perfil
-            </MenuItem>
-            <MenuItem onClick={handleMenuClose}>
-              <LogoutIcon sx={{ mr: 1 }} fontSize="small" />
-              Cerrar Sesión
-            </MenuItem>
+            {/* Settings & Logout */}
+            <Box sx={{ py: 0.5 }}>
+              <MenuItem 
+                onClick={handleMenuClose}
+                sx={{ 
+                  py: 1.5,
+                  px: 2,
+                  '&:hover': { bgcolor: 'rgba(0, 0, 0, 0.04)' }
+                }}
+              >
+                <PersonIcon sx={{ mr: 2, fontSize: 24, color: 'text.secondary' }} />
+                <Typography variant="body1">Mi Perfil</Typography>
+              </MenuItem>
+              <MenuItem 
+                onClick={handleMenuClose}
+                sx={{ 
+                  py: 1.5,
+                  px: 2,
+                  '&:hover': { bgcolor: 'rgba(0, 0, 0, 0.04)' }
+                }}
+              >
+                <LogoutIcon sx={{ mr: 2, fontSize: 24, color: 'text.secondary' }} />
+                <Typography variant="body1">Cerrar Sesión</Typography>
+              </MenuItem>
+            </Box>
           </Menu>
         </Toolbar>
       </AppBar>

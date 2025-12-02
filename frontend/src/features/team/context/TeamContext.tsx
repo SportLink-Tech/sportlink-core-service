@@ -1,4 +1,4 @@
-import React, { createContext, useContext, ReactNode } from 'react'
+import { createContext, useContext, ReactNode } from 'react'
 import { CreateTeamUseCase } from '../domain/usecases/CreateTeamUseCase'
 import { SearchTeamUseCase } from '../domain/usecases/SearchTeamUseCase'
 import { TeamApiAdapter } from '../infrastructure/adapters/TeamApiAdapter'

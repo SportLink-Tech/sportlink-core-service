@@ -119,72 +119,72 @@ export function SearchTeamForm() {
             <Stack spacing={3}>
               {teams.map((team, index) => (
                 <Card key={`${team.Sport}-${team.Name}-${index}`} variant="outlined" sx={{ p: 2 }}>
-                  <Stack spacing={2}>
-                    <Box>
-                      <Typography variant="subtitle2" color="text.secondary">
-                        Nombre
-                      </Typography>
-                      <Typography variant="h5">{team.Name}</Typography>
-                    </Box>
+            <Stack spacing={2}>
+              <Box>
+                <Typography variant="subtitle2" color="text.secondary">
+                  Nombre
+                </Typography>
+                <Typography variant="h5">{team.Name}</Typography>
+              </Box>
 
-                    <Box>
-                      <Typography variant="subtitle2" color="text.secondary">
-                        Deporte
-                      </Typography>
-                      <Chip label={team.Sport} color="primary" />
-                    </Box>
+              <Box>
+                <Typography variant="subtitle2" color="text.secondary">
+                  Deporte
+                </Typography>
+                <Chip label={team.Sport} color="primary" />
+              </Box>
 
-                    <Box>
-                      <Typography variant="subtitle2" color="text.secondary">
-                        Categoría
-                      </Typography>
-                      <Chip 
-                        label={team.Category === 0 ? 'Unranked' : `L${team.Category}`} 
-                        color="secondary" 
-                      />
-                    </Box>
+              <Box>
+                <Typography variant="subtitle2" color="text.secondary">
+                  Categoría
+                </Typography>
+                <Chip 
+                  label={team.Category === 0 ? 'Unranked' : `L${team.Category}`} 
+                  color="secondary" 
+                />
+              </Box>
 
-                    <Box>
-                      <Typography variant="subtitle2" color="text.secondary">
-                        Estadísticas
-                      </Typography>
-                      <Stack direction="row" spacing={2}>
-                        <Chip label={`Victorias: ${team.Stats.Wins}`} variant="outlined" color="success" />
-                        <Chip label={`Derrotas: ${team.Stats.Losses}`} variant="outlined" color="error" />
-                        <Chip label={`Empates: ${team.Stats.Draws}`} variant="outlined" />
-                      </Stack>
-                    </Box>
+              <Box>
+                <Typography variant="subtitle2" color="text.secondary">
+                  Estadísticas
+                </Typography>
+                <Stack direction="row" spacing={2}>
+                  <Chip label={`Victorias: ${team.Stats.Wins}`} variant="outlined" color="success" />
+                  <Chip label={`Derrotas: ${team.Stats.Losses}`} variant="outlined" color="error" />
+                  <Chip label={`Empates: ${team.Stats.Draws}`} variant="outlined" />
+                </Stack>
+              </Box>
 
-                    <Box>
-                      <Typography variant="subtitle2" color="text.secondary" gutterBottom>
-                        Miembros ({team.Members?.length || 0})
-                      </Typography>
-                      {team.Members && team.Members.length > 0 ? (
-                        <Stack spacing={1}>
-                          {team.Members.map((member) => (
-                            <Card key={member.ID} variant="outlined">
-                              <CardContent sx={{ py: 1 }}>
-                                <Stack direction="row" spacing={2} alignItems="center">
-                                  <Typography variant="body1" sx={{ flex: 1 }}>
-                                    {member.ID}
-                                  </Typography>
-                                  <Chip 
-                                    label={`Categoría ${member.Category}`} 
-                                    size="small" 
-                                    color="primary"
-                                    variant="outlined"
-                                  />
-                                </Stack>
-                              </CardContent>
-                            </Card>
-                          ))}
-                        </Stack>
-                      ) : (
-                        <Typography variant="body2" color="text.secondary" sx={{ fontStyle: 'italic' }}>
-                          Este equipo no tiene miembros registrados
-                        </Typography>
-                      )}
-                    </Box>
+              <Box>
+                <Typography variant="subtitle2" color="text.secondary" gutterBottom>
+                  Miembros ({team.Members?.length || 0})
+                </Typography>
+                {team.Members && team.Members.length > 0 ? (
+                  <Stack spacing={1}>
+                    {team.Members.map((member) => (
+                      <Card key={member.ID} variant="outlined">
+                        <CardContent sx={{ py: 1 }}>
+                          <Stack direction="row" spacing={2} alignItems="center">
+                            <Typography variant="body1" sx={{ flex: 1 }}>
+                              {member.ID}
+                            </Typography>
+                            <Chip 
+                              label={`Categoría ${member.Category}`} 
+                              size="small" 
+                              color="primary"
+                              variant="outlined"
+                            />
+                          </Stack>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </Stack>
+                ) : (
+                  <Typography variant="body2" color="text.secondary" sx={{ fontStyle: 'italic' }}>
+                    Este equipo no tiene miembros registrados
+                  </Typography>
+                )}
+              </Box>
                   </Stack>
                 </Card>
               ))}

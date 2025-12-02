@@ -122,6 +122,7 @@ export function SearchTeamPage() {
                   onChange={(e) => setTeamName(e.target.value)}
                   fullWidth
                   placeholder="Ej: Thunder Strikers"
+                  helperText="Deja vacío para buscar todos los equipos del deporte"
                 />
 
                 <Box>

@@ -6,7 +6,8 @@ help:
 	@echo "  make up                  - Levantar backend + frontend (detached)"
 	@echo "  make down                - Detener backend + frontend"
 	@echo "  make logs                - Ver logs de los contenedores"
-	@echo "  make rebuild             - Reconstruir y levantar infraestructura"
+	@echo "  make rebuild             - Reconstruir y levantar infraestructura (⚠️ BORRA DATOS)"
+	@echo "  make restart-backend     - Reiniciar solo el backend (mantiene datos)"
 	@echo ""
 	@echo "Backend:"
 	@echo "  make test                - Ejecutar tests del backend"
@@ -71,6 +72,7 @@ logs:
 
 .PHONY: rebuild
 rebuild:
+	@echo "⚠️  WARNING: This will DELETE all data in Localstack!"
 	@echo "Rebuilding infrastructure..."
 	@$(MAKE) down
 	-docker rmi sportlink-core-service
@@ -82,6 +84,26 @@ rebuild:
 	@echo "✓ Backend running on http://localhost:8080"
 	@echo "✓ Frontend running on http://localhost:3000"
 	@echo "✓ Frontend logs: tail -f frontend.log"
+
+.PHONY: restart-backend
+restart-backend:
+	@echo "Restarting backend (keeps Localstack data)..."
+	@docker-compose restart app
+	@echo "Waiting for backend to be ready..."
+	@sleep 3
+	@echo "✓ Backend restarted"
+
+.PHONY: restart-frontend
+restart-frontend:
+	@echo "Restarting frontend..."
+	@if [ -f frontend.pid ]; then \
+		kill $$(cat frontend.pid) 2>/dev/null || true; \
+		rm -f frontend.pid; \
+	fi
+	@-pkill -f "vite" || true
+	@cd frontend && nohup npm run dev > ../frontend.log 2>&1 & echo $$! > ../frontend.pid
+	@sleep 2
+	@echo "✓ Frontend restarted on http://localhost:3000"
 
 .PHONY: env-up
 env-up:
