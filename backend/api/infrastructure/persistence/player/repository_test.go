@@ -52,7 +52,7 @@ func TestDynamoDBRepository_Save(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := repository.Save(tt.entity)
+			err := repository.Save(ctx, tt.entity)
 			if (err != nil) != tt.failure {
 				t.Errorf("it was an error: %v", err)
 				return
@@ -180,12 +180,12 @@ func TestDynamoDBRepository_Find(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			for _, entity := range tt.savedPlayers {
-				err := repository.Save(entity)
+				err := repository.Save(ctx, entity)
 				if err != nil {
 					t.Fatalf("failed to save entity: %v", err)
 				}
 			}
-			players, err := repository.Find(tt.query)
+			players, err := repository.Find(ctx, tt.query)
 			if err != nil {
 				t.Fatalf("failed to find players: %v", err)
 			}

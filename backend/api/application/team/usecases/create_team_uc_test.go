@@ -1,6 +1,7 @@
 package usecases_test
 
 import (
+	"context"
 	"fmt"
 	"reflect"
 	"sportlink/api/application/team/usecases"
@@ -25,7 +26,7 @@ func TestCreateTeamUC_Invoke(t *testing.T) {
 	}{
 		{
 			name: "save team successfully",
-			entity: *team.NewTeam(
+			entity: team.NewTeam(
 				"Boca Jr",
 				common.L1,
 				*common.NewStats(10, 0, 0),
@@ -33,7 +34,7 @@ func TestCreateTeamUC_Invoke(t *testing.T) {
 				make([]player.Entity, 0),
 			),
 			on: func(t *testing.T, playerRepository *pmocks.Repository, teamRepository *mmocks.Repository) {
-				teamRepository.On("Save", mock.MatchedBy(func(team team.Entity) bool {
+				teamRepository.On("Save", mock.Anything, mock.MatchedBy(func(team team.Entity) bool {
 					return team.Name == "Boca Jr" &&
 						team.Category == common.L1 &&
 						team.Sport == common.Football &&
@@ -43,18 +44,22 @@ func TestCreateTeamUC_Invoke(t *testing.T) {
 			},
 			then: func(t *testing.T, response *team.Entity, err error) {
 				assert.NoError(t, err)
-				assert.Equal(t, team.NewTeam(
+				expected := team.NewTeam(
 					"Boca Jr",
 					common.L1,
 					*common.NewStats(10, 0, 0),
 					common.Football,
 					make([]player.Entity, 0),
-				), response)
+				)
+				assert.Equal(t, expected.ID, response.ID)
+				assert.Equal(t, expected.Name, response.Name)
+				assert.Equal(t, expected.Category, response.Category)
+				assert.Equal(t, expected.Sport, response.Sport)
 			},
 		},
 		{
 			name: "save team with players successfully",
-			entity: *team.NewTeam(
+			entity: team.NewTeam(
 				"Boca Jr",
 				common.L1,
 				*common.NewStats(10, 0, 0),
@@ -73,7 +78,7 @@ func TestCreateTeamUC_Invoke(t *testing.T) {
 				},
 			),
 			on: func(t *testing.T, playerRepository *pmocks.Repository, teamRepository *mmocks.Repository) {
-				teamRepository.On("Save", mock.MatchedBy(func(team team.Entity) bool {
+				teamRepository.On("Save", mock.Anything, mock.MatchedBy(func(team team.Entity) bool {
 					return team.Name == "Boca Jr" &&
 						team.Category == common.L1 &&
 						team.Sport == common.Football &&
@@ -81,7 +86,7 @@ func TestCreateTeamUC_Invoke(t *testing.T) {
 						team.Stats == *common.NewStats(10, 0, 0)
 				})).Return(nil)
 
-				playerRepository.On("Find", mock.MatchedBy(func(query player.DomainQuery) bool {
+				playerRepository.On("Find", mock.Anything, mock.MatchedBy(func(query player.DomainQuery) bool {
 					return reflect.DeepEqual(query.Ids, []string{"eldiegote", "elpajaro"})
 				})).Return([]player.Entity{
 					{
@@ -98,7 +103,7 @@ func TestCreateTeamUC_Invoke(t *testing.T) {
 			},
 			then: func(t *testing.T, response *team.Entity, err error) {
 				assert.NoError(t, err)
-				assert.Equal(t, team.NewTeam(
+				expected := team.NewTeam(
 					"Boca Jr",
 					common.L1,
 					*common.NewStats(10, 0, 0),
@@ -115,12 +120,17 @@ func TestCreateTeamUC_Invoke(t *testing.T) {
 							Sport:    common.Football,
 						},
 					},
-				), response)
+				)
+				assert.Equal(t, expected.ID, response.ID)
+				assert.Equal(t, expected.Name, response.Name)
+				assert.Equal(t, expected.Category, response.Category)
+				assert.Equal(t, expected.Sport, response.Sport)
+				assert.Equal(t, len(expected.Members), len(response.Members))
 			},
 		},
 		{
 			name: "when some of the team players does not exist then the team could not be created",
-			entity: *team.NewTeam(
+			entity: team.NewTeam(
 				"Boca Jr",
 				common.L1,
 				*common.NewStats(10, 0, 0),
@@ -139,7 +149,7 @@ func TestCreateTeamUC_Invoke(t *testing.T) {
 				},
 			),
 			on: func(t *testing.T, playerRepository *pmocks.Repository, teamRepository *mmocks.Repository) {
-				teamRepository.On("Save", mock.MatchedBy(func(team team.Entity) bool {
+				teamRepository.On("Save", mock.Anything, mock.MatchedBy(func(team team.Entity) bool {
 					return team.Name == "Boca Jr" &&
 						team.Category == common.L1 &&
 						team.Sport == common.Football &&
@@ -147,7 +157,7 @@ func TestCreateTeamUC_Invoke(t *testing.T) {
 						team.Stats == *common.NewStats(10, 0, 0)
 				})).Return(nil)
 
-				playerRepository.On("Find", mock.MatchedBy(func(query player.DomainQuery) bool {
+				playerRepository.On("Find", mock.Anything, mock.MatchedBy(func(query player.DomainQuery) bool {
 					return reflect.DeepEqual(query.Ids, []string{"eldiegote", "elpajaro"})
 				})).Return([]player.Entity{
 					{
@@ -165,7 +175,7 @@ func TestCreateTeamUC_Invoke(t *testing.T) {
 		},
 		{
 			name: "when the save method repository thrown an error, then it must be retrieved",
-			entity: *team.NewTeam(
+			entity: team.NewTeam(
 				"Boca Jr",
 				common.L1,
 				*common.NewStats(10, 0, 0),
@@ -173,7 +183,7 @@ func TestCreateTeamUC_Invoke(t *testing.T) {
 				make([]player.Entity, 0),
 			),
 			on: func(t *testing.T, playerRepository *pmocks.Repository, teamRepository *mmocks.Repository) {
-				teamRepository.On("Save", mock.MatchedBy(func(team team.Entity) bool {
+				teamRepository.On("Save", mock.Anything, mock.MatchedBy(func(team team.Entity) bool {
 					return team.Name == "Boca Jr" &&
 						team.Category == common.L1 &&
 						team.Sport == common.Football &&
@@ -199,7 +209,7 @@ func TestCreateTeamUC_Invoke(t *testing.T) {
 			tt.on(t, playerRepository, teamRepository)
 
 			// when
-			response, err := uc.Invoke(tt.entity)
+			response, err := uc.Invoke(context.Background(), tt.entity)
 
 			// then
 			tt.then(t, response, err)

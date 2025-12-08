@@ -36,7 +36,7 @@ func TestFindTeamController(t *testing.T) {
 			sport:     "Football",
 			nameQuery: "Boca",
 			on: func(t *testing.T, teamRepository *tmocks.Repository) {
-				teamRepository.On("Find", mock.MatchedBy(func(query team2.DomainQuery) bool {
+				teamRepository.On("Find", mock.Anything, mock.MatchedBy(func(query team2.DomainQuery) bool {
 					return len(query.Sports) == 1 &&
 						query.Sports[0] == common.Football &&
 						query.Name == "Boca"
@@ -72,7 +72,7 @@ func TestFindTeamController(t *testing.T) {
 			sport:     "Paddle",
 			nameQuery: "Los Delfines",
 			on: func(t *testing.T, teamRepository *tmocks.Repository) {
-				teamRepository.On("Find", mock.MatchedBy(func(query team2.DomainQuery) bool {
+				teamRepository.On("Find", mock.Anything, mock.MatchedBy(func(query team2.DomainQuery) bool {
 					return len(query.Sports) == 1 &&
 						query.Sports[0] == common.Paddle &&
 						query.Name == "Los Delfines"
@@ -99,7 +99,7 @@ func TestFindTeamController(t *testing.T) {
 			sport:     "Tennis",
 			nameQuery: "NonExistent",
 			on: func(t *testing.T, teamRepository *tmocks.Repository) {
-				teamRepository.On("Find", mock.MatchedBy(func(query team2.DomainQuery) bool {
+				teamRepository.On("Find", mock.Anything, mock.MatchedBy(func(query team2.DomainQuery) bool {
 					return len(query.Sports) == 1 &&
 						query.Sports[0] == common.Tennis &&
 						query.Name == "NonExistent"
@@ -117,7 +117,7 @@ func TestFindTeamController(t *testing.T) {
 			sport:     "Football",
 			nameQuery: "River",
 			on: func(t *testing.T, teamRepository *tmocks.Repository) {
-				teamRepository.On("Find", mock.MatchedBy(func(query team2.DomainQuery) bool {
+				teamRepository.On("Find", mock.Anything, mock.MatchedBy(func(query team2.DomainQuery) bool {
 					return len(query.Sports) == 1 &&
 						query.Sports[0] == common.Football &&
 						query.Name == "River"
@@ -149,7 +149,7 @@ func TestFindTeamController(t *testing.T) {
 			nameQuery:     "",
 			categoryQuery: "1",
 			on: func(t *testing.T, teamRepository *tmocks.Repository) {
-				teamRepository.On("Find", mock.MatchedBy(func(query team2.DomainQuery) bool {
+				teamRepository.On("Find", mock.Anything, mock.MatchedBy(func(query team2.DomainQuery) bool {
 					return len(query.Sports) == 1 &&
 						query.Sports[0] == common.Football &&
 						len(query.Categories) == 1 &&
@@ -184,7 +184,7 @@ func TestFindTeamController(t *testing.T) {
 			nameQuery:     "",
 			categoryQuery: "5,7",
 			on: func(t *testing.T, teamRepository *tmocks.Repository) {
-				teamRepository.On("Find", mock.MatchedBy(func(query team2.DomainQuery) bool {
+				teamRepository.On("Find", mock.Anything, mock.MatchedBy(func(query team2.DomainQuery) bool {
 					return len(query.Sports) == 1 &&
 						query.Sports[0] == common.Paddle &&
 						len(query.Categories) == 2 &&
@@ -219,7 +219,7 @@ func TestFindTeamController(t *testing.T) {
 			nameQuery:     "Boca",
 			categoryQuery: "1",
 			on: func(t *testing.T, teamRepository *tmocks.Repository) {
-				teamRepository.On("Find", mock.MatchedBy(func(query team2.DomainQuery) bool {
+				teamRepository.On("Find", mock.Anything, mock.MatchedBy(func(query team2.DomainQuery) bool {
 					return len(query.Sports) == 1 &&
 						query.Sports[0] == common.Football &&
 						query.Name == "Boca" &&
@@ -249,7 +249,7 @@ func TestFindTeamController(t *testing.T) {
 			nameQuery:     "",
 			categoryQuery: "",
 			on: func(t *testing.T, teamRepository *tmocks.Repository) {
-				teamRepository.On("Find", mock.MatchedBy(func(query team2.DomainQuery) bool {
+				teamRepository.On("Find", mock.Anything, mock.MatchedBy(func(query team2.DomainQuery) bool {
 					return len(query.Sports) == 1 &&
 						query.Sports[0] == common.Paddle &&
 						query.Name == "" &&

@@ -18,5 +18,5 @@ func CreationRequestToEntity(request team2.NewTeamRequest) (team.Entity, error) 
 	for _, playerId := range request.PlayerIds {
 		players = append(players, player.Entity{ID: playerId})
 	}
-	return *team.NewTeam(request.Name, category, *stats, sport, players), nil
+	return team.NewTeam(request.Name, category, *stats, sport, players), nil
 }

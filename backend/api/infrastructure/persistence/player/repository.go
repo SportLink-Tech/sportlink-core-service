@@ -24,7 +24,7 @@ func NewDynamoDBRepository(client *dynamodb.Client, tableName string) player.Rep
 	}
 }
 
-func (repo *DynamoDBRepository) Save(entity player.Entity) error {
+func (repo *DynamoDBRepository) Save(ctx context.Context, entity player.Entity) error {
 	dto, err := From(entity)
 	if err != nil {
 		return err
@@ -35,7 +35,7 @@ func (repo *DynamoDBRepository) Save(entity player.Entity) error {
 		return err
 	}
 
-	_, err = repo.dbClient.PutItem(context.TODO(), &dynamodb.PutItemInput{
+	_, err = repo.dbClient.PutItem(ctx, &dynamodb.PutItemInput{
 		TableName: &repo.tableName,
 		Item:      av,
 	})
@@ -43,7 +43,7 @@ func (repo *DynamoDBRepository) Save(entity player.Entity) error {
 }
 
 // Find TODO improve this code
-func (repo *DynamoDBRepository) Find(query player.DomainQuery) ([]player.Entity, error) {
+func (repo *DynamoDBRepository) Find(ctx context.Context, query player.DomainQuery) ([]player.Entity, error) {
 	keyCond := expression.KeyEqual(expression.Key("EntityId"), expression.Value("Entity#Player"))
 
 	if query.Id != "" {
@@ -58,7 +58,7 @@ func (repo *DynamoDBRepository) Find(query player.DomainQuery) ([]player.Entity,
 	}
 
 	var results []player.Entity
-	resp, err := repo.dbClient.Query(context.TODO(), &dynamodb.QueryInput{
+	resp, err := repo.dbClient.Query(ctx, &dynamodb.QueryInput{
 		TableName:                 aws.String(repo.tableName),
 		KeyConditionExpression:    expr.KeyCondition(),
 		ExpressionAttributeNames:  expr.Names(),

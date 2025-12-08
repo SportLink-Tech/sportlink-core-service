@@ -7,7 +7,7 @@ import (
 	"time"
 )
 
-func TestDefaultQueryParser_ParseSports(t *testing.T) {
+func TestDefaultQueryParser_Sports(t *testing.T) {
 	parser := NewQueryParser()
 
 	tests := []struct {
@@ -50,19 +50,19 @@ func TestDefaultQueryParser_ParseSports(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := parser.ParseSports(tt.input)
+			got, err := parser.Sports(tt.input)
 			if (err != nil) != tt.wantError {
-				t.Errorf("ParseSports() error = %v, wantError %v", err, tt.wantError)
+				t.Errorf("Sports() error = %v, wantError %v", err, tt.wantError)
 				return
 			}
 			if !equalSports(got, tt.want) {
-				t.Errorf("ParseSports() = %v, want %v", got, tt.want)
+				t.Errorf("Sports() = %v, want %v", got, tt.want)
 			}
 		})
 	}
 }
 
-func TestDefaultQueryParser_ParseCategories(t *testing.T) {
+func TestDefaultQueryParser_Categories(t *testing.T) {
 	parser := NewQueryParser()
 
 	tests := []struct {
@@ -117,19 +117,19 @@ func TestDefaultQueryParser_ParseCategories(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := parser.ParseCategories(tt.input)
+			got, err := parser.Categories(tt.input)
 			if (err != nil) != tt.wantError {
-				t.Errorf("ParseCategories() error = %v, wantError %v", err, tt.wantError)
+				t.Errorf("Categories() error = %v, wantError %v", err, tt.wantError)
 				return
 			}
 			if !equalCategories(got, tt.want) {
-				t.Errorf("ParseCategories() = %v, want %v", got, tt.want)
+				t.Errorf("Categories() = %v, want %v", got, tt.want)
 			}
 		})
 	}
 }
 
-func TestDefaultQueryParser_ParseStatuses(t *testing.T) {
+func TestDefaultQueryParser_Statuses(t *testing.T) {
 	parser := NewQueryParser()
 
 	tests := []struct {
@@ -178,19 +178,19 @@ func TestDefaultQueryParser_ParseStatuses(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := parser.ParseStatuses(tt.input)
+			got, err := parser.Statuses(tt.input)
 			if (err != nil) != tt.wantError {
-				t.Errorf("ParseStatuses() error = %v, wantError %v", err, tt.wantError)
+				t.Errorf("Statuses() error = %v, wantError %v", err, tt.wantError)
 				return
 			}
 			if !equalStatuses(got, tt.want) {
-				t.Errorf("ParseStatuses() = %v, want %v", got, tt.want)
+				t.Errorf("Statuses() = %v, want %v", got, tt.want)
 			}
 		})
 	}
 }
 
-func TestDefaultQueryParser_ParseDate(t *testing.T) {
+func TestDefaultQueryParser_Date(t *testing.T) {
 	parser := NewQueryParser()
 
 	tests := []struct {
@@ -227,19 +227,19 @@ func TestDefaultQueryParser_ParseDate(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := parser.ParseDate(tt.input)
+			got, err := parser.Date(tt.input)
 			if (err != nil) != tt.wantError {
-				t.Errorf("ParseDate() error = %v, wantError %v", err, tt.wantError)
+				t.Errorf("Date() error = %v, wantError %v", err, tt.wantError)
 				return
 			}
 			if !got.Equal(tt.want) && !tt.want.IsZero() {
-				t.Errorf("ParseDate() = %v, want %v", got, tt.want)
+				t.Errorf("Date() = %v, want %v", got, tt.want)
 			}
 		})
 	}
 }
 
-func TestDefaultQueryParser_ParseLocation(t *testing.T) {
+func TestDefaultQueryParser_Location(t *testing.T) {
 	parser := NewQueryParser()
 
 	tests := []struct {
@@ -282,19 +282,141 @@ func TestDefaultQueryParser_ParseLocation(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := parser.ParseLocation(tt.country, tt.province, tt.locality)
+			got := parser.Location(tt.country, tt.province, tt.locality)
 			if tt.want == nil {
 				if got != nil {
-					t.Errorf("ParseLocation() = %v, want nil", got)
+					t.Errorf("Location() = %v, want nil", got)
 				}
 				return
 			}
 			if got == nil {
-				t.Errorf("ParseLocation() = nil, want %v", tt.want)
+				t.Errorf("Location() = nil, want %v", tt.want)
 				return
 			}
 			if got.Country != tt.want.Country || got.Province != tt.want.Province || got.Locality != tt.want.Locality {
-				t.Errorf("ParseLocation() = %v, want %v", got, tt.want)
+				t.Errorf("Location() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestDefaultQueryParser_Limit(t *testing.T) {
+	parser := NewQueryParser()
+
+	tests := []struct {
+		name    string
+		limit   string
+		want    int
+		wantErr bool
+	}{
+		{
+			name:    "given valid limit when parsing then returns limit value",
+			limit:   "9",
+			want:    9,
+			wantErr: false,
+		},
+		{
+			name:    "given empty string when parsing limit then returns zero",
+			limit:   "",
+			want:    0,
+			wantErr: false,
+		},
+		{
+			name:    "given zero when parsing limit then returns zero",
+			limit:   "0",
+			want:    0,
+			wantErr: false,
+		},
+		{
+			name:    "given large number when parsing limit then returns value",
+			limit:   "100",
+			want:    100,
+			wantErr: false,
+		},
+		{
+			name:    "given invalid string when parsing limit then returns error",
+			limit:   "invalid",
+			want:    0,
+			wantErr: true,
+		},
+		{
+			name:    "given negative number when parsing limit then returns error",
+			limit:   "-5",
+			want:    0,
+			wantErr: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := parser.Limit(tt.limit)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("Limit() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if got != tt.want {
+				t.Errorf("Limit() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestDefaultQueryParser_Offset(t *testing.T) {
+	parser := NewQueryParser()
+
+	tests := []struct {
+		name    string
+		offset  string
+		want    int
+		wantErr bool
+	}{
+		{
+			name:    "given valid offset when parsing then returns offset value",
+			offset:  "9",
+			want:    9,
+			wantErr: false,
+		},
+		{
+			name:    "given empty string when parsing offset then returns zero",
+			offset:  "",
+			want:    0,
+			wantErr: false,
+		},
+		{
+			name:    "given zero when parsing offset then returns zero",
+			offset:  "0",
+			want:    0,
+			wantErr: false,
+		},
+		{
+			name:    "given large number when parsing offset then returns value",
+			offset:  "100",
+			want:    100,
+			wantErr: false,
+		},
+		{
+			name:    "given invalid string when parsing offset then returns error",
+			offset:  "invalid",
+			want:    0,
+			wantErr: true,
+		},
+		{
+			name:    "given negative number when parsing offset then returns error",
+			offset:  "-5",
+			want:    0,
+			wantErr: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := parser.Offset(tt.offset)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("Offset() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if got != tt.want {
+				t.Errorf("Offset() = %v, want %v", got, tt.want)
 			}
 		})
 	}

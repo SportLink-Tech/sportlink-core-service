@@ -1,4 +1,10 @@
-import { MatchAnnouncement, CreateMatchAnnouncementRequest, FindMatchAnnouncementsQuery, ApiError } from '../../../../shared/types/matchAnnouncement'
+import {
+  MatchAnnouncement,
+  CreateMatchAnnouncementRequest,
+  FindMatchAnnouncementsQuery,
+  ApiError,
+  PaginatedMatchAnnouncementsResponse,
+} from '../../../../shared/types/matchAnnouncement'
 import { MatchAnnouncementRepository } from '../../domain/ports/MatchAnnouncementRepository'
 
 const API_BASE_URL = '/api'
@@ -32,7 +38,7 @@ export class MatchAnnouncementApiAdapter implements MatchAnnouncementRepository 
     }
   }
 
-  async find(query: FindMatchAnnouncementsQuery): Promise<{ data: MatchAnnouncement[]; status: number }> {
+  async find(query: FindMatchAnnouncementsQuery): Promise<{ data: PaginatedMatchAnnouncementsResponse; status: number }> {
     const queryParams = new URLSearchParams()
 
     if (query.sports && query.sports.length > 0) {
@@ -65,6 +71,14 @@ export class MatchAnnouncementApiAdapter implements MatchAnnouncementRepository 
       if (query.location.locality) {
         queryParams.append('locality', query.location.locality)
       }
+    }
+
+    if (query.limit !== undefined && query.limit > 0) {
+      queryParams.append('limit', query.limit.toString())
+    }
+
+    if (query.offset !== undefined && query.offset > 0) {
+      queryParams.append('offset', query.offset.toString())
     }
 
     const queryString = queryParams.toString()

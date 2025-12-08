@@ -1,6 +1,7 @@
 package usecases_test
 
 import (
+	"context"
 	"fmt"
 	"sportlink/api/application/team/usecases"
 	"sportlink/api/domain/common"
@@ -28,7 +29,7 @@ func TestFindTeamUC_Invoke(t *testing.T) {
 				Name:   "Boca",
 			},
 			on: func(t *testing.T, repository *mmocks.Repository) {
-				repository.On("Find", mock.MatchedBy(func(query team.DomainQuery) bool {
+				repository.On("Find", mock.Anything, mock.MatchedBy(func(query team.DomainQuery) bool {
 					return len(query.Sports) == 1 &&
 						query.Sports[0] == common.Football &&
 						query.Name == "Boca"
@@ -64,7 +65,7 @@ func TestFindTeamUC_Invoke(t *testing.T) {
 				Name:   "Los Delfines",
 			},
 			on: func(t *testing.T, repository *mmocks.Repository) {
-				repository.On("Find", mock.MatchedBy(func(query team.DomainQuery) bool {
+				repository.On("Find", mock.Anything, mock.MatchedBy(func(query team.DomainQuery) bool {
 					return len(query.Sports) == 1 &&
 						query.Sports[0] == common.Paddle &&
 						query.Name == "Los Delfines"
@@ -93,7 +94,7 @@ func TestFindTeamUC_Invoke(t *testing.T) {
 				Name:   "NonExistent",
 			},
 			on: func(t *testing.T, repository *mmocks.Repository) {
-				repository.On("Find", mock.MatchedBy(func(query team.DomainQuery) bool {
+				repository.On("Find", mock.Anything, mock.MatchedBy(func(query team.DomainQuery) bool {
 					return len(query.Sports) == 1 &&
 						query.Sports[0] == common.Tennis &&
 						query.Name == "NonExistent"
@@ -112,7 +113,7 @@ func TestFindTeamUC_Invoke(t *testing.T) {
 				Name:   "River",
 			},
 			on: func(t *testing.T, repository *mmocks.Repository) {
-				repository.On("Find", mock.MatchedBy(func(query team.DomainQuery) bool {
+				repository.On("Find", mock.Anything, mock.MatchedBy(func(query team.DomainQuery) bool {
 					return len(query.Sports) == 1 &&
 						query.Sports[0] == common.Football &&
 						query.Name == "River"
@@ -135,7 +136,7 @@ func TestFindTeamUC_Invoke(t *testing.T) {
 			tt.on(t, teamRepository)
 
 			// when
-			result, err := uc.Invoke(tt.query)
+			result, err := uc.Invoke(context.Background(), tt.query)
 
 			// then
 			tt.then(t, result, err)

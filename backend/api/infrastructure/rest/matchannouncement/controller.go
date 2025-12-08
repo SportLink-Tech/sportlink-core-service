@@ -2,6 +2,7 @@ package matchannouncement
 
 import (
 	"sportlink/api/application"
+	"sportlink/api/application/matchannouncement/usecases"
 	"sportlink/api/domain/matchannouncement"
 	"sportlink/api/infrastructure/rest/matchannouncement/parser"
 
@@ -16,14 +17,14 @@ type Controller interface {
 
 type DefaultController struct {
 	createMatchAnnouncementUC application.UseCase[matchannouncement.Entity, matchannouncement.Entity]
-	findMatchAnnouncementsUC  application.UseCase[matchannouncement.DomainQuery, []matchannouncement.Entity]
+	findMatchAnnouncementsUC  application.UseCase[matchannouncement.DomainQuery, usecases.FindMatchAnnouncementResult]
 	validator                 *validator.Validate
 	queryParser               parser.QueryParser
 }
 
 func NewController(
 	createMatchAnnouncementUC application.UseCase[matchannouncement.Entity, matchannouncement.Entity],
-	findMatchAnnouncementsUC application.UseCase[matchannouncement.DomainQuery, []matchannouncement.Entity],
+	findMatchAnnouncementsUC application.UseCase[matchannouncement.DomainQuery, usecases.FindMatchAnnouncementResult],
 	validator *validator.Validate,
 ) Controller {
 	return NewControllerWithParser(createMatchAnnouncementUC, findMatchAnnouncementsUC, validator, nil)
@@ -34,7 +35,7 @@ func NewController(
 // This allows for dependency injection in tests.
 func NewControllerWithParser(
 	createMatchAnnouncementUC application.UseCase[matchannouncement.Entity, matchannouncement.Entity],
-	findMatchAnnouncementsUC application.UseCase[matchannouncement.DomainQuery, []matchannouncement.Entity],
+	findMatchAnnouncementsUC application.UseCase[matchannouncement.DomainQuery, usecases.FindMatchAnnouncementResult],
 	validator *validator.Validate,
 	queryParser parser.QueryParser,
 ) Controller {

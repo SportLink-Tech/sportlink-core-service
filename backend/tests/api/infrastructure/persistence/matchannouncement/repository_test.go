@@ -85,7 +85,7 @@ func Test_Save(t *testing.T) {
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
 			// when
-			err := repository.Save(testCase.entity)
+			err := repository.Save(ctx, testCase.entity)
 
 			// then
 			testCase.assertions(t, err)
@@ -122,7 +122,7 @@ func Test_Find(t *testing.T) {
 				endTime := time.Date(tomorrow.Year(), tomorrow.Month(), tomorrow.Day(), 12, 0, 0, 0, tz)
 				timeSlot, _ := domain.NewTimeSlot(startTime, endTime)
 
-				err := repository.Save(domain.NewMatchAnnouncement(
+				err := repository.Save(ctx, domain.NewMatchAnnouncement(
 					"Paddle Team A",
 					common.Paddle,
 					tomorrow,
@@ -136,7 +136,7 @@ func Test_Find(t *testing.T) {
 					t.Fatal(err)
 				}
 
-				err = repository.Save(domain.NewMatchAnnouncement(
+				err = repository.Save(ctx, domain.NewMatchAnnouncement(
 					"Paddle Team B",
 					common.Paddle,
 					tomorrow,
@@ -151,7 +151,7 @@ func Test_Find(t *testing.T) {
 				}
 
 				// Save a Tennis announcement that should not appear
-				err = repository.Save(domain.NewMatchAnnouncement(
+				err = repository.Save(ctx, domain.NewMatchAnnouncement(
 					"Tennis Team",
 					common.Tennis,
 					tomorrow,
@@ -192,7 +192,7 @@ func Test_Find(t *testing.T) {
 				endTime := time.Date(nextWeek.Year(), nextWeek.Month(), nextWeek.Day(), 12, 0, 0, 0, tz)
 				timeSlot, _ := domain.NewTimeSlot(startTime, endTime)
 
-				repository.Save(domain.NewMatchAnnouncement(
+				repository.Save(ctx, domain.NewMatchAnnouncement(
 					"Multi Status Team A",
 					common.Paddle,
 					nextWeek,
@@ -203,7 +203,7 @@ func Test_Find(t *testing.T) {
 					time.Now().In(tz),
 				))
 
-				repository.Save(domain.NewMatchAnnouncement(
+				repository.Save(ctx, domain.NewMatchAnnouncement(
 					"Multi Status Team B",
 					common.Paddle,
 					nextWeek,
@@ -214,7 +214,7 @@ func Test_Find(t *testing.T) {
 					time.Now().In(tz),
 				))
 
-				repository.Save(domain.NewMatchAnnouncement(
+				repository.Save(ctx, domain.NewMatchAnnouncement(
 					"Multi Status Team C",
 					common.Paddle,
 					nextWeek,
@@ -247,7 +247,7 @@ func Test_Find(t *testing.T) {
 
 				// Matches both filters
 				betweenRange, _ := domain.NewBetweenCategories(3, 6)
-				repository.Save(domain.NewMatchAnnouncement(
+				repository.Save(ctx, domain.NewMatchAnnouncement(
 					"Paddle Pending Team",
 					common.Paddle,
 					dayAfterTomorrow,
@@ -260,7 +260,7 @@ func Test_Find(t *testing.T) {
 
 				// Wrong sport
 				betweenRange2, _ := domain.NewBetweenCategories(3, 6)
-				repository.Save(domain.NewMatchAnnouncement(
+				repository.Save(ctx, domain.NewMatchAnnouncement(
 					"Tennis Pending Team",
 					common.Tennis,
 					dayAfterTomorrow,
@@ -273,7 +273,7 @@ func Test_Find(t *testing.T) {
 
 				// Wrong status
 				betweenRange3, _ := domain.NewBetweenCategories(3, 6)
-				repository.Save(domain.NewMatchAnnouncement(
+				repository.Save(ctx, domain.NewMatchAnnouncement(
 					"Paddle Confirmed Team",
 					common.Paddle,
 					dayAfterTomorrow,
@@ -312,10 +312,10 @@ func Test_Find(t *testing.T) {
 			testCase.on(t, repository)
 
 			// when
-			entities, err := repository.Find(testCase.query)
+			page, err := repository.Find(ctx, testCase.query)
 
 			// then
-			testCase.assertions(t, entities, err)
+			testCase.assertions(t, page.Entities, err)
 		})
 	}
 }

@@ -15,12 +15,12 @@ type QueryParser struct {
 	mock.Mock
 }
 
-// ParseCategories provides a mock function with given fields: categoriesQuery
-func (_m *QueryParser) ParseCategories(categoriesQuery string) ([]common.Category, error) {
+// Categories provides a mock function with given fields: categoriesQuery
+func (_m *QueryParser) Categories(categoriesQuery string) ([]common.Category, error) {
 	ret := _m.Called(categoriesQuery)
 
 	if len(ret) == 0 {
-		panic("no return value specified for ParseCategories")
+		panic("no return value specified for Categories")
 	}
 
 	var r0 []common.Category
@@ -45,12 +45,12 @@ func (_m *QueryParser) ParseCategories(categoriesQuery string) ([]common.Categor
 	return r0, r1
 }
 
-// ParseDate provides a mock function with given fields: dateQuery
-func (_m *QueryParser) ParseDate(dateQuery string) (time.Time, error) {
+// Date provides a mock function with given fields: dateQuery
+func (_m *QueryParser) Date(dateQuery string) (time.Time, error) {
 	ret := _m.Called(dateQuery)
 
 	if len(ret) == 0 {
-		panic("no return value specified for ParseDate")
+		panic("no return value specified for Date")
 	}
 
 	var r0 time.Time
@@ -73,12 +73,12 @@ func (_m *QueryParser) ParseDate(dateQuery string) (time.Time, error) {
 	return r0, r1
 }
 
-// ParseLocation provides a mock function with given fields: country, province, locality
-func (_m *QueryParser) ParseLocation(country, province, locality string) *matchannouncement.Location {
+// Location provides a mock function with given fields: country, province, locality
+func (_m *QueryParser) Location(country, province, locality string) *matchannouncement.Location {
 	ret := _m.Called(country, province, locality)
 
 	if len(ret) == 0 {
-		panic("no return value specified for ParseLocation")
+		panic("no return value specified for Location")
 	}
 
 	var r0 *matchannouncement.Location
@@ -93,12 +93,12 @@ func (_m *QueryParser) ParseLocation(country, province, locality string) *matcha
 	return r0
 }
 
-// ParseSports provides a mock function with given fields: sportsQuery
-func (_m *QueryParser) ParseSports(sportsQuery string) ([]common.Sport, error) {
+// Sports provides a mock function with given fields: sportsQuery
+func (_m *QueryParser) Sports(sportsQuery string) ([]common.Sport, error) {
 	ret := _m.Called(sportsQuery)
 
 	if len(ret) == 0 {
-		panic("no return value specified for ParseSports")
+		panic("no return value specified for Sports")
 	}
 
 	var r0 []common.Sport
@@ -123,12 +123,12 @@ func (_m *QueryParser) ParseSports(sportsQuery string) ([]common.Sport, error) {
 	return r0, r1
 }
 
-// ParseStatuses provides a mock function with given fields: statusesQuery
-func (_m *QueryParser) ParseStatuses(statusesQuery string) ([]matchannouncement.Status, error) {
+// Statuses provides a mock function with given fields: statusesQuery
+func (_m *QueryParser) Statuses(statusesQuery string) ([]matchannouncement.Status, error) {
 	ret := _m.Called(statusesQuery)
 
 	if len(ret) == 0 {
-		panic("no return value specified for ParseStatuses")
+		panic("no return value specified for Statuses")
 	}
 
 	var r0 []matchannouncement.Status
@@ -146,6 +146,62 @@ func (_m *QueryParser) ParseStatuses(statusesQuery string) ([]matchannouncement.
 
 	if rf, ok := ret.Get(1).(func(string) error); ok {
 		r1 = rf(statusesQuery)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// Limit provides a mock function with given fields: limitQuery
+func (_m *QueryParser) Limit(limitQuery string) (int, error) {
+	ret := _m.Called(limitQuery)
+
+	if len(ret) == 0 {
+		panic("no return value specified for Limit")
+	}
+
+	var r0 int
+	var r1 error
+	if rf, ok := ret.Get(0).(func(string) (int, error)); ok {
+		return rf(limitQuery)
+	}
+	if rf, ok := ret.Get(0).(func(string) int); ok {
+		r0 = rf(limitQuery)
+	} else {
+		r0 = ret.Get(0).(int)
+	}
+
+	if rf, ok := ret.Get(1).(func(string) error); ok {
+		r1 = rf(limitQuery)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// Offset provides a mock function with given fields: offsetQuery
+func (_m *QueryParser) Offset(offsetQuery string) (int, error) {
+	ret := _m.Called(offsetQuery)
+
+	if len(ret) == 0 {
+		panic("no return value specified for Offset")
+	}
+
+	var r0 int
+	var r1 error
+	if rf, ok := ret.Get(0).(func(string) (int, error)); ok {
+		return rf(offsetQuery)
+	}
+	if rf, ok := ret.Get(0).(func(string) int); ok {
+		r0 = rf(offsetQuery)
+	} else {
+		r0 = ret.Get(0).(int)
+	}
+
+	if rf, ok := ret.Get(1).(func(string) error); ok {
+		r1 = rf(offsetQuery)
 	} else {
 		r1 = ret.Error(1)
 	}

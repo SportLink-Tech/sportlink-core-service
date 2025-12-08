@@ -29,7 +29,7 @@ func (sc *DefaultController) CreateMatchAnnouncement(c *gin.Context) {
 		return
 	}
 
-	result, err := sc.createMatchAnnouncementUC.Invoke(input)
+	result, err := sc.createMatchAnnouncementUC.Invoke(c.Request.Context(), input)
 	if err != nil {
 		c.Error(errors.UseCaseExecutionFailed(err.Error()))
 		return

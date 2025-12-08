@@ -33,6 +33,27 @@ print_banner "Waiting for DyanamoDb CloudFormation stack to be created..."
 
 awslocal cloudformation wait stack-create-complete --stack-name core-dynamo-table-stack
 
+print_banner "Waiting for SQS CloudFormation stack to be created..."
+
+awslocal cloudformation wait stack-create-complete --stack-name sqs-queue-stack
+
+print_banner "======================================= Seeding Database ==========================================================="
+
+# Ejecutar scripts de seeding
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+if [ -f "${SCRIPT_DIR}/seed-teams.sh" ]; then
+    bash "${SCRIPT_DIR}/seed-teams.sh"
+else
+    echo "Warning: seed-teams.sh not found"
+fi
+
+if [ -f "${SCRIPT_DIR}/seed-match-announcements.sh" ]; then
+    bash "${SCRIPT_DIR}/seed-match-announcements.sh"
+else
+    echo "Warning: seed-match-announcements.sh not found"
+fi
+
 print_banner "======================================= Localstack Setup Ends ==========================================================="
 
-echo "All services created."
+echo "All services created and database seeded."

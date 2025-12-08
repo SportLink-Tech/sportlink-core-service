@@ -9,6 +9,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue"
 	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/expression"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
+	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
 )
 
 type RepositoryAdapter struct {
@@ -23,7 +24,7 @@ func NewRepository(client *dynamodb.Client, tableName string) matchannouncement.
 	}
 }
 
-func (repo *RepositoryAdapter) Save(entity matchannouncement.Entity) error {
+func (repo *RepositoryAdapter) Save(ctx context.Context, entity matchannouncement.Entity) error {
 	dto, err := From(entity)
 	if err != nil {
 		return err
@@ -34,50 +35,164 @@ func (repo *RepositoryAdapter) Save(entity matchannouncement.Entity) error {
 		return err
 	}
 
-	_, err = repo.dbClient.PutItem(context.TODO(), &dynamodb.PutItemInput{
+	_, err = repo.dbClient.PutItem(ctx, &dynamodb.PutItemInput{
 		TableName: &repo.tableName,
 		Item:      av,
 	})
 	return err
 }
 
-func (repo *RepositoryAdapter) Find(query matchannouncement.DomainQuery) ([]matchannouncement.Entity, error) {
+const (
+	// DynamoDBBatchSize is the batch size used when fetching filtered results
+	// DynamoDB limit applies before FilterExpression, so we fetch in batches
+	// to ensure we get enough filtered items
+	DynamoDBBatchSize = 100
+)
+
+func (repo *RepositoryAdapter) Find(ctx context.Context, query matchannouncement.DomainQuery) (matchannouncement.Page, error) {
 	keyCond := expression.KeyEqual(expression.Key("EntityId"), expression.Value("Entity#MatchAnnouncement"))
 
 	builder := expression.NewBuilder().WithKeyCondition(keyCond)
 	includeFilters(query, &builder)
 	expr, err := builder.Build()
 	if err != nil {
-		return []matchannouncement.Entity{}, err
+		return matchannouncement.Page{}, err
 	}
 
-	resp, err := repo.dbClient.Query(context.TODO(), &dynamodb.QueryInput{
+	totalCount, err := repo.countTotal(ctx, query, expr)
+	if err != nil {
+		return matchannouncement.Page{}, err
+	}
+
+	queryInput := repo.buildQueryInput(expr)
+	hasFilters := expr.Filter() != nil
+
+	var results []matchannouncement.Entity
+	if hasFilters {
+		results, err = repo.fetchWithFilters(ctx, queryInput, query.Limit, query.Offset)
+	} else {
+		results, err = repo.fetchWithoutFilters(ctx, queryInput, query.Limit, query.Offset)
+	}
+	if err != nil {
+		return matchannouncement.Page{}, err
+	}
+
+	results = applyPagination(results, query.Limit, query.Offset)
+
+	if results == nil {
+		results = []matchannouncement.Entity{}
+	}
+
+	return matchannouncement.Page{
+		Entities: results,
+		Total:    totalCount,
+	}, nil
+}
+
+func (repo *RepositoryAdapter) buildQueryInput(expr expression.Expression) *dynamodb.QueryInput {
+	return &dynamodb.QueryInput{
 		TableName:                 aws.String(repo.tableName),
 		KeyConditionExpression:    expr.KeyCondition(),
 		ExpressionAttributeNames:  expr.Names(),
 		ExpressionAttributeValues: expr.Values(),
 		FilterExpression:          expr.Filter(),
-	})
+	}
+}
+
+func (repo *RepositoryAdapter) fetchWithFilters(ctx context.Context, queryInput *dynamodb.QueryInput, limit, offset int) ([]matchannouncement.Entity, error) {
+	itemsNeeded := calculateItemsNeeded(limit, offset)
+	queryInput.Limit = aws.Int32(DynamoDBBatchSize)
+
+	var results []matchannouncement.Entity
+	var lastEvaluatedKey map[string]types.AttributeValue
+
+	for len(results) < itemsNeeded {
+		if lastEvaluatedKey != nil {
+			queryInput.ExclusiveStartKey = lastEvaluatedKey
+		}
+
+		pageResults, nextKey, err := repo.fetchQueryPage(ctx, queryInput)
+		if err != nil {
+			return nil, err
+		}
+
+		results = append(results, pageResults...)
+
+		if nextKey == nil || len(results) >= itemsNeeded {
+			break
+		}
+		lastEvaluatedKey = nextKey
+	}
+
+	return results, nil
+}
+
+func (repo *RepositoryAdapter) fetchWithoutFilters(ctx context.Context, queryInput *dynamodb.QueryInput, limit, offset int) ([]matchannouncement.Entity, error) {
+	applyDynamoDBLimit(limit, offset, queryInput)
+
+	results, _, err := repo.fetchQueryPage(ctx, queryInput)
+	return results, err
+}
+
+func (repo *RepositoryAdapter) fetchQueryPage(ctx context.Context, queryInput *dynamodb.QueryInput) ([]matchannouncement.Entity, map[string]types.AttributeValue, error) {
+	resp, err := repo.dbClient.Query(ctx, queryInput)
 	if err != nil {
-		return []matchannouncement.Entity{}, err
+		return nil, nil, err
 	}
 
 	var results []matchannouncement.Entity
 	for _, item := range resp.Items {
-		var dto Dto
-		err = attributevalue.UnmarshalMap(item, &dto)
+		dto, err := repo.unmarshalItem(item)
 		if err != nil {
-			return []matchannouncement.Entity{}, fmt.Errorf("failed to unmarshal item: %w", err)
+			return nil, nil, err
 		}
 		results = append(results, dto.ToDomain())
 	}
 
-	// Return empty slice if no results found
-	if results == nil {
-		return []matchannouncement.Entity{}, nil
+	return results, resp.LastEvaluatedKey, nil
+}
+
+func (repo *RepositoryAdapter) unmarshalItem(item map[string]types.AttributeValue) (Dto, error) {
+	var dto Dto
+	err := attributevalue.UnmarshalMap(item, &dto)
+	if err != nil {
+		return Dto{}, fmt.Errorf("failed to unmarshal item: %w", err)
+	}
+	return dto, nil
+}
+
+func calculateItemsNeeded(limit, offset int) int {
+	itemsNeeded := limit
+	if offset > 0 {
+		itemsNeeded = limit + offset
+	}
+	return itemsNeeded
+}
+
+// countTotal counts the total number of entities matching the query (ignoring pagination)
+func (repo *RepositoryAdapter) countTotal(ctx context.Context, query matchannouncement.DomainQuery, expr expression.Expression) (int, error) {
+	// Query without limit to count all matching items
+	// Note: For large datasets, this could be expensive. Consider using a separate count index if needed.
+	queryInput := &dynamodb.QueryInput{
+		TableName:                 aws.String(repo.tableName),
+		KeyConditionExpression:    expr.KeyCondition(),
+		ExpressionAttributeNames:  expr.Names(),
+		ExpressionAttributeValues: expr.Values(),
+		FilterExpression:          expr.Filter(),
 	}
 
-	return results, nil
+	totalCount := 0
+	paginator := dynamodb.NewQueryPaginator(repo.dbClient, queryInput)
+
+	for paginator.HasMorePages() {
+		resp, err := paginator.NextPage(ctx)
+		if err != nil {
+			return 0, err
+		}
+		totalCount += len(resp.Items)
+	}
+
+	return totalCount, nil
 }
 
 func From(entity matchannouncement.Entity) (Dto, error) {
@@ -131,6 +246,50 @@ func From(entity matchannouncement.Entity) (Dto, error) {
 		CreatedAt:  createdAt,
 		ExpiresAt:  expiresAt,
 	}, nil
+}
+
+// applyDynamoDBLimit sets the DynamoDB query limit, accounting for offset and filters
+// Note: DynamoDB limit applies before FilterExpression, so we need to fetch more items
+// to ensure we have enough results after filtering. We use a multiplier to account for
+// potential filtered items, or fetch all if limit is small.
+func applyDynamoDBLimit(limit, offset int, queryInput *dynamodb.QueryInput) {
+	if limit > 0 {
+		limitToFetch := limit
+		if offset > 0 {
+			limitToFetch = limit + offset
+		}
+		// DynamoDB limit applies BEFORE FilterExpression, so we need to fetch more
+		// to account for items that will be filtered out. Use a multiplier if we have filters.
+		// For small limits, we can be more aggressive with the multiplier.
+		hasFilters := queryInput.FilterExpression != nil
+		if hasFilters {
+			// Multiply by 3-5x to account for filtered items, but cap at reasonable value
+			multiplier := 5
+			adjustedLimit := limitToFetch * multiplier
+			// Cap at 1000 to avoid fetching too much
+			if adjustedLimit > 1000 {
+				adjustedLimit = 1000
+			}
+			limitToFetch = adjustedLimit
+		}
+		queryInput.Limit = aws.Int32(int32(limitToFetch))
+	}
+}
+
+// applyPagination applies limit and offset to a slice of results
+// Returns the paginated slice
+func applyPagination(results []matchannouncement.Entity, limit, offset int) []matchannouncement.Entity {
+	// Apply offset in memory
+	if offset > 0 && len(results) > offset {
+		results = results[offset:]
+	}
+
+	// Apply limit in memory (in case we fetched more than needed)
+	if limit > 0 && len(results) > limit {
+		results = results[:limit]
+	}
+
+	return results
 }
 
 func includeFilters(query matchannouncement.DomainQuery, builder *expression.Builder) {

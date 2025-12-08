@@ -54,6 +54,19 @@ export interface FindMatchAnnouncementsQuery {
     province?: string
     locality?: string
   }
+  limit?: number
+  offset?: number
+}
+
+export interface PaginationInfo {
+  number: number // Current page number (1-based)
+  out_of: number // Total number of pages
+  total: number // Total number of items matching the query
+}
+
+export interface PaginatedMatchAnnouncementsResponse {
+  data: MatchAnnouncement[]
+  pagination: PaginationInfo
 }
 
 export interface ApiError {

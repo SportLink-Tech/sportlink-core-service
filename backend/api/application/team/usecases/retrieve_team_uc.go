@@ -1,6 +1,7 @@
 package usecases
 
 import (
+	"context"
 	"sportlink/api/domain/common"
 	"sportlink/api/domain/team"
 )
@@ -15,8 +16,8 @@ func NewRetrieveTeamUC(teamRepository team.Repository) *RetrieveTeamUC {
 	}
 }
 
-func (uc *RetrieveTeamUC) Invoke(id team.ID) (*team.Entity, error) {
-	teams, err := uc.teamRepository.Find(team.DomainQuery{
+func (uc *RetrieveTeamUC) Invoke(ctx context.Context, id team.ID) (*team.Entity, error) {
+	teams, err := uc.teamRepository.Find(ctx, team.DomainQuery{
 		Name: id.Name,
 		Sports: []common.Sport{
 			id.Sport,

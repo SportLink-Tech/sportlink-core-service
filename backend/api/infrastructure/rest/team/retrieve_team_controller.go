@@ -19,7 +19,7 @@ func (sc *DefaultController) RetrieveTeam(c *gin.Context) {
 		return
 	}
 
-	t, err := sc.retrieveTeamUC.Invoke(team.ID{
+	t, err := sc.retrieveTeamUC.Invoke(c.Request.Context(), team.ID{
 		Sport: common.Sport(sportParam),
 		Name:  teamName,
 	})

@@ -1,6 +1,7 @@
 package usecases
 
 import (
+	"context"
 	"fmt"
 	"sportlink/api/domain/player"
 	"sportlink/api/domain/team"
@@ -18,27 +19,28 @@ func NewCreateTeamUC(playerRepository player.Repository, teamRepository team.Rep
 	}
 }
 
-func (uc *CreateTeamUC) Invoke(input team.Entity) (*team.Entity, error) {
-	err := uc.validateTeamMembers(input)
+func (uc *CreateTeamUC) Invoke(ctx context.Context, input team.Entity) (*team.Entity, error) {
+	err := uc.validateTeamMembers(ctx, input)
 	if err != nil {
 		return nil, err
 	}
 
-	err = uc.teamRepository.Save(input)
+	err = uc.teamRepository.Save(ctx, input)
 	if err != nil {
 		return nil, fmt.Errorf("error while inserting team in database: %w", err)
 	}
+	// Return a pointer to the input entity
 	return &input, nil
 }
 
-func (uc *CreateTeamUC) validateTeamMembers(input team.Entity) error {
+func (uc *CreateTeamUC) validateTeamMembers(ctx context.Context, input team.Entity) error {
 	if len(input.Members) > 0 {
 		playerIDs := make([]string, len(input.Members))
 		for i, member := range input.Members {
 			playerIDs[i] = member.ID
 		}
 
-		players, err := uc.playerRepository.Find(player.DomainQuery{
+		players, err := uc.playerRepository.Find(ctx, player.DomainQuery{
 			Ids: playerIDs,
 		})
 		if err != nil {

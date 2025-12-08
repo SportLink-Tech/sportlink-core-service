@@ -27,7 +27,7 @@ func (sc *DefaultController) CreateTeam(c *gin.Context) {
 		return
 	}
 
-	result, err := sc.createTeamUC.Invoke(input)
+	result, err := sc.createTeamUC.Invoke(c.Request.Context(), input)
 	if err != nil {
 		c.Error(errors.UseCaseExecutionFailed(err.Error()))
 		return

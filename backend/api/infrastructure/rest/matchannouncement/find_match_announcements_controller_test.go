@@ -12,6 +12,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 
+	"sportlink/api/application/matchannouncement/usecases"
 	"sportlink/api/domain/common"
 	domain "sportlink/api/domain/matchannouncement"
 	"sportlink/api/infrastructure/middleware"
@@ -21,7 +22,7 @@ import (
 )
 
 // FindUseCaseMock is a type alias for the find match announcements use case mock
-type FindUseCaseMock = amocks.UseCase[domain.DomainQuery, []domain.Entity]
+type FindUseCaseMock = amocks.UseCase[domain.DomainQuery, usecases.FindMatchAnnouncementResult]
 
 func TestFindMatchAnnouncements(t *testing.T) {
 	validator := validator.New()
@@ -41,18 +42,26 @@ func TestFindMatchAnnouncements(t *testing.T) {
 				"fromDate":   "2025-12-01",
 			},
 			on: func(t *testing.T, useCaseMock *FindUseCaseMock, parserMock *pmocks.QueryParser) {
-				parserMock.On("ParseSports", "Paddle").Return([]common.Sport{common.Paddle}, nil)
-				parserMock.On("ParseCategories", "4,5").Return([]common.Category{common.L4, common.L5}, nil)
-				parserMock.On("ParseStatuses", "PENDING").Return([]domain.Status{domain.StatusPending}, nil)
-				parserMock.On("ParseDate", "2025-12-01").Return(time.Date(2025, 12, 1, 0, 0, 0, 0, time.UTC), nil)
-				parserMock.On("ParseDate", "").Return(time.Time{}, nil)
-				parserMock.On("ParseLocation", "", "", "").Return(nil)
+				parserMock.On("Sports", "Paddle").Return([]common.Sport{common.Paddle}, nil)
+				parserMock.On("Categories", "4,5").Return([]common.Category{common.L4, common.L5}, nil)
+				parserMock.On("Statuses", "PENDING").Return([]domain.Status{domain.StatusPending}, nil)
+				parserMock.On("Date", "2025-12-01").Return(time.Date(2025, 12, 1, 0, 0, 0, 0, time.UTC), nil)
+				parserMock.On("Date", "").Return(time.Time{}, nil)
+				parserMock.On("Location", "", "", "").Return(nil)
+				parserMock.On("Limit", "").Return(0, nil)
+				parserMock.On("Offset", "").Return(0, nil)
 
-				expectedAnnouncements := []domain.Entity{
-					createTestAnnouncement("Boca", common.Paddle, domain.StatusPending),
+				expectedAnnouncement := createTestAnnouncement("Boca", common.Paddle, domain.StatusPending)
+				expectedResult := &usecases.FindMatchAnnouncementResult{
+					Entities: []domain.Entity{expectedAnnouncement},
+					Page: usecases.PageInfo{
+						Number: 1,
+						OutOf:  1,
+						Total:  1,
+					},
 				}
 
-				useCaseMock.On("Invoke", mock.MatchedBy(func(query domain.DomainQuery) bool {
+				useCaseMock.On("Invoke", mock.Anything, mock.MatchedBy(func(query domain.DomainQuery) bool {
 					return len(query.Sports) == 1 &&
 						query.Sports[0] == common.Paddle &&
 						len(query.Categories) == 2 &&
@@ -61,43 +70,57 @@ func TestFindMatchAnnouncements(t *testing.T) {
 						len(query.Statuses) == 1 &&
 						query.Statuses[0] == domain.StatusPending &&
 						!query.FromDate.IsZero()
-				})).Return(&expectedAnnouncements, nil)
+				})).Return(expectedResult, nil)
 			},
 			then: func(t *testing.T, responseCode int, response interface{}) {
 				assert.Equal(t, http.StatusOK, responseCode)
-				responseList := response.([]interface{})
-				assert.Greater(t, len(responseList), 0)
-				firstAnnouncement := responseList[0].(map[string]interface{})
+				responseMap := response.(map[string]interface{})
+				data := responseMap["data"].([]interface{})
+				assert.Greater(t, len(data), 0)
+				firstAnnouncement := data[0].(map[string]interface{})
 				assert.Equal(t, "Boca", firstAnnouncement["team_name"])
 				assert.Equal(t, "Paddle", firstAnnouncement["sport"])
+				pagination := responseMap["pagination"].(map[string]interface{})
+				assert.Equal(t, float64(1), pagination["number"])
+				assert.Equal(t, float64(1), pagination["out_of"])
 			},
 		},
 		{
 			name:        "given no query parameters when finding announcements then returns all announcements",
 			queryParams: map[string]string{},
 			on: func(t *testing.T, useCaseMock *FindUseCaseMock, parserMock *pmocks.QueryParser) {
-				parserMock.On("ParseSports", "").Return(nil, nil)
-				parserMock.On("ParseCategories", "").Return(nil, nil)
-				parserMock.On("ParseStatuses", "").Return(nil, nil)
-				parserMock.On("ParseDate", "").Return(time.Time{}, nil).Twice()
-				parserMock.On("ParseLocation", "", "", "").Return(nil)
+				parserMock.On("Sports", "").Return(nil, nil)
+				parserMock.On("Categories", "").Return(nil, nil)
+				parserMock.On("Statuses", "").Return(nil, nil)
+				parserMock.On("Date", "").Return(time.Time{}, nil).Twice()
+				parserMock.On("Location", "", "", "").Return(nil)
+				parserMock.On("Limit", "").Return(0, nil)
+				parserMock.On("Offset", "").Return(0, nil)
 
-				expectedAnnouncements := []domain.Entity{
-					createTestAnnouncement("Boca", common.Paddle, domain.StatusPending),
-					createTestAnnouncement("River", common.Football, domain.StatusConfirmed),
+				expectedResult := &usecases.FindMatchAnnouncementResult{
+					Entities: []domain.Entity{
+						createTestAnnouncement("Boca", common.Paddle, domain.StatusPending),
+						createTestAnnouncement("River", common.Football, domain.StatusConfirmed),
+					},
+					Page: usecases.PageInfo{
+						Number: 1,
+						OutOf:  1,
+						Total:  2,
+					},
 				}
 
-				useCaseMock.On("Invoke", mock.MatchedBy(func(query domain.DomainQuery) bool {
+				useCaseMock.On("Invoke", mock.Anything, mock.MatchedBy(func(query domain.DomainQuery) bool {
 					return len(query.Sports) == 0 &&
 						len(query.Categories) == 0 &&
 						len(query.Statuses) == 0 &&
 						query.Location == nil
-				})).Return(&expectedAnnouncements, nil)
+				})).Return(expectedResult, nil)
 			},
 			then: func(t *testing.T, responseCode int, response interface{}) {
 				assert.Equal(t, http.StatusOK, responseCode)
-				responseList := response.([]interface{})
-				assert.Equal(t, 2, len(responseList))
+				responseMap := response.(map[string]interface{})
+				data := responseMap["data"].([]interface{})
+				assert.Equal(t, 2, len(data))
 			},
 		},
 		{
@@ -106,8 +129,8 @@ func TestFindMatchAnnouncements(t *testing.T) {
 				"categories": "invalid",
 			},
 			on: func(t *testing.T, useCaseMock *FindUseCaseMock, parserMock *pmocks.QueryParser) {
-				parserMock.On("ParseSports", "").Return(nil, nil)
-				parserMock.On("ParseCategories", "invalid").Return(nil, assert.AnError)
+				parserMock.On("Sports", "").Return(nil, nil)
+				parserMock.On("Categories", "invalid").Return(nil, assert.AnError)
 			},
 			then: func(t *testing.T, responseCode int, response interface{}) {
 				assert.Equal(t, http.StatusBadRequest, responseCode)
@@ -121,10 +144,12 @@ func TestFindMatchAnnouncements(t *testing.T) {
 				"fromDate": "invalid-date",
 			},
 			on: func(t *testing.T, useCaseMock *FindUseCaseMock, parserMock *pmocks.QueryParser) {
-				parserMock.On("ParseSports", "").Return(nil, nil)
-				parserMock.On("ParseCategories", "").Return(nil, nil)
-				parserMock.On("ParseStatuses", "").Return(nil, nil)
-				parserMock.On("ParseDate", "invalid-date").Return(time.Time{}, assert.AnError)
+				parserMock.On("Sports", "").Return(nil, nil)
+				parserMock.On("Categories", "").Return(nil, nil)
+				parserMock.On("Statuses", "").Return(nil, nil)
+				parserMock.On("Date", "invalid-date").Return(time.Time{}, assert.AnError)
+				parserMock.On("Limit", "").Return(0, nil)
+				parserMock.On("Offset", "").Return(0, nil)
 			},
 			then: func(t *testing.T, responseCode int, response interface{}) {
 				assert.Equal(t, http.StatusBadRequest, responseCode)
@@ -138,13 +163,15 @@ func TestFindMatchAnnouncements(t *testing.T) {
 				"sports": "Paddle",
 			},
 			on: func(t *testing.T, useCaseMock *FindUseCaseMock, parserMock *pmocks.QueryParser) {
-				parserMock.On("ParseSports", "Paddle").Return([]common.Sport{common.Paddle}, nil)
-				parserMock.On("ParseCategories", "").Return(nil, nil)
-				parserMock.On("ParseStatuses", "").Return(nil, nil)
-				parserMock.On("ParseDate", "").Return(time.Time{}, nil).Twice()
-				parserMock.On("ParseLocation", "", "", "").Return(nil)
+				parserMock.On("Sports", "Paddle").Return([]common.Sport{common.Paddle}, nil)
+				parserMock.On("Categories", "").Return(nil, nil)
+				parserMock.On("Statuses", "").Return(nil, nil)
+				parserMock.On("Date", "").Return(time.Time{}, nil).Twice()
+				parserMock.On("Location", "", "", "").Return(nil)
+				parserMock.On("Limit", "").Return(0, nil)
+				parserMock.On("Offset", "").Return(0, nil)
 
-				useCaseMock.On("Invoke", mock.MatchedBy(func(query domain.DomainQuery) bool {
+				useCaseMock.On("Invoke", mock.Anything, mock.MatchedBy(func(query domain.DomainQuery) bool {
 					return len(query.Sports) == 1 && query.Sports[0] == common.Paddle
 				})).Return(nil, assert.AnError)
 			},
@@ -160,16 +187,25 @@ func TestFindMatchAnnouncements(t *testing.T) {
 				"sports": "Paddle",
 			},
 			on: func(t *testing.T, useCaseMock *FindUseCaseMock, parserMock *pmocks.QueryParser) {
-				parserMock.On("ParseSports", "Paddle").Return([]common.Sport{common.Paddle}, nil)
-				parserMock.On("ParseCategories", "").Return(nil, nil)
-				parserMock.On("ParseStatuses", "").Return(nil, nil)
-				parserMock.On("ParseDate", "").Return(time.Time{}, nil).Twice()
-				parserMock.On("ParseLocation", "", "", "").Return(nil)
+				parserMock.On("Sports", "Paddle").Return([]common.Sport{common.Paddle}, nil)
+				parserMock.On("Categories", "").Return(nil, nil)
+				parserMock.On("Statuses", "").Return(nil, nil)
+				parserMock.On("Date", "").Return(time.Time{}, nil).Twice()
+				parserMock.On("Location", "", "", "").Return(nil)
+				parserMock.On("Limit", "").Return(0, nil)
+				parserMock.On("Offset", "").Return(0, nil)
 
-				emptyResult := []domain.Entity{}
-				useCaseMock.On("Invoke", mock.MatchedBy(func(query domain.DomainQuery) bool {
+				emptyResult := &usecases.FindMatchAnnouncementResult{
+					Entities: []domain.Entity{},
+					Page: usecases.PageInfo{
+						Number: 1,
+						OutOf:  0,
+						Total:  0,
+					},
+				}
+				useCaseMock.On("Invoke", mock.Anything, mock.MatchedBy(func(query domain.DomainQuery) bool {
 					return len(query.Sports) == 1 && query.Sports[0] == common.Paddle
-				})).Return(&emptyResult, nil)
+				})).Return(emptyResult, nil)
 			},
 			then: func(t *testing.T, responseCode int, response interface{}) {
 				assert.Equal(t, http.StatusNotFound, responseCode)
@@ -185,29 +221,39 @@ func TestFindMatchAnnouncements(t *testing.T) {
 				"locality": "Palermo",
 			},
 			on: func(t *testing.T, useCaseMock *FindUseCaseMock, parserMock *pmocks.QueryParser) {
-				parserMock.On("ParseSports", "").Return(nil, nil)
-				parserMock.On("ParseCategories", "").Return(nil, nil)
-				parserMock.On("ParseStatuses", "").Return(nil, nil)
-				parserMock.On("ParseDate", "").Return(time.Time{}, nil).Twice()
+				parserMock.On("Sports", "").Return(nil, nil)
+				parserMock.On("Categories", "").Return(nil, nil)
+				parserMock.On("Statuses", "").Return(nil, nil)
+				parserMock.On("Date", "").Return(time.Time{}, nil).Twice()
 				location := domain.NewLocation("Argentina", "Buenos Aires", "Palermo")
-				parserMock.On("ParseLocation", "Argentina", "Buenos Aires", "Palermo").Return(&location)
+				parserMock.On("Location", "Argentina", "Buenos Aires", "Palermo").Return(&location)
+				parserMock.On("Limit", "").Return(0, nil)
+				parserMock.On("Offset", "").Return(0, nil)
 
-				expectedAnnouncements := []domain.Entity{
-					createTestAnnouncement("Boca", common.Paddle, domain.StatusPending),
+				expectedResult := &usecases.FindMatchAnnouncementResult{
+					Entities: []domain.Entity{
+						createTestAnnouncement("Boca", common.Paddle, domain.StatusPending),
+					},
+					Page: usecases.PageInfo{
+						Number: 1,
+						OutOf:  1,
+						Total:  1,
+					},
 				}
 
-				useCaseMock.On("Invoke", mock.MatchedBy(func(query domain.DomainQuery) bool {
+				useCaseMock.On("Invoke", mock.Anything, mock.MatchedBy(func(query domain.DomainQuery) bool {
 					return query.Location != nil &&
 						query.Location.Country == "Argentina" &&
 						query.Location.Province == "Buenos Aires" &&
 						query.Location.Locality == "Palermo"
-				})).Return(&expectedAnnouncements, nil)
+				})).Return(expectedResult, nil)
 			},
 			then: func(t *testing.T, responseCode int, response interface{}) {
 				assert.Equal(t, http.StatusOK, responseCode)
-				responseList := response.([]interface{})
-				assert.Equal(t, 1, len(responseList))
-				firstAnnouncement := responseList[0].(map[string]interface{})
+				responseMap := response.(map[string]interface{})
+				data := responseMap["data"].([]interface{})
+				assert.Equal(t, 1, len(data))
+				firstAnnouncement := data[0].(map[string]interface{})
 				location := firstAnnouncement["location"].(map[string]interface{})
 				assert.Equal(t, "Argentina", location["country"])
 				assert.Equal(t, "Buenos Aires", location["province"])
@@ -221,30 +267,40 @@ func TestFindMatchAnnouncements(t *testing.T) {
 				"toDate":   "2025-12-31",
 			},
 			on: func(t *testing.T, useCaseMock *FindUseCaseMock, parserMock *pmocks.QueryParser) {
-				parserMock.On("ParseSports", "").Return(nil, nil)
-				parserMock.On("ParseCategories", "").Return(nil, nil)
-				parserMock.On("ParseStatuses", "").Return(nil, nil)
+				parserMock.On("Sports", "").Return(nil, nil)
+				parserMock.On("Categories", "").Return(nil, nil)
+				parserMock.On("Statuses", "").Return(nil, nil)
 				fromDate := time.Date(2025, 12, 1, 0, 0, 0, 0, time.UTC)
 				toDate := time.Date(2025, 12, 31, 0, 0, 0, 0, time.UTC)
-				parserMock.On("ParseDate", "2025-12-01").Return(fromDate, nil)
-				parserMock.On("ParseDate", "2025-12-31").Return(toDate, nil)
-				parserMock.On("ParseLocation", "", "", "").Return(nil)
+				parserMock.On("Date", "2025-12-01").Return(fromDate, nil)
+				parserMock.On("Date", "2025-12-31").Return(toDate, nil)
+				parserMock.On("Location", "", "", "").Return(nil)
+				parserMock.On("Limit", "").Return(0, nil)
+				parserMock.On("Offset", "").Return(0, nil)
 
-				expectedAnnouncements := []domain.Entity{
-					createTestAnnouncement("Boca", common.Paddle, domain.StatusPending),
+				expectedResult := &usecases.FindMatchAnnouncementResult{
+					Entities: []domain.Entity{
+						createTestAnnouncement("Boca", common.Paddle, domain.StatusPending),
+					},
+					Page: usecases.PageInfo{
+						Number: 1,
+						OutOf:  1,
+						Total:  1,
+					},
 				}
 
-				useCaseMock.On("Invoke", mock.MatchedBy(func(query domain.DomainQuery) bool {
+				useCaseMock.On("Invoke", mock.Anything, mock.MatchedBy(func(query domain.DomainQuery) bool {
 					return !query.FromDate.IsZero() &&
 						!query.ToDate.IsZero() &&
 						query.FromDate.Equal(fromDate) &&
 						query.ToDate.Equal(toDate)
-				})).Return(&expectedAnnouncements, nil)
+				})).Return(expectedResult, nil)
 			},
 			then: func(t *testing.T, responseCode int, response interface{}) {
 				assert.Equal(t, http.StatusOK, responseCode)
-				responseList := response.([]interface{})
-				assert.Equal(t, 1, len(responseList))
+				responseMap := response.(map[string]interface{})
+				data := responseMap["data"].([]interface{})
+				assert.Equal(t, 1, len(data))
 			},
 		},
 	}
@@ -254,7 +310,7 @@ func TestFindMatchAnnouncements(t *testing.T) {
 			t.Parallel()
 
 			// Setup
-			useCaseMock := amocks.NewUseCase[domain.DomainQuery, []domain.Entity](t)
+			useCaseMock := amocks.NewUseCase[domain.DomainQuery, usecases.FindMatchAnnouncementResult](t)
 			parserMock := pmocks.NewQueryParser(t)
 			controller := matchannouncement.NewControllerWithParser(nil, useCaseMock, validator, parserMock)
 

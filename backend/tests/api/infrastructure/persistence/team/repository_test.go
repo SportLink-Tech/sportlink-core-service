@@ -3,6 +3,7 @@ package team_test
 import (
 	"context"
 	"sportlink/api/domain/common"
+	"sportlink/api/domain/player"
 	dteam "sportlink/api/domain/team"
 	"sportlink/api/infrastructure/persistence/team"
 	"sportlink/dev/testcontainer"
@@ -26,11 +27,13 @@ func Test_Save(t *testing.T) {
 	}{
 		{
 			name: "save an item successfully",
-			entity: dteam.Entity{
-				Name:     "Boca",
-				Category: common.L1,
-				Sport:    common.Football,
-			},
+			entity: dteam.NewTeam(
+				"Boca",
+				common.L1,
+				*common.NewStats(0, 0, 0),
+				common.Football,
+				[]player.Entity{},
+			),
 
 			assertions: func(t *testing.T, err error) {
 				assert.Nil(t, err)
@@ -40,7 +43,7 @@ func Test_Save(t *testing.T) {
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
 			// when
-			err := repository.Save(testCase.entity)
+			err := repository.Save(ctx, testCase.entity)
 
 			// then
 			testCase.assertions(t, err)
@@ -67,11 +70,13 @@ func Test_Find(t *testing.T) {
 				Name: "First",
 			},
 			on: func(t *testing.T, repository dteam.Repository) {
-				err := repository.Save(dteam.Entity{
-					Name:     "First Test Team",
-					Category: common.L6,
-					Sport:    common.Paddle,
-				})
+				err := repository.Save(ctx, dteam.NewTeam(
+					"First Test Team",
+					common.L6,
+					*common.NewStats(0, 0, 0),
+					common.Paddle,
+					[]player.Entity{},
+				))
 				if err != nil {
 					t.Fatal(err)
 				}
@@ -93,17 +98,21 @@ func Test_Find(t *testing.T) {
 				Categories: []common.Category{common.L2},
 			},
 			on: func(t *testing.T, repository dteam.Repository) {
-				repository.Save(dteam.Entity{
-					Name:     "Second Test A",
-					Category: common.L2,
-					Sport:    common.Football,
-				})
+				repository.Save(ctx, dteam.NewTeam(
+					"Second Test A",
+					common.L2,
+					*common.NewStats(0, 0, 0),
+					common.Football,
+					[]player.Entity{},
+				))
 
-				repository.Save(dteam.Entity{
-					Name:     "Second Test B",
-					Category: common.L2,
-					Sport:    common.Paddle,
-				})
+				repository.Save(ctx, dteam.NewTeam(
+					"Second Test B",
+					common.L2,
+					*common.NewStats(0, 0, 0),
+					common.Paddle,
+					[]player.Entity{},
+				))
 
 			},
 			assertions: func(t *testing.T, entities []dteam.Entity, err error) {
@@ -143,28 +152,36 @@ func Test_Find(t *testing.T) {
 			},
 			on: func(t *testing.T, repository dteam.Repository) {
 				// Guardar equipos de Football L1
-				repository.Save(dteam.Entity{
-					Name:     "Team Cat Sport A",
-					Category: common.L1,
-					Sport:    common.Football,
-				})
-				repository.Save(dteam.Entity{
-					Name:     "Team Cat Sport B",
-					Category: common.L1,
-					Sport:    common.Football,
-				})
+				repository.Save(ctx, dteam.NewTeam(
+					"Team Cat Sport A",
+					common.L1,
+					*common.NewStats(0, 0, 0),
+					common.Football,
+					[]player.Entity{},
+				))
+				repository.Save(ctx, dteam.NewTeam(
+					"Team Cat Sport B",
+					common.L1,
+					*common.NewStats(0, 0, 0),
+					common.Football,
+					[]player.Entity{},
+				))
 				// Guardar equipo de Football L2 (no debe aparecer)
-				repository.Save(dteam.Entity{
-					Name:     "Team Cat Sport C",
-					Category: common.L2,
-					Sport:    common.Football,
-				})
+				repository.Save(ctx, dteam.NewTeam(
+					"Team Cat Sport C",
+					common.L2,
+					*common.NewStats(0, 0, 0),
+					common.Football,
+					[]player.Entity{},
+				))
 				// Guardar equipo de Paddle L1 (no debe aparecer)
-				repository.Save(dteam.Entity{
-					Name:     "Team Cat Sport D",
-					Category: common.L1,
-					Sport:    common.Paddle,
-				})
+				repository.Save(ctx, dteam.NewTeam(
+					"Team Cat Sport D",
+					common.L1,
+					*common.NewStats(0, 0, 0),
+					common.Paddle,
+					[]player.Entity{},
+				))
 			},
 			assertions: func(t *testing.T, entities []dteam.Entity, err error) {
 				assert.Nil(t, err)
@@ -190,21 +207,27 @@ func Test_Find(t *testing.T) {
 				Categories: []common.Category{common.L5, common.L7},
 			},
 			on: func(t *testing.T, repository dteam.Repository) {
-				repository.Save(dteam.Entity{
-					Name:     "Multi Cat Team A",
-					Category: common.L5,
-					Sport:    common.Paddle,
-				})
-				repository.Save(dteam.Entity{
-					Name:     "Multi Cat Team B",
-					Category: common.L7,
-					Sport:    common.Paddle,
-				})
-				repository.Save(dteam.Entity{
-					Name:     "Multi Cat Team C",
-					Category: common.L3,
-					Sport:    common.Paddle,
-				})
+				repository.Save(ctx, dteam.NewTeam(
+					"Multi Cat Team A",
+					common.L5,
+					*common.NewStats(0, 0, 0),
+					common.Paddle,
+					[]player.Entity{},
+				))
+				repository.Save(ctx, dteam.NewTeam(
+					"Multi Cat Team B",
+					common.L7,
+					*common.NewStats(0, 0, 0),
+					common.Paddle,
+					[]player.Entity{},
+				))
+				repository.Save(ctx, dteam.NewTeam(
+					"Multi Cat Team C",
+					common.L3,
+					*common.NewStats(0, 0, 0),
+					common.Paddle,
+					[]player.Entity{},
+				))
 			},
 			assertions: func(t *testing.T, entities []dteam.Entity, err error) {
 				assert.Nil(t, err)
@@ -229,21 +252,27 @@ func Test_Find(t *testing.T) {
 				Sports: []common.Sport{common.Tennis},
 			},
 			on: func(t *testing.T, repository dteam.Repository) {
-				repository.Save(dteam.Entity{
-					Name:     "Sport Only Team A",
-					Category: common.L3,
-					Sport:    common.Tennis,
-				})
-				repository.Save(dteam.Entity{
-					Name:     "Sport Only Team B",
-					Category: common.L4,
-					Sport:    common.Tennis,
-				})
-				repository.Save(dteam.Entity{
-					Name:     "Sport Only Team C",
-					Category: common.L1,
-					Sport:    common.Football,
-				})
+				repository.Save(ctx, dteam.NewTeam(
+					"Sport Only Team A",
+					common.L3,
+					*common.NewStats(0, 0, 0),
+					common.Tennis,
+					[]player.Entity{},
+				))
+				repository.Save(ctx, dteam.NewTeam(
+					"Sport Only Team B",
+					common.L4,
+					*common.NewStats(0, 0, 0),
+					common.Tennis,
+					[]player.Entity{},
+				))
+				repository.Save(ctx, dteam.NewTeam(
+					"Sport Only Team C",
+					common.L1,
+					*common.NewStats(0, 0, 0),
+					common.Football,
+					[]player.Entity{},
+				))
 			},
 			assertions: func(t *testing.T, entities []dteam.Entity, err error) {
 				assert.Nil(t, err)
@@ -270,21 +299,27 @@ func Test_Find(t *testing.T) {
 				Categories: []common.Category{common.L1},
 			},
 			on: func(t *testing.T, repository dteam.Repository) {
-				repository.Save(dteam.Entity{
-					Name:     "Pattern Match Team",
-					Category: common.L1,
-					Sport:    common.Football,
-				})
-				repository.Save(dteam.Entity{
-					Name:     "Pattern No Match Category",
-					Category: common.L2,
-					Sport:    common.Football,
-				})
-				repository.Save(dteam.Entity{
-					Name:     "Pattern No Match Sport",
-					Category: common.L1,
-					Sport:    common.Paddle,
-				})
+				repository.Save(ctx, dteam.NewTeam(
+					"Pattern Match Team",
+					common.L1,
+					*common.NewStats(0, 0, 0),
+					common.Football,
+					[]player.Entity{},
+				))
+				repository.Save(ctx, dteam.NewTeam(
+					"Pattern No Match Category",
+					common.L2,
+					*common.NewStats(0, 0, 0),
+					common.Football,
+					[]player.Entity{},
+				))
+				repository.Save(ctx, dteam.NewTeam(
+					"Pattern No Match Sport",
+					common.L1,
+					*common.NewStats(0, 0, 0),
+					common.Paddle,
+					[]player.Entity{},
+				))
 			},
 			assertions: func(t *testing.T, entities []dteam.Entity, err error) {
 				assert.Nil(t, err)
@@ -304,7 +339,7 @@ func Test_Find(t *testing.T) {
 			testCase.on(t, repository)
 
 			// when
-			entities, err := repository.Find(testCase.query)
+			entities, err := repository.Find(ctx, testCase.query)
 
 			// then
 			testCase.assertions(t, entities, err)

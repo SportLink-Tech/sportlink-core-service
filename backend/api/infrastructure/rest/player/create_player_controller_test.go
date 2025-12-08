@@ -38,10 +38,10 @@ func TestPlayerCreationHandler(t *testing.T) {
 				Category: 1,
 			},
 			on: func(t *testing.T, playerRepository *pmocks.Repository) {
-				playerRepository.On("Find", mock.MatchedBy(func(query domain.DomainQuery) bool {
+				playerRepository.On("Find", mock.Anything, mock.MatchedBy(func(query domain.DomainQuery) bool {
 					return query.Id == "player1" && query.Category == common.L1 && query.Sport == common.Football
 				})).Return([]domain.Entity{}, nil)
-				playerRepository.On("Save", mock.MatchedBy(func(entity domain.Entity) bool {
+				playerRepository.On("Save", mock.Anything, mock.MatchedBy(func(entity domain.Entity) bool {
 					return entity.ID == "player1" &&
 						entity.Category == common.L1 &&
 						entity.Sport == common.Football
@@ -60,8 +60,8 @@ func TestPlayerCreationHandler(t *testing.T) {
 				Category: 4,
 			},
 			on: func(t *testing.T, playerRepository *pmocks.Repository) {
-				playerRepository.On("Find", mock.Anything).Return([]domain.Entity{}, nil)
-				playerRepository.On("Save", mock.Anything).Return(nil)
+				playerRepository.On("Find", mock.Anything, mock.Anything).Return([]domain.Entity{}, nil)
+				playerRepository.On("Save", mock.Anything, mock.Anything).Return(nil)
 			},
 			assertions: func(t *testing.T, responseCode int, response map[string]interface{}) {
 				assert.Equal(t, http.StatusCreated, responseCode)
@@ -76,8 +76,8 @@ func TestPlayerCreationHandler(t *testing.T) {
 				Category: 3,
 			},
 			on: func(t *testing.T, playerRepository *pmocks.Repository) {
-				playerRepository.On("Find", mock.Anything).Return([]domain.Entity{}, nil)
-				playerRepository.On("Save", mock.Anything).Return(nil)
+				playerRepository.On("Find", mock.Anything, mock.Anything).Return([]domain.Entity{}, nil)
+				playerRepository.On("Save", mock.Anything, mock.Anything).Return(nil)
 			},
 			assertions: func(t *testing.T, responseCode int, response map[string]interface{}) {
 				assert.Equal(t, http.StatusCreated, responseCode)
@@ -96,7 +96,7 @@ func TestPlayerCreationHandler(t *testing.T) {
 					Category: common.L2,
 					Sport:    common.Football,
 				}
-				playerRepository.On("Find", mock.Anything).Return([]domain.Entity{existingPlayer}, nil)
+				playerRepository.On("Find", mock.Anything, mock.Anything).Return([]domain.Entity{existingPlayer}, nil)
 			},
 			assertions: func(t *testing.T, responseCode int, response map[string]interface{}) {
 				assert.Equal(t, http.StatusConflict, responseCode)
@@ -112,8 +112,8 @@ func TestPlayerCreationHandler(t *testing.T) {
 				Category: 99,
 			},
 			on: func(t *testing.T, playerRepository *pmocks.Repository) {
-				playerRepository.On("Find", mock.Anything).Return([]domain.Entity{}, nil)
-				playerRepository.On("Save", mock.Anything).Return(nil)
+				playerRepository.On("Find", mock.Anything, mock.Anything).Return([]domain.Entity{}, nil)
+				playerRepository.On("Save", mock.Anything, mock.Anything).Return(nil)
 			},
 			assertions: func(t *testing.T, responseCode int, response map[string]interface{}) {
 				assert.Contains(t, response["message"], "invalid category value: 99")
@@ -128,8 +128,8 @@ func TestPlayerCreationHandler(t *testing.T) {
 				Category: 1,
 			},
 			on: func(t *testing.T, playerRepository *pmocks.Repository) {
-				playerRepository.On("Find", mock.Anything).Return([]domain.Entity{}, nil)
-				playerRepository.On("Save", mock.Anything).Return(nil)
+				playerRepository.On("Find", mock.Anything, mock.Anything).Return([]domain.Entity{}, nil)
+				playerRepository.On("Save", mock.Anything, mock.Anything).Return(nil)
 			},
 			assertions: func(t *testing.T, responseCode int, response map[string]interface{}) {
 				assert.Contains(t, response["message"], "Error:Field validation for 'Sport' failed")
@@ -144,8 +144,8 @@ func TestPlayerCreationHandler(t *testing.T) {
 				Category: 1,
 			},
 			on: func(t *testing.T, playerRepository *pmocks.Repository) {
-				playerRepository.On("Find", mock.Anything).Return([]domain.Entity{}, nil)
-				playerRepository.On("Save", mock.Anything).Return(nil)
+				playerRepository.On("Find", mock.Anything, mock.Anything).Return([]domain.Entity{}, nil)
+				playerRepository.On("Save", mock.Anything, mock.Anything).Return(nil)
 			},
 			assertions: func(t *testing.T, responseCode int, response map[string]interface{}) {
 				assert.Contains(t, response["message"], "Error:Field validation for 'ID'")
@@ -159,8 +159,8 @@ func TestPlayerCreationHandler(t *testing.T) {
 				ID:    "player4",
 			},
 			on: func(t *testing.T, playerRepository *pmocks.Repository) {
-				playerRepository.On("Find", mock.Anything).Return([]domain.Entity{}, nil)
-				playerRepository.On("Save", mock.MatchedBy(func(entity domain.Entity) bool {
+				playerRepository.On("Find", mock.Anything, mock.Anything).Return([]domain.Entity{}, nil)
+				playerRepository.On("Save", mock.Anything, mock.MatchedBy(func(entity domain.Entity) bool {
 					return entity.ID == "player4" && entity.Category == common.Unranked
 				})).Return(nil)
 			},

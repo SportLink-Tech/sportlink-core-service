@@ -49,7 +49,7 @@ func (sc *DefaultController) FindTeam(c *gin.Context) {
 		query.Categories = categories
 	}
 
-	teams, err := sc.findTeamUC.Invoke(query)
+	teams, err := sc.findTeamUC.Invoke(c.Request.Context(), query)
 
 	if err != nil {
 		c.Error(errors.UseCaseExecutionFailed(err.Error()))

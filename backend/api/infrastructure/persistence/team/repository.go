@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"sportlink/api/domain/team"
+	"strings"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue"
@@ -23,7 +24,7 @@ func NewRepository(client *dynamodb.Client, tableName string) team.Repository {
 	}
 }
 
-func (repo *RepositoryAdapter) Save(entity team.Entity) error {
+func (repo *RepositoryAdapter) Save(ctx context.Context, entity team.Entity) error {
 	dto, err := From(entity)
 	if err != nil {
 		return err
@@ -34,18 +35,29 @@ func (repo *RepositoryAdapter) Save(entity team.Entity) error {
 		return err
 	}
 
-	_, err = repo.dbClient.PutItem(context.TODO(), &dynamodb.PutItemInput{
+	_, err = repo.dbClient.PutItem(ctx, &dynamodb.PutItemInput{
 		TableName: &repo.tableName,
 		Item:      av,
 	})
 	return err
 }
 
-func (repo *RepositoryAdapter) Find(query team.DomainQuery) ([]team.Entity, error) {
+func (repo *RepositoryAdapter) Find(ctx context.Context, query team.DomainQuery) ([]team.Entity, error) {
 	keyCond := expression.KeyEqual(expression.Key("EntityId"), expression.Value("Entity#Team"))
 
-	if query.Name != "" {
-		keyCond = expression.KeyAnd(keyCond, expression.KeyBeginsWith(expression.Key("Id"), query.Name))
+	if query.Name != "" && len(query.Sports) > 0 {
+		// Search by the full ID format: SPORT#<sport>#NAME#<name>
+		// Use the first sport for the key condition, filter the rest if needed
+		idPrefix := fmt.Sprintf("SPORT#%s#NAME#%s", query.Sports[0], query.Name)
+		keyCond = expression.KeyAnd(keyCond, expression.KeyBeginsWith(expression.Key("Id"), idPrefix))
+	} else if query.Name != "" {
+		// If only name specified, search by name pattern (requires filter, not key condition)
+		// We'll search for any ID that starts with SPORT# and filter by name
+		keyCond = expression.KeyAnd(keyCond, expression.KeyBeginsWith(expression.Key("Id"), "SPORT#"))
+	} else if len(query.Sports) > 0 {
+		// If only sports specified, search by sport prefix
+		sportPrefix := fmt.Sprintf("SPORT#%s", query.Sports[0])
+		keyCond = expression.KeyAnd(keyCond, expression.KeyBeginsWith(expression.Key("Id"), sportPrefix))
 	}
 
 	builder := expression.NewBuilder().WithKeyCondition(keyCond)
@@ -55,7 +67,7 @@ func (repo *RepositoryAdapter) Find(query team.DomainQuery) ([]team.Entity, erro
 		return []team.Entity{}, err
 	}
 
-	resp, err := repo.dbClient.Query(context.TODO(), &dynamodb.QueryInput{
+	resp, err := repo.dbClient.Query(ctx, &dynamodb.QueryInput{
 		TableName:                 aws.String(repo.tableName),
 		KeyConditionExpression:    expr.KeyCondition(),
 		ExpressionAttributeNames:  expr.Names(),
@@ -73,7 +85,17 @@ func (repo *RepositoryAdapter) Find(query team.DomainQuery) ([]team.Entity, erro
 		if err != nil {
 			return []team.Entity{}, fmt.Errorf("failed to unmarshal item: %w", err)
 		}
-		results = append(results, dto.ToDomain())
+		entity := dto.ToDomain()
+
+		// If only name is specified without sports, filter by name in memory
+		// (DynamoDB Contains filter may not work as expected for partial matches)
+		if query.Name != "" && len(query.Sports) == 0 {
+			if !strings.Contains(entity.Name, query.Name) {
+				continue
+			}
+		}
+
+		results = append(results, entity)
 	}
 
 	// Return empty slice if no results found
@@ -85,13 +107,13 @@ func (repo *RepositoryAdapter) Find(query team.DomainQuery) ([]team.Entity, erro
 }
 
 func From(entity team.Entity) (Dto, error) {
-	if entity.Name == "" {
+	if entity.ID == "" {
 		return Dto{}, fmt.Errorf("ID could not be empty")
 	}
 
 	return Dto{
 		EntityId: "Entity#Team",
-		Id:       entity.Name,
+		Id:       entity.ID,
 		Category: int(entity.Category),
 		Sport:    string(entity.Sport),
 	}, nil
@@ -115,6 +137,9 @@ func includeFilters(query team.DomainQuery, builder *expression.Builder) {
 		}
 		filters = append(filters, expression.Name("Sport").In(sportValues[0], sportValues[1:]...))
 	}
+
+	// Note: Name filtering without sports is done in memory after query
+	// to avoid DynamoDB Contains filter limitations
 
 	// Combine all filters with AND
 	if len(filters) > 0 {

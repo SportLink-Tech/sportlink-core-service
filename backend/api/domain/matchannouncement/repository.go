@@ -1,14 +1,21 @@
 package matchannouncement
 
 import (
+	"context"
 	"sportlink/api/domain/common"
 	"time"
 )
 
+// Page contains the results of a Find operation with pagination information
+type Page struct {
+	Entities []Entity // The matching entities
+	Total    int      // Total number of entities matching the query (ignoring limit/offset)
+}
+
 // Repository defines the persistence operations for match announcements
 type Repository interface {
-	Save(entity Entity) error
-	Find(query DomainQuery) ([]Entity, error)
+	Save(ctx context.Context, entity Entity) error
+	Find(ctx context.Context, query DomainQuery) (Page, error)
 }
 
 // DomainQuery represents the search criteria for match announcements
@@ -19,6 +26,8 @@ type DomainQuery struct {
 	FromDate   time.Time         // Announcements from this date
 	ToDate     time.Time         // Announcements until this date
 	Location   *Location         // Search by location (optional)
+	Limit      int               // Maximum number of results to return (0 = no limit)
+	Offset     int               // Number of results to skip (0 = no offset)
 }
 
 func NewDomainQuery(
@@ -28,6 +37,8 @@ func NewDomainQuery(
 	fromDate time.Time,
 	toDate time.Time,
 	location *Location,
+	limit int,
+	offset int,
 ) *DomainQuery {
 	return &DomainQuery{
 		Sports:     sports,
@@ -36,5 +47,7 @@ func NewDomainQuery(
 		FromDate:   fromDate,
 		ToDate:     toDate,
 		Location:   location,
+		Limit:      limit,
+		Offset:     offset,
 	}
 }

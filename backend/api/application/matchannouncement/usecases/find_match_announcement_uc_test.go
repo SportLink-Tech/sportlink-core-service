@@ -1,6 +1,7 @@
 package usecases_test
 
 import (
+	"context"
 	"fmt"
 	"reflect"
 	"sportlink/api/application/matchannouncement/usecases"
@@ -28,260 +29,340 @@ func TestFindMatchAnnouncementUC_Invoke(t *testing.T) {
 		name  string
 		query matchannouncement.DomainQuery
 		on    func(t *testing.T, repository *mmocks.Repository)
-		then  func(t *testing.T, result *[]matchannouncement.Entity, err error)
+		then  func(t *testing.T, result *usecases.FindMatchAnnouncementResult, err error)
 	}{
 		{
-			name: "find announcements successfully - multiple results by sport",
+			name: "given valid query when finding announcements then returns paginated results",
 			query: matchannouncement.DomainQuery{
 				Sports: []common.Sport{common.Paddle},
+				Limit:  9,
+				Offset: 0,
 			},
 			on: func(t *testing.T, repository *mmocks.Repository) {
-				repository.On("Find", mock.MatchedBy(func(query matchannouncement.DomainQuery) bool {
+				repository.On("Find", mock.Anything, mock.MatchedBy(func(query matchannouncement.DomainQuery) bool {
 					return len(query.Sports) == 1 && query.Sports[0] == common.Paddle
-				})).Return([]matchannouncement.Entity{
-					{
-						TeamName:           "Thunder Strikers",
-						Sport:              common.Paddle,
-						Day:                tomorrow,
-						TimeSlot:           timeSlot,
-						Location:           location,
-						AdmittedCategories: matchannouncement.NewSpecificCategories([]common.Category{5, 6, 7}),
-						Status:             matchannouncement.StatusPending,
-						CreatedAt:          time.Now().In(tz),
+				})).Return(matchannouncement.Page{
+					Entities: []matchannouncement.Entity{
+						{
+							TeamName:           "Thunder Strikers",
+							Sport:              common.Paddle,
+							Day:                tomorrow,
+							TimeSlot:           timeSlot,
+							Location:           location,
+							AdmittedCategories: matchannouncement.NewSpecificCategories([]common.Category{5, 6, 7}),
+							Status:             matchannouncement.StatusPending,
+							CreatedAt:          time.Now().In(tz),
+						},
+						{
+							TeamName:           "Elite Padel Team",
+							Sport:              common.Paddle,
+							Day:                nextWeek,
+							TimeSlot:           timeSlot,
+							Location:           location,
+							AdmittedCategories: matchannouncement.NewGreaterThanCategory(5),
+							Status:             matchannouncement.StatusPending,
+							CreatedAt:          time.Now().In(tz),
+						},
 					},
-					{
-						TeamName:           "Elite Padel Team",
-						Sport:              common.Paddle,
-						Day:                nextWeek,
-						TimeSlot:           timeSlot,
-						Location:           location,
-						AdmittedCategories: matchannouncement.NewGreaterThanCategory(5),
-						Status:             matchannouncement.StatusPending,
-						CreatedAt:          time.Now().In(tz),
-					},
+					Total: 25,
 				}, nil)
 			},
-			then: func(t *testing.T, result *[]matchannouncement.Entity, err error) {
+			then: func(t *testing.T, result *usecases.FindMatchAnnouncementResult, err error) {
 				assert.NoError(t, err)
 				assert.NotNil(t, result)
-				assert.Len(t, *result, 2)
-				assert.Equal(t, "Thunder Strikers", (*result)[0].TeamName)
-				assert.Equal(t, "Elite Padel Team", (*result)[1].TeamName)
-				assert.Equal(t, common.Paddle, (*result)[0].Sport)
+				assert.Len(t, result.Entities, 2)
+				assert.Equal(t, "Thunder Strikers", result.Entities[0].TeamName)
+				assert.Equal(t, "Elite Padel Team", result.Entities[1].TeamName)
+				assert.Equal(t, common.Paddle, result.Entities[0].Sport)
+				assert.Equal(t, 25, result.Page.Total)
+				assert.Equal(t, 1, result.Page.Number)
+				assert.Equal(t, 3, result.Page.OutOf)
 			},
 		},
 		{
-			name: "find announcements successfully - single result by sport and status",
+			name: "given second page when finding announcements then returns correct page number",
 			query: matchannouncement.DomainQuery{
-				Sports:   []common.Sport{common.Tennis},
-				Statuses: []matchannouncement.Status{matchannouncement.StatusConfirmed},
+				Sports: []common.Sport{common.Tennis},
+				Limit:  9,
+				Offset: 9,
 			},
 			on: func(t *testing.T, repository *mmocks.Repository) {
-				repository.On("Find", mock.MatchedBy(func(query matchannouncement.DomainQuery) bool {
-					return len(query.Sports) == 1 &&
-						query.Sports[0] == common.Tennis &&
-						len(query.Statuses) == 1 &&
-						query.Statuses[0] == matchannouncement.StatusConfirmed
-				})).Return([]matchannouncement.Entity{
-					{
-						TeamName:           "Tennis Pros",
-						Sport:              common.Tennis,
-						Day:                tomorrow,
-						TimeSlot:           timeSlot,
-						Location:           location,
-						AdmittedCategories: matchannouncement.NewSpecificCategories([]common.Category{4, 5}),
-						Status:             matchannouncement.StatusConfirmed,
-						CreatedAt:          time.Now().In(tz),
+				repository.On("Find", mock.Anything, mock.MatchedBy(func(query matchannouncement.DomainQuery) bool {
+					return len(query.Sports) == 1 && query.Sports[0] == common.Tennis
+				})).Return(matchannouncement.Page{
+					Entities: []matchannouncement.Entity{
+						{
+							TeamName:           "Tennis Pros",
+							Sport:              common.Tennis,
+							Day:                tomorrow,
+							TimeSlot:           timeSlot,
+							Location:           location,
+							AdmittedCategories: matchannouncement.NewSpecificCategories([]common.Category{4, 5}),
+							Status:             matchannouncement.StatusConfirmed,
+							CreatedAt:          time.Now().In(tz),
+						},
 					},
+					Total: 20,
 				}, nil)
 			},
-			then: func(t *testing.T, result *[]matchannouncement.Entity, err error) {
+			then: func(t *testing.T, result *usecases.FindMatchAnnouncementResult, err error) {
 				assert.NoError(t, err)
 				assert.NotNil(t, result)
-				assert.Len(t, *result, 1)
-				assert.Equal(t, "Tennis Pros", (*result)[0].TeamName)
-				assert.Equal(t, common.Tennis, (*result)[0].Sport)
-				assert.Equal(t, matchannouncement.StatusConfirmed, (*result)[0].Status)
+				assert.Len(t, result.Entities, 1)
+				assert.Equal(t, "Tennis Pros", result.Entities[0].TeamName)
+				assert.Equal(t, common.Tennis, result.Entities[0].Sport)
+				assert.Equal(t, matchannouncement.StatusConfirmed, result.Entities[0].Status)
+				assert.Equal(t, 20, result.Page.Total)
+				assert.Equal(t, 2, result.Page.Number)
+				assert.Equal(t, 3, result.Page.OutOf)
 			},
 		},
 		{
-			name: "find announcements by multiple statuses successfully",
+			name: "given query with multiple statuses when finding announcements then returns matching results",
 			query: matchannouncement.DomainQuery{
 				Statuses: []matchannouncement.Status{
 					matchannouncement.StatusPending,
 					matchannouncement.StatusConfirmed,
 				},
+				Limit:  9,
+				Offset: 0,
 			},
 			on: func(t *testing.T, repository *mmocks.Repository) {
-				repository.On("Find", mock.MatchedBy(func(query matchannouncement.DomainQuery) bool {
+				repository.On("Find", mock.Anything, mock.MatchedBy(func(query matchannouncement.DomainQuery) bool {
 					return len(query.Statuses) == 2 &&
 						reflect.DeepEqual(query.Statuses, []matchannouncement.Status{
 							matchannouncement.StatusPending,
 							matchannouncement.StatusConfirmed,
 						})
-				})).Return([]matchannouncement.Entity{
-					{
-						TeamName:           "Team Pending",
-						Sport:              common.Football,
-						Day:                tomorrow,
-						TimeSlot:           timeSlot,
-						Location:           location,
-						AdmittedCategories: matchannouncement.NewSpecificCategories([]common.Category{1}),
-						Status:             matchannouncement.StatusPending,
-						CreatedAt:          time.Now().In(tz),
+				})).Return(matchannouncement.Page{
+					Entities: []matchannouncement.Entity{
+						{
+							TeamName:           "Team Pending",
+							Sport:              common.Football,
+							Day:                tomorrow,
+							TimeSlot:           timeSlot,
+							Location:           location,
+							AdmittedCategories: matchannouncement.NewSpecificCategories([]common.Category{1}),
+							Status:             matchannouncement.StatusPending,
+							CreatedAt:          time.Now().In(tz),
+						},
+						{
+							TeamName:           "Team Confirmed",
+							Sport:              common.Football,
+							Day:                tomorrow,
+							TimeSlot:           timeSlot,
+							Location:           location,
+							AdmittedCategories: matchannouncement.NewSpecificCategories([]common.Category{1}),
+							Status:             matchannouncement.StatusConfirmed,
+							CreatedAt:          time.Now().In(tz),
+						},
 					},
-					{
-						TeamName:           "Team Confirmed",
-						Sport:              common.Football,
-						Day:                tomorrow,
-						TimeSlot:           timeSlot,
-						Location:           location,
-						AdmittedCategories: matchannouncement.NewSpecificCategories([]common.Category{1}),
-						Status:             matchannouncement.StatusConfirmed,
-						CreatedAt:          time.Now().In(tz),
-					},
+					Total: 2,
 				}, nil)
 			},
-			then: func(t *testing.T, result *[]matchannouncement.Entity, err error) {
+			then: func(t *testing.T, result *usecases.FindMatchAnnouncementResult, err error) {
 				assert.NoError(t, err)
 				assert.NotNil(t, result)
-				assert.Len(t, *result, 2)
+				assert.Len(t, result.Entities, 2)
 				assert.Contains(t, []matchannouncement.Status{
 					matchannouncement.StatusPending,
 					matchannouncement.StatusConfirmed,
-				}, (*result)[0].Status)
+				}, result.Entities[0].Status)
 				assert.Contains(t, []matchannouncement.Status{
 					matchannouncement.StatusPending,
 					matchannouncement.StatusConfirmed,
-				}, (*result)[1].Status)
+				}, result.Entities[1].Status)
+				assert.Equal(t, 2, result.Page.Total)
+				assert.Equal(t, 1, result.Page.Number)
+				assert.Equal(t, 1, result.Page.OutOf)
 			},
 		},
 		{
-			name: "find announcements by date range successfully",
+			name: "given query with date range when finding announcements then returns matching results",
 			query: matchannouncement.DomainQuery{
 				FromDate: time.Now().In(tz),
 				ToDate:   time.Now().In(tz).AddDate(0, 0, 10),
+				Limit:    9,
+				Offset:   0,
 			},
 			on: func(t *testing.T, repository *mmocks.Repository) {
-				repository.On("Find", mock.MatchedBy(func(query matchannouncement.DomainQuery) bool {
+				repository.On("Find", mock.Anything, mock.MatchedBy(func(query matchannouncement.DomainQuery) bool {
 					return !query.FromDate.IsZero() && !query.ToDate.IsZero()
-				})).Return([]matchannouncement.Entity{
-					{
-						TeamName:           "Future Match Team",
-						Sport:              common.Paddle,
-						Day:                nextWeek,
-						TimeSlot:           timeSlot,
-						Location:           location,
-						AdmittedCategories: matchannouncement.NewSpecificCategories([]common.Category{3, 4}),
-						Status:             matchannouncement.StatusPending,
-						CreatedAt:          time.Now().In(tz),
+				})).Return(matchannouncement.Page{
+					Entities: []matchannouncement.Entity{
+						{
+							TeamName:           "Future Match Team",
+							Sport:              common.Paddle,
+							Day:                nextWeek,
+							TimeSlot:           timeSlot,
+							Location:           location,
+							AdmittedCategories: matchannouncement.NewSpecificCategories([]common.Category{3, 4}),
+							Status:             matchannouncement.StatusPending,
+							CreatedAt:          time.Now().In(tz),
+						},
 					},
+					Total: 1,
 				}, nil)
 			},
-			then: func(t *testing.T, result *[]matchannouncement.Entity, err error) {
+			then: func(t *testing.T, result *usecases.FindMatchAnnouncementResult, err error) {
 				assert.NoError(t, err)
 				assert.NotNil(t, result)
-				assert.Len(t, *result, 1)
-				assert.Equal(t, "Future Match Team", (*result)[0].TeamName)
+				assert.Len(t, result.Entities, 1)
+				assert.Equal(t, "Future Match Team", result.Entities[0].TeamName)
+				assert.Equal(t, 1, result.Page.Total)
 			},
 		},
 		{
-			name: "find announcements by location successfully",
+			name: "given query with location when finding announcements then returns matching results",
 			query: matchannouncement.DomainQuery{
 				Location: &matchannouncement.Location{
 					Country:  "Argentina",
 					Province: "Buenos Aires",
 					Locality: "CABA",
 				},
+				Limit:  9,
+				Offset: 0,
 			},
 			on: func(t *testing.T, repository *mmocks.Repository) {
-				repository.On("Find", mock.MatchedBy(func(query matchannouncement.DomainQuery) bool {
+				repository.On("Find", mock.Anything, mock.MatchedBy(func(query matchannouncement.DomainQuery) bool {
 					return query.Location != nil &&
 						query.Location.Country == "Argentina" &&
 						query.Location.Locality == "CABA"
-				})).Return([]matchannouncement.Entity{
-					{
-						TeamName:           "CABA Local Team",
-						Sport:              common.Football,
-						Day:                tomorrow,
-						TimeSlot:           timeSlot,
-						Location:           location,
-						AdmittedCategories: matchannouncement.NewLessThanCategory(3),
-						Status:             matchannouncement.StatusPending,
-						CreatedAt:          time.Now().In(tz),
+				})).Return(matchannouncement.Page{
+					Entities: []matchannouncement.Entity{
+						{
+							TeamName:           "CABA Local Team",
+							Sport:              common.Football,
+							Day:                tomorrow,
+							TimeSlot:           timeSlot,
+							Location:           location,
+							AdmittedCategories: matchannouncement.NewLessThanCategory(3),
+							Status:             matchannouncement.StatusPending,
+							CreatedAt:          time.Now().In(tz),
+						},
 					},
+					Total: 1,
 				}, nil)
 			},
-			then: func(t *testing.T, result *[]matchannouncement.Entity, err error) {
+			then: func(t *testing.T, result *usecases.FindMatchAnnouncementResult, err error) {
 				assert.NoError(t, err)
 				assert.NotNil(t, result)
-				assert.Len(t, *result, 1)
-				assert.Equal(t, "CABA", (*result)[0].Location.Locality)
+				assert.Len(t, result.Entities, 1)
+				assert.Equal(t, "CABA", result.Entities[0].Location.Locality)
 			},
 		},
 		{
-			name: "find announcements with multiple filters - sport and status",
+			name: "given query with multiple filters when finding announcements then returns matching results",
 			query: matchannouncement.DomainQuery{
 				Sports:   []common.Sport{common.Paddle},
 				Statuses: []matchannouncement.Status{matchannouncement.StatusPending},
+				Limit:    9,
+				Offset:   0,
 			},
 			on: func(t *testing.T, repository *mmocks.Repository) {
-				repository.On("Find", mock.MatchedBy(func(query matchannouncement.DomainQuery) bool {
+				repository.On("Find", mock.Anything, mock.MatchedBy(func(query matchannouncement.DomainQuery) bool {
 					return len(query.Sports) == 1 &&
 						query.Sports[0] == common.Paddle &&
 						len(query.Statuses) == 1 &&
 						query.Statuses[0] == matchannouncement.StatusPending
-				})).Return([]matchannouncement.Entity{
-					{
-						TeamName:           "Paddle Seekers",
-						Sport:              common.Paddle,
-						Day:                tomorrow,
-						TimeSlot:           timeSlot,
-						Location:           location,
-						AdmittedCategories: matchannouncement.NewSpecificCategories([]common.Category{5, 6}),
-						Status:             matchannouncement.StatusPending,
-						CreatedAt:          time.Now().In(tz),
+				})).Return(matchannouncement.Page{
+					Entities: []matchannouncement.Entity{
+						{
+							TeamName:           "Paddle Seekers",
+							Sport:              common.Paddle,
+							Day:                tomorrow,
+							TimeSlot:           timeSlot,
+							Location:           location,
+							AdmittedCategories: matchannouncement.NewSpecificCategories([]common.Category{5, 6}),
+							Status:             matchannouncement.StatusPending,
+							CreatedAt:          time.Now().In(tz),
+						},
 					},
+					Total: 1,
 				}, nil)
 			},
-			then: func(t *testing.T, result *[]matchannouncement.Entity, err error) {
+			then: func(t *testing.T, result *usecases.FindMatchAnnouncementResult, err error) {
 				assert.NoError(t, err)
 				assert.NotNil(t, result)
-				assert.Len(t, *result, 1)
-				assert.Equal(t, common.Paddle, (*result)[0].Sport)
-				assert.Equal(t, matchannouncement.StatusPending, (*result)[0].Status)
+				assert.Len(t, result.Entities, 1)
+				assert.Equal(t, common.Paddle, result.Entities[0].Sport)
+				assert.Equal(t, matchannouncement.StatusPending, result.Entities[0].Status)
 			},
 		},
 		{
-			name: "find announcements successfully - no results",
+			name: "given query with no results when finding announcements then returns empty result",
 			query: matchannouncement.DomainQuery{
 				Sports: []common.Sport{common.Sport("NonExistentSport")},
+				Limit:  9,
+				Offset: 0,
 			},
 			on: func(t *testing.T, repository *mmocks.Repository) {
-				repository.On("Find", mock.MatchedBy(func(query matchannouncement.DomainQuery) bool {
+				repository.On("Find", mock.Anything, mock.MatchedBy(func(query matchannouncement.DomainQuery) bool {
 					return len(query.Sports) == 1
-				})).Return([]matchannouncement.Entity{}, nil)
+				})).Return(matchannouncement.Page{
+					Entities: []matchannouncement.Entity{},
+					Total:    0,
+				}, nil)
 			},
-			then: func(t *testing.T, result *[]matchannouncement.Entity, err error) {
+			then: func(t *testing.T, result *usecases.FindMatchAnnouncementResult, err error) {
 				assert.NoError(t, err)
 				assert.NotNil(t, result)
-				assert.Empty(t, *result)
+				assert.Empty(t, result.Entities)
+				assert.Equal(t, 0, result.Page.Total)
+				assert.Equal(t, 0, result.Page.OutOf)
 			},
 		},
 		{
-			name: "find announcements fails - repository error",
+			name: "given repository error when finding announcements then returns error",
 			query: matchannouncement.DomainQuery{
 				Sports: []common.Sport{common.Paddle},
+				Limit:  9,
+				Offset: 0,
 			},
 			on: func(t *testing.T, repository *mmocks.Repository) {
-				repository.On("Find", mock.MatchedBy(func(query matchannouncement.DomainQuery) bool {
+				repository.On("Find", mock.Anything, mock.MatchedBy(func(query matchannouncement.DomainQuery) bool {
 					return len(query.Sports) == 1 && query.Sports[0] == common.Paddle
-				})).Return([]matchannouncement.Entity{}, fmt.Errorf("database connection error"))
+				})).Return(matchannouncement.Page{}, fmt.Errorf("database connection error"))
 			},
-			then: func(t *testing.T, result *[]matchannouncement.Entity, err error) {
+			then: func(t *testing.T, result *usecases.FindMatchAnnouncementResult, err error) {
 				assert.Error(t, err)
 				assert.Equal(t, "database connection error", err.Error())
 				assert.Nil(t, result)
+			},
+		},
+		{
+			name: "given query without limit when finding announcements then returns single page",
+			query: matchannouncement.DomainQuery{
+				Sports: []common.Sport{common.Paddle},
+				Limit:  0,
+				Offset: 0,
+			},
+			on: func(t *testing.T, repository *mmocks.Repository) {
+				repository.On("Find", mock.Anything, mock.MatchedBy(func(query matchannouncement.DomainQuery) bool {
+					return len(query.Sports) == 1 && query.Sports[0] == common.Paddle
+				})).Return(matchannouncement.Page{
+					Entities: []matchannouncement.Entity{
+						{
+							TeamName:           "All Results Team",
+							Sport:              common.Paddle,
+							Day:                tomorrow,
+							TimeSlot:           timeSlot,
+							Location:           location,
+							AdmittedCategories: matchannouncement.NewSpecificCategories([]common.Category{5}),
+							Status:             matchannouncement.StatusPending,
+							CreatedAt:          time.Now().In(tz),
+						},
+					},
+					Total: 1,
+				}, nil)
+			},
+			then: func(t *testing.T, result *usecases.FindMatchAnnouncementResult, err error) {
+				assert.NoError(t, err)
+				assert.NotNil(t, result)
+				assert.Len(t, result.Entities, 1)
+				assert.Equal(t, 1, result.Page.Number)
+				assert.Equal(t, 1, result.Page.OutOf)
+				assert.Equal(t, 1, result.Page.Total)
 			},
 		},
 	}
@@ -296,7 +377,7 @@ func TestFindMatchAnnouncementUC_Invoke(t *testing.T) {
 			tt.on(t, repo)
 
 			// when
-			result, err := uc.Invoke(tt.query)
+			result, err := uc.Invoke(context.Background(), tt.query)
 
 			// then
 			tt.then(t, result, err)

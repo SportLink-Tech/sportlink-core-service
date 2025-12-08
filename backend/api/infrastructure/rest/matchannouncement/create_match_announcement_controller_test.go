@@ -65,7 +65,7 @@ func TestCreateMatchAnnouncement(t *testing.T) {
 					time.Now(),
 				)
 
-				useCaseMock.On("Invoke", mock.MatchedBy(func(entity domain.Entity) bool {
+				useCaseMock.On("Invoke", mock.Anything, mock.MatchedBy(func(entity domain.Entity) bool {
 					return entity.TeamName == "Boca" &&
 						entity.Sport == common.Paddle &&
 						entity.Location.Country == "Argentina" &&
@@ -129,7 +129,7 @@ func TestCreateMatchAnnouncement(t *testing.T) {
 			on: func(t *testing.T, useCaseMock *UseCaseMock) {
 				// Invalid sport passes validation but fails in mapper or use case
 				// The mapper will convert it, but use case validation will fail
-				useCaseMock.On("Invoke", mock.MatchedBy(func(entity domain.Entity) bool {
+				useCaseMock.On("Invoke", mock.Anything, mock.MatchedBy(func(entity domain.Entity) bool {
 					return entity.TeamName == "Boca" && entity.Sport == common.Sport("InvalidSport")
 				})).Return(nil, assert.AnError)
 			},
@@ -188,7 +188,7 @@ func TestCreateMatchAnnouncement(t *testing.T) {
 				},
 			},
 			on: func(t *testing.T, useCaseMock *UseCaseMock) {
-				useCaseMock.On("Invoke", mock.MatchedBy(func(entity domain.Entity) bool {
+				useCaseMock.On("Invoke", mock.Anything, mock.MatchedBy(func(entity domain.Entity) bool {
 					return entity.TeamName == "Boca" && entity.Sport == common.Paddle
 				})).Return(nil, assert.AnError)
 			},
@@ -219,7 +219,7 @@ func TestCreateMatchAnnouncement(t *testing.T) {
 				},
 			},
 			on: func(t *testing.T, useCaseMock *UseCaseMock) {
-				useCaseMock.On("Invoke", mock.MatchedBy(func(entity domain.Entity) bool {
+				useCaseMock.On("Invoke", mock.Anything, mock.MatchedBy(func(entity domain.Entity) bool {
 					return entity.TeamName == "NonExistentTeam" && entity.Sport == common.Paddle
 				})).Return(nil, assert.AnError)
 			},
@@ -261,7 +261,7 @@ func TestCreateMatchAnnouncement(t *testing.T) {
 					time.Now(),
 				)
 
-				useCaseMock.On("Invoke", mock.MatchedBy(func(entity domain.Entity) bool {
+				useCaseMock.On("Invoke", mock.Anything, mock.MatchedBy(func(entity domain.Entity) bool {
 					return entity.TeamName == "Boca" &&
 						entity.Sport == common.Paddle &&
 						entity.AdmittedCategories.Type == domain.RangeTypeSpecific
@@ -308,7 +308,7 @@ func TestCreateMatchAnnouncement(t *testing.T) {
 					time.Now(),
 				)
 
-				useCaseMock.On("Invoke", mock.MatchedBy(func(entity domain.Entity) bool {
+				useCaseMock.On("Invoke", mock.Anything, mock.MatchedBy(func(entity domain.Entity) bool {
 					return entity.TeamName == "Boca" &&
 						entity.Sport == common.Paddle &&
 						entity.AdmittedCategories.Type == domain.RangeTypeBetween

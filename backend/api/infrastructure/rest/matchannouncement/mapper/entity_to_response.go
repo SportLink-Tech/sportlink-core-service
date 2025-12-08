@@ -60,3 +60,20 @@ func EntitiesToResponses(entities []matchannouncement.Entity) []response.MatchAn
 	}
 	return responses
 }
+
+// NewPaginatedResponse creates a paginated response with the given data and pagination info
+func NewPaginatedResponse(
+	data []response.MatchAnnouncementResponse,
+	pageNumber int,
+	totalPages int,
+	total int,
+) response.PaginatedMatchAnnouncementsResponse {
+	return response.PaginatedMatchAnnouncementsResponse{
+		Data: data,
+		Pagination: response.PaginationInfo{
+			Number: pageNumber,
+			OutOf:  totalPages,
+			Total:  total,
+		},
+	}
+}

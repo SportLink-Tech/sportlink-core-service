@@ -1,6 +1,7 @@
 package usecases_test
 
 import (
+	"context"
 	"fmt"
 	"reflect"
 	"sportlink/api/application/matchannouncement/usecases"
@@ -52,13 +53,13 @@ func TestCreateMatchAnnouncementUC_Invoke(t *testing.T) {
 			},
 			on: func(t *testing.T, repository *mmocks.Repository, teamRepository *tmocks.Repository) {
 				// Mock team exists
-				teamRepository.On("Find", mock.MatchedBy(func(query team.DomainQuery) bool {
+				teamRepository.On("Find", mock.Anything, mock.MatchedBy(func(query team.DomainQuery) bool {
 					return query.Name == "Thunder Strikers" &&
 						reflect.DeepEqual(query.Sports, []common.Sport{common.Paddle})
 				})).Return([]team.Entity{{Name: "Thunder Strikers", Sport: common.Paddle}}, nil)
 
 				// Mock save announcement
-				repository.On("Save", mock.MatchedBy(func(entity matchannouncement.Entity) bool {
+				repository.On("Save", mock.Anything, mock.MatchedBy(func(entity matchannouncement.Entity) bool {
 					return entity.TeamName == "Thunder Strikers" &&
 						entity.Sport == common.Paddle &&
 						entity.Status == matchannouncement.StatusPending
@@ -85,13 +86,13 @@ func TestCreateMatchAnnouncementUC_Invoke(t *testing.T) {
 			},
 			on: func(t *testing.T, repository *mmocks.Repository, teamRepository *tmocks.Repository) {
 				// Mock team exists
-				teamRepository.On("Find", mock.MatchedBy(func(query team.DomainQuery) bool {
+				teamRepository.On("Find", mock.Anything, mock.MatchedBy(func(query team.DomainQuery) bool {
 					return query.Name == "Thunder Strikers" &&
 						reflect.DeepEqual(query.Sports, []common.Sport{common.Paddle})
 				})).Return([]team.Entity{{Name: "Thunder Strikers", Sport: common.Paddle}}, nil)
 
 				// Mock save announcement
-				repository.On("Save", mock.MatchedBy(func(entity matchannouncement.Entity) bool {
+				repository.On("Save", mock.Anything, mock.MatchedBy(func(entity matchannouncement.Entity) bool {
 					return entity.TeamName == "Thunder Strikers" &&
 						entity.AdmittedCategories.Type == matchannouncement.RangeTypeGreaterThan
 				})).Return(nil)
@@ -116,7 +117,7 @@ func TestCreateMatchAnnouncementUC_Invoke(t *testing.T) {
 			},
 			on: func(t *testing.T, repository *mmocks.Repository, teamRepository *tmocks.Repository) {
 				// Mock team does not exist (empty slice)
-				teamRepository.On("Find", mock.MatchedBy(func(query team.DomainQuery) bool {
+				teamRepository.On("Find", mock.Anything, mock.MatchedBy(func(query team.DomainQuery) bool {
 					return query.Name == "NonExistent Team" &&
 						reflect.DeepEqual(query.Sports, []common.Sport{common.Paddle})
 				})).Return([]team.Entity{}, nil)
@@ -141,7 +142,7 @@ func TestCreateMatchAnnouncementUC_Invoke(t *testing.T) {
 			},
 			on: func(t *testing.T, repository *mmocks.Repository, teamRepository *tmocks.Repository) {
 				// Mock team repository error
-				teamRepository.On("Find", mock.MatchedBy(func(query team.DomainQuery) bool {
+				teamRepository.On("Find", mock.Anything, mock.MatchedBy(func(query team.DomainQuery) bool {
 					return query.Name == "Thunder Strikers"
 				})).Return([]team.Entity{}, fmt.Errorf("database connection error"))
 			},
@@ -165,12 +166,12 @@ func TestCreateMatchAnnouncementUC_Invoke(t *testing.T) {
 			},
 			on: func(t *testing.T, repository *mmocks.Repository, teamRepository *tmocks.Repository) {
 				// Mock team exists
-				teamRepository.On("Find", mock.MatchedBy(func(query team.DomainQuery) bool {
+				teamRepository.On("Find", mock.Anything, mock.MatchedBy(func(query team.DomainQuery) bool {
 					return query.Name == "Thunder Strikers"
 				})).Return([]team.Entity{{Name: "Thunder Strikers", Sport: common.Paddle}}, nil)
 
 				// Mock save error
-				repository.On("Save", mock.Anything).Return(fmt.Errorf("database error"))
+				repository.On("Save", mock.Anything, mock.Anything).Return(fmt.Errorf("database error"))
 			},
 			then: func(t *testing.T, result *matchannouncement.Entity, err error) {
 				assert.Error(t, err)
@@ -254,7 +255,7 @@ func TestCreateMatchAnnouncementUC_Invoke(t *testing.T) {
 			tt.on(t, repo, teamRepo)
 
 			// when
-			result, err := uc.Invoke(tt.input)
+			result, err := uc.Invoke(context.Background(), tt.input)
 
 			// then
 			tt.then(t, result, err)

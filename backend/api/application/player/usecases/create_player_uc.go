@@ -1,6 +1,7 @@
 package usecases
 
 import (
+	"context"
 	"fmt"
 	"sportlink/api/domain/player"
 )
@@ -15,8 +16,8 @@ func NewCreatePlayerUC(repository player.Repository) CreatePlayerUC {
 	}
 }
 
-func (uc *CreatePlayerUC) Invoke(input player.Entity) (*player.Entity, error) {
-	result, err := uc.repository.Find(player.DomainQuery{
+func (uc *CreatePlayerUC) Invoke(ctx context.Context, input player.Entity) (*player.Entity, error) {
+	result, err := uc.repository.Find(ctx, player.DomainQuery{
 		Id:       input.ID,
 		Category: input.Category,
 		Sport:    input.Sport,
@@ -28,7 +29,7 @@ func (uc *CreatePlayerUC) Invoke(input player.Entity) (*player.Entity, error) {
 	}
 
 	// Save the new player
-	err = uc.repository.Save(input)
+	err = uc.repository.Save(ctx, input)
 	if err != nil {
 		return nil, fmt.Errorf("error while inserting player in database: %w", err)
 	}

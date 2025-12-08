@@ -3,6 +3,7 @@
 package mocks
 
 import (
+	"context"
 	matchannouncement "sportlink/api/domain/matchannouncement"
 
 	mock "github.com/stretchr/testify/mock"
@@ -13,29 +14,29 @@ type Repository struct {
 	mock.Mock
 }
 
-// Find provides a mock function with given fields: query
-func (_m *Repository) Find(query matchannouncement.DomainQuery) ([]matchannouncement.Entity, error) {
-	ret := _m.Called(query)
+// Find provides a mock function with given fields: ctx, query
+func (_m *Repository) Find(ctx context.Context, query matchannouncement.DomainQuery) (matchannouncement.Page, error) {
+	ret := _m.Called(ctx, query)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Find")
 	}
 
-	var r0 []matchannouncement.Entity
+	var r0 matchannouncement.Page
 	var r1 error
-	if rf, ok := ret.Get(0).(func(matchannouncement.DomainQuery) ([]matchannouncement.Entity, error)); ok {
-		return rf(query)
+	if rf, ok := ret.Get(0).(func(context.Context, matchannouncement.DomainQuery) (matchannouncement.Page, error)); ok {
+		return rf(ctx, query)
 	}
-	if rf, ok := ret.Get(0).(func(matchannouncement.DomainQuery) []matchannouncement.Entity); ok {
-		r0 = rf(query)
+	if rf, ok := ret.Get(0).(func(context.Context, matchannouncement.DomainQuery) matchannouncement.Page); ok {
+		r0 = rf(ctx, query)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]matchannouncement.Entity)
+			r0 = ret.Get(0).(matchannouncement.Page)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(matchannouncement.DomainQuery) error); ok {
-		r1 = rf(query)
+	if rf, ok := ret.Get(1).(func(context.Context, matchannouncement.DomainQuery) error); ok {
+		r1 = rf(ctx, query)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -43,17 +44,17 @@ func (_m *Repository) Find(query matchannouncement.DomainQuery) ([]matchannounce
 	return r0, r1
 }
 
-// Save provides a mock function with given fields: entity
-func (_m *Repository) Save(entity matchannouncement.Entity) error {
-	ret := _m.Called(entity)
+// Save provides a mock function with given fields: ctx, entity
+func (_m *Repository) Save(ctx context.Context, entity matchannouncement.Entity) error {
+	ret := _m.Called(ctx, entity)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Save")
 	}
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(matchannouncement.Entity) error); ok {
-		r0 = rf(entity)
+	if rf, ok := ret.Get(0).(func(context.Context, matchannouncement.Entity) error); ok {
+		r0 = rf(ctx, entity)
 	} else {
 		r0 = ret.Error(0)
 	}

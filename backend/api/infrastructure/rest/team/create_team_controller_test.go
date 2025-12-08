@@ -40,13 +40,13 @@ func TestTeamCreationHandlerWithEmptyFields(t *testing.T) {
 				PlayerIds: []string{"1", "2"},
 			},
 			on: func(t *testing.T, playerRepository *pmocks.Repository, teamRepository *tmocks.Repository) {
-				teamRepository.On("Save", mock.MatchedBy(func(entity team2.Entity) bool {
+				teamRepository.On("Save", mock.Anything, mock.MatchedBy(func(entity team2.Entity) bool {
 					return entity.Sport == common.Football &&
 						entity.Stats == *common.NewStats(0, 0, 0) &&
 						entity.Name == "Boca Juniors" &&
 						entity.Category == common.L1
 				})).Return(nil)
-				playerRepository.On("Find", mock.Anything).Return([]player.Entity{
+				playerRepository.On("Find", mock.Anything, mock.Anything).Return([]player.Entity{
 					{
 						ID: "1",
 					},
@@ -68,8 +68,8 @@ func TestTeamCreationHandlerWithEmptyFields(t *testing.T) {
 				PlayerIds: []string{"1", "2"},
 			},
 			on: func(t *testing.T, playerRepository *pmocks.Repository, teamRepository *tmocks.Repository) {
-				teamRepository.On("Save", mock.Anything).Return(nil)
-				playerRepository.On("Find", mock.Anything).Return([]player.Entity{
+				teamRepository.On("Save", mock.Anything, mock.Anything).Return(nil)
+				playerRepository.On("Find", mock.Anything, mock.Anything).Return([]player.Entity{
 					{
 						ID: "1",
 					},
@@ -89,8 +89,8 @@ func TestTeamCreationHandlerWithEmptyFields(t *testing.T) {
 				Category: 1,
 			},
 			on: func(t *testing.T, playerRepository *pmocks.Repository, teamRepository *tmocks.Repository) {
-				teamRepository.On("Save", mock.Anything).Return(nil)
-				playerRepository.On("Find", mock.Anything).Return([]player.Entity{}, nil)
+				teamRepository.On("Save", mock.Anything, mock.Anything).Return(nil)
+				playerRepository.On("Find", mock.Anything, mock.Anything).Return([]player.Entity{}, nil)
 			},
 			assertions: func(t *testing.T, responseCode int, response map[string]interface{}) {
 				assert.Equal(t, http.StatusCreated, responseCode)
@@ -100,8 +100,8 @@ func TestTeamCreationHandlerWithEmptyFields(t *testing.T) {
 			name:           "create a new River Plate team successfully",
 			payloadRequest: request2.NewTeamRequest{Sport: "Football", Name: "River Plate", Category: 2},
 			on: func(t *testing.T, playerRepository *pmocks.Repository, teamRepository *tmocks.Repository) {
-				teamRepository.On("Save", mock.Anything).Return(nil)
-				playerRepository.On("Find", mock.Anything).Return([]player.Entity{}, nil)
+				teamRepository.On("Save", mock.Anything, mock.Anything).Return(nil)
+				playerRepository.On("Find", mock.Anything, mock.Anything).Return([]player.Entity{}, nil)
 			},
 			assertions: func(t *testing.T, responseCode int, response map[string]interface{}) {
 				assert.Equal(t, http.StatusCreated, responseCode)
@@ -111,8 +111,8 @@ func TestTeamCreationHandlerWithEmptyFields(t *testing.T) {
 			name:           "create a new Los Delfines paddle team successfully",
 			payloadRequest: request2.NewTeamRequest{Sport: "Paddle", Name: "Los Delfines", Category: 7},
 			on: func(t *testing.T, playerRepository *pmocks.Repository, teamRepository *tmocks.Repository) {
-				teamRepository.On("Save", mock.Anything).Return(nil)
-				playerRepository.On("Find", mock.Anything).Return([]player.Entity{}, nil)
+				teamRepository.On("Save", mock.Anything, mock.Anything).Return(nil)
+				playerRepository.On("Find", mock.Anything, mock.Anything).Return([]player.Entity{}, nil)
 			},
 			assertions: func(t *testing.T, responseCode int, response map[string]interface{}) {
 				assert.Equal(t, http.StatusCreated, responseCode)
@@ -122,8 +122,8 @@ func TestTeamCreationHandlerWithEmptyFields(t *testing.T) {
 			name:           "fails when create a new team with invalid category",
 			payloadRequest: request2.NewTeamRequest{Sport: "Football", Name: "Boca Juniors", Category: 9},
 			on: func(t *testing.T, playerRepository *pmocks.Repository, teamRepository *tmocks.Repository) {
-				teamRepository.On("Save", mock.Anything).Return(nil)
-				playerRepository.On("Find", mock.Anything).Return([]player.Entity{}, nil)
+				teamRepository.On("Save", mock.Anything, mock.Anything).Return(nil)
+				playerRepository.On("Find", mock.Anything, mock.Anything).Return([]player.Entity{}, nil)
 			},
 			assertions: func(t *testing.T, responseCode int, response map[string]interface{}) {
 				assert.Contains(t, response["message"], "Err: invalid category value: 9")
@@ -134,8 +134,8 @@ func TestTeamCreationHandlerWithEmptyFields(t *testing.T) {
 			name:           "fails when create a new team with invalid sport",
 			payloadRequest: request2.NewTeamRequest{Sport: "fuchibol", Name: "River Plate", Category: 2},
 			on: func(t *testing.T, playerRepository *pmocks.Repository, teamRepository *tmocks.Repository) {
-				teamRepository.On("Save", mock.Anything).Return(nil)
-				playerRepository.On("Find", mock.Anything).Return([]player.Entity{}, nil)
+				teamRepository.On("Save", mock.Anything, mock.Anything).Return(nil)
+				playerRepository.On("Find", mock.Anything, mock.Anything).Return([]player.Entity{}, nil)
 			},
 			assertions: func(t *testing.T, responseCode int, response map[string]interface{}) {
 				assert.Contains(t, response["message"], "Error:Field validation for 'Sport' failed")
@@ -146,8 +146,8 @@ func TestTeamCreationHandlerWithEmptyFields(t *testing.T) {
 			name:           "create a new team successfully",
 			payloadRequest: request2.NewTeamRequest{Sport: "Football", Name: "", Category: 1},
 			on: func(t *testing.T, playerRepository *pmocks.Repository, teamRepository *tmocks.Repository) {
-				teamRepository.On("Save", mock.Anything).Return(nil)
-				playerRepository.On("Find", mock.Anything).Return([]player.Entity{}, nil)
+				teamRepository.On("Save", mock.Anything, mock.Anything).Return(nil)
+				playerRepository.On("Find", mock.Anything, mock.Anything).Return([]player.Entity{}, nil)
 			},
 			assertions: func(t *testing.T, responseCode int, response map[string]interface{}) {
 				assert.Contains(t, response["message"], " Error:Field validation for 'Name'")

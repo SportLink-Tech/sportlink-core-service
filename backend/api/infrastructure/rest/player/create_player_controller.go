@@ -27,7 +27,7 @@ func (sc *DefaultController) CreatePlayer(c *gin.Context) {
 		return
 	}
 
-	result, err := sc.createPlayerUC.Invoke(input)
+	result, err := sc.createPlayerUC.Invoke(c.Request.Context(), input)
 	if err != nil {
 		c.Error(errors.UseCaseExecutionFailed(err.Error()))
 		return

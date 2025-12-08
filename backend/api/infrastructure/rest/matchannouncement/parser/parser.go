@@ -11,11 +11,13 @@ import (
 
 // QueryParser defines the interface for parsing query parameters
 type QueryParser interface {
-	ParseSports(sportsQuery string) ([]common.Sport, error)
-	ParseCategories(categoriesQuery string) ([]common.Category, error)
-	ParseStatuses(statusesQuery string) ([]matchannouncement.Status, error)
-	ParseDate(dateQuery string) (time.Time, error)
-	ParseLocation(country, province, locality string) *matchannouncement.Location
+	Sports(sportsQuery string) ([]common.Sport, error)
+	Categories(categoriesQuery string) ([]common.Category, error)
+	Statuses(statusesQuery string) ([]matchannouncement.Status, error)
+	Date(dateQuery string) (time.Time, error)
+	Location(country, province, locality string) *matchannouncement.Location
+	Limit(limitQuery string) (int, error)
+	Offset(offsetQuery string) (int, error)
 }
 
 // DefaultQueryParser implements QueryParser interface
@@ -26,8 +28,8 @@ func NewQueryParser() QueryParser {
 	return &DefaultQueryParser{}
 }
 
-// ParseSports parses a comma-separated string of sports into a slice of Sport
-func (p *DefaultQueryParser) ParseSports(sportsQuery string) ([]common.Sport, error) {
+// Sports parses a comma-separated string of sports into a slice of Sport
+func (p *DefaultQueryParser) Sports(sportsQuery string) ([]common.Sport, error) {
 	if sportsQuery == "" {
 		return nil, nil
 	}
@@ -46,8 +48,8 @@ func (p *DefaultQueryParser) ParseSports(sportsQuery string) ([]common.Sport, er
 	return sports, nil
 }
 
-// ParseCategories parses a comma-separated string of category numbers into a slice of Category
-func (p *DefaultQueryParser) ParseCategories(categoriesQuery string) ([]common.Category, error) {
+// Categories parses a comma-separated string of category numbers into a slice of Category
+func (p *DefaultQueryParser) Categories(categoriesQuery string) ([]common.Category, error) {
 	if categoriesQuery == "" {
 		return nil, nil
 	}
@@ -77,8 +79,8 @@ func (p *DefaultQueryParser) ParseCategories(categoriesQuery string) ([]common.C
 	return categories, nil
 }
 
-// ParseStatuses parses a comma-separated string of statuses into a slice of Status
-func (p *DefaultQueryParser) ParseStatuses(statusesQuery string) ([]matchannouncement.Status, error) {
+// Statuses parses a comma-separated string of statuses into a slice of Status
+func (p *DefaultQueryParser) Statuses(statusesQuery string) ([]matchannouncement.Status, error) {
 	if statusesQuery == "" {
 		return nil, nil
 	}
@@ -103,8 +105,8 @@ func (p *DefaultQueryParser) ParseStatuses(statusesQuery string) ([]matchannounc
 	return statuses, nil
 }
 
-// ParseDate parses a date string in YYYY-MM-DD format into a time.Time
-func (p *DefaultQueryParser) ParseDate(dateQuery string) (time.Time, error) {
+// Date parses a date string in YYYY-MM-DD format into a time.Time
+func (p *DefaultQueryParser) Date(dateQuery string) (time.Time, error) {
 	if dateQuery == "" {
 		return time.Time{}, nil
 	}
@@ -117,8 +119,8 @@ func (p *DefaultQueryParser) ParseDate(dateQuery string) (time.Time, error) {
 	return date, nil
 }
 
-// ParseLocation creates a Location from country, province, and locality strings
-func (p *DefaultQueryParser) ParseLocation(country, province, locality string) *matchannouncement.Location {
+// Location creates a Location from country, province, and locality strings
+func (p *DefaultQueryParser) Location(country, province, locality string) *matchannouncement.Location {
 	if country == "" && province == "" && locality == "" {
 		return nil
 	}
@@ -128,4 +130,40 @@ func (p *DefaultQueryParser) ParseLocation(country, province, locality string) *
 		Province: province,
 		Locality: locality,
 	}
+}
+
+// Limit parses a limit string into an integer
+func (p *DefaultQueryParser) Limit(limitQuery string) (int, error) {
+	if limitQuery == "" {
+		return 0, nil // 0 means no limit
+	}
+
+	limit, err := strconv.Atoi(limitQuery)
+	if err != nil {
+		return 0, fmt.Errorf("invalid limit format: %w", err)
+	}
+
+	if limit < 0 {
+		return 0, fmt.Errorf("limit must be non-negative, got: %d", limit)
+	}
+
+	return limit, nil
+}
+
+// Offset parses an offset string into an integer
+func (p *DefaultQueryParser) Offset(offsetQuery string) (int, error) {
+	if offsetQuery == "" {
+		return 0, nil // 0 means no offset
+	}
+
+	offset, err := strconv.Atoi(offsetQuery)
+	if err != nil {
+		return 0, fmt.Errorf("invalid offset format: %w", err)
+	}
+
+	if offset < 0 {
+		return 0, fmt.Errorf("offset must be non-negative, got: %d", offset)
+	}
+
+	return offset, nil
 }

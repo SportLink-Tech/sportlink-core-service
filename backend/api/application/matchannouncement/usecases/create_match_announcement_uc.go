@@ -1,6 +1,7 @@
 package usecases
 
 import (
+	"context"
 	"fmt"
 	"sportlink/api/domain/common"
 	"sportlink/api/domain/matchannouncement"
@@ -20,19 +21,19 @@ func NewCreateMatchAnnouncementUC(matchAnnouncementRepository matchannouncement.
 	}
 }
 
-func (uc *CreateMatchAnnouncementUC) Invoke(input matchannouncement.Entity) (*matchannouncement.Entity, error) {
+func (uc *CreateMatchAnnouncementUC) Invoke(ctx context.Context, input matchannouncement.Entity) (*matchannouncement.Entity, error) {
 	// Validate the announcement
 	if err := uc.validateAnnouncement(input); err != nil {
 		return nil, err
 	}
 
 	// Validate that the team exists
-	if err := uc.validateTeamExists(input); err != nil {
+	if err := uc.validateTeamExists(ctx, input); err != nil {
 		return nil, err
 	}
 
 	// Save the announcement
-	err := uc.matchAnnouncementRepository.Save(input)
+	err := uc.matchAnnouncementRepository.Save(ctx, input)
 	if err != nil {
 		return nil, fmt.Errorf("error while inserting match announcement in database: %w", err)
 	}
@@ -84,9 +85,9 @@ func (uc *CreateMatchAnnouncementUC) validateAnnouncement(input matchannouncemen
 	return nil
 }
 
-func (uc *CreateMatchAnnouncementUC) validateTeamExists(input matchannouncement.Entity) error {
+func (uc *CreateMatchAnnouncementUC) validateTeamExists(ctx context.Context, input matchannouncement.Entity) error {
 	// Search for the team by name and sport
-	teams, err := uc.teamRepository.Find(team.DomainQuery{
+	teams, err := uc.teamRepository.Find(ctx, team.DomainQuery{
 		Name:   input.TeamName,
 		Sports: []common.Sport{input.Sport},
 	})

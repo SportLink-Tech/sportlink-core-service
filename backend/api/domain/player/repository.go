@@ -1,10 +1,13 @@
 package player
 
-import "sportlink/api/domain/common"
+import (
+	"context"
+	"sportlink/api/domain/common"
+)
 
 type Repository interface {
-	Save(entity Entity) error
-	Find(query DomainQuery) ([]Entity, error)
+	Save(ctx context.Context, entity Entity) error
+	Find(ctx context.Context, query DomainQuery) ([]Entity, error)
 }
 
 type DomainQuery struct {
