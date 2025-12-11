@@ -148,8 +148,7 @@ func TestFindMatchAnnouncements(t *testing.T) {
 				parserMock.On("Categories", "").Return(nil, nil)
 				parserMock.On("Statuses", "").Return(nil, nil)
 				parserMock.On("Date", "invalid-date").Return(time.Time{}, assert.AnError)
-				parserMock.On("Limit", "").Return(0, nil)
-				parserMock.On("Offset", "").Return(0, nil)
+				// Limit and Offset are not called when Date parsing fails
 			},
 			then: func(t *testing.T, responseCode int, response interface{}) {
 				assert.Equal(t, http.StatusBadRequest, responseCode)
