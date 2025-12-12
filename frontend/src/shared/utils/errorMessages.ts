@@ -1,6 +1,6 @@
 /**
  * Error Messages Mapper
- * Maps backend error codes and messages to Spanish user-friendly messages
+ * Maps backend error codes and messages to Spanish account-friendly messages
  */
 
 export interface ErrorMapping {
@@ -62,7 +62,7 @@ export const ERROR_PATTERNS: Array<{ pattern: RegExp; message: string }> = [
 ]
 
 /**
- * Translates backend error to Spanish user-friendly message
+ * Translates backend error to Spanish account-friendly message
  * @param errorCode - Error code from backend
  * @param errorMessage - Original error message from backend
  * @returns Spanish translated message
