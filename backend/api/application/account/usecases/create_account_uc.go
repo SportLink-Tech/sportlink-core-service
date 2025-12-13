@@ -38,7 +38,7 @@ func (uc *CreateAccountUC) Invoke(ctx context.Context, input account.Entity) (*a
 	}
 
 	if len(result) > 0 {
-		return nil, fmt.Errorf("Account already exist: %+v", input)
+		return nil, fmt.Errorf("account already exist: %+v", input)
 	}
 
 	// Save the new account

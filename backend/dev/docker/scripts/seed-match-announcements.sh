@@ -22,14 +22,99 @@ print_banner "Insertando anuncios de partidos de ejemplo en DynamoDB..."
 # Obtener fecha/hora actual como base
 # Intentar usar timezone de Argentina, fallback a UTC
 if TZ="America/Argentina/Buenos_Aires" date +%s >/dev/null 2>&1; then
-    NOW=$(TZ="America/Argentina/Buenos_Aires" date +%s)
-    TODAY_DATE=$(TZ="America/Argentina/Buenos_Aires" date +%Y-%m-%d)
-    TODAY_START=$(TZ="America/Argentina/Buenos_Aires" date -d "${TODAY_DATE} 00:00:00" +%s 2>/dev/null || date -d "${TODAY_DATE} 00:00:00" +%s)
+    TZ_AR="America/Argentina/Buenos_Aires"
+    NOW=$(TZ="$TZ_AR" date +%s)
+    TODAY_DATE=$(TZ="$TZ_AR" date +%Y-%m-%d)
+    # Calcular inicio del día en el timezone de Argentina
+    TODAY_START=$(TZ="$TZ_AR" date -d "${TODAY_DATE} 00:00:00" +%s 2>/dev/null || TZ="$TZ_AR" date +%s -d "${TODAY_DATE} 00:00:00")
 else
     NOW=$(date +%s)
     TODAY_DATE=$(date +%Y-%m-%d)
     TODAY_START=$(date -d "${TODAY_DATE} 00:00:00" +%s 2>/dev/null || date -u -d "${TODAY_DATE} 00:00:00" +%s)
 fi
+
+# Debug: mostrar fechas calculadas
+echo "Fecha de ejecución: $(date -d "@${NOW}" '+%Y-%m-%d %H:%M:%S')"
+echo "Hoy (${TODAY_DATE}) comienza en timestamp: ${TODAY_START}"
+echo "Timestamp actual: ${NOW}"
+
+# Función para eliminar anuncios antiguos (con Day < TODAY_START)
+cleanup_old_announcements() {
+    print_banner "Limpiando anuncios con fechas pasadas..."
+    local entity_id="Entity#MatchAnnouncement"
+    local deleted_count=0
+    
+    # Crear archivo temporal para la respuesta del scan
+    local temp_scan=$(mktemp)
+    
+    # Escanear todos los MatchAnnouncements con Day < TODAY_START
+    awslocal dynamodb scan \
+        --table-name "$TABLE_NAME" \
+        --region "$REGION" \
+        --filter-expression "EntityId = :entity_id AND Day < :today_start" \
+        --expression-attribute-values "{
+            \":entity_id\": {\"S\": \"${entity_id}\"},
+            \":today_start\": {\"N\": \"${TODAY_START}\"}
+        }" \
+        --projection-expression "EntityId,Id" \
+        --output json > "$temp_scan" 2>/dev/null || {
+        echo "  Advertencia: No se pudieron obtener anuncios antiguos (puede ser normal si la tabla está vacía)"
+        rm -f "$temp_scan"
+        return
+    }
+    
+    # Extraer IDs y eliminar (usando python3 si está disponible, sino usar grep/sed básico)
+    if command -v python3 >/dev/null 2>&1; then
+        python3 <<PYEOF
+import json
+import sys
+import subprocess
+import os
+
+try:
+    with open('${temp_scan}', 'r') as f:
+        data = json.load(f)
+    
+    deleted = 0
+    for item in data.get('Items', []):
+        entity_id_val = item.get('EntityId', {}).get('S', '')
+        id_val = item.get('Id', {}).get('S', '')
+        
+        if entity_id_val == '${entity_id}' and id_val:
+            key = {
+                "EntityId": {"S": entity_id_val},
+                "Id": {"S": id_val}
+            }
+            
+            result = subprocess.run(
+                ['awslocal', 'dynamodb', 'delete-item',
+                 '--table-name', '${TABLE_NAME}',
+                 '--region', '${REGION}',
+                 '--key', json.dumps(key)],
+                capture_output=True,
+                text=True
+            )
+            
+            if result.returncode == 0:
+                deleted += 1
+                print(f"  Eliminado: {id_val}")
+    
+    if deleted == 0:
+        print("  No se encontraron anuncios antiguos para eliminar")
+    else:
+        print(f"  Total eliminados: {deleted}")
+except Exception as e:
+    print(f"  Advertencia: Error procesando anuncios: {e}")
+PYEOF
+    else
+        echo "  Advertencia: python3 no disponible, omitiendo limpieza de anuncios antiguos"
+    fi
+    
+    rm -f "$temp_scan"
+}
+
+# Limpiar anuncios antiguos antes de insertar nuevos
+cleanup_old_announcements
 
 # Función auxiliar para generar UUID (simple pero efectivo)
 generate_uuid() {
@@ -129,10 +214,15 @@ insert_match_announcement() {
     echo "✓ Anuncio insertado: ${team_name} - ${sport} - ${date_str} ${hour}:00 - ${status}"
 }
 
-# Anuncios para hoy (día 0)
+# Anuncios para hoy (día 0) - Múltiples para cada deporte
 insert_match_announcement "Los Leones FC" "Football" 0 18 2 "Argentina" "Buenos Aires" "Capital Federal" "BETWEEN" "null" "4" "6" "PENDING"
+insert_match_announcement "River Plate A" "Football" 0 19 2 "Argentina" "Buenos Aires" "Núñez" "GREATER_THAN" "null" "5" "null" "PENDING"
+insert_match_announcement "Boca Juniors A" "Football" 0 20 2 "Argentina" "Buenos Aires" "La Boca" "SPECIFIC" "4 5" "null" "null" "PENDING"
 insert_match_announcement "Rocket Pádel" "Paddle" 0 20 2 "Argentina" "Buenos Aires" "Palermo" "GREATER_THAN" "null" "5" "null" "PENDING"
+insert_match_announcement "Pádel Express" "Paddle" 0 19 2 "Argentina" "Buenos Aires" "Palermo" "BETWEEN" "null" "4" "6" "PENDING"
+insert_match_announcement "Smash Pádel" "Paddle" 0 21 2 "Argentina" "Buenos Aires" "Villa Crespo" "SPECIFIC" "6 7" "null" "null" "PENDING"
 insert_match_announcement "Tennis Club Elite" "Tennis" 0 16 2 "Argentina" "Buenos Aires" "Recoleta" "SPECIFIC" "5 6" "null" "null" "PENDING"
+insert_match_announcement "Tennis Pro" "Tennis" 0 17 2 "Argentina" "Buenos Aires" "Belgrano" "GREATER_THAN" "null" "6" "null" "PENDING"
 
 # Anuncios para mañana (día 1)
 insert_match_announcement "Real Madrid Local" "Football" 1 19 2 "Argentina" "Buenos Aires" "Belgrano" "GREATER_THAN" "null" "5" "null" "PENDING"
