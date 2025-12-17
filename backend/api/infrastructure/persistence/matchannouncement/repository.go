@@ -12,12 +12,26 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
 )
 
+// DynamoDBClientInterface defines the interface for DynamoDB operations needed by the repository
+type DynamoDBClientInterface interface {
+	PutItem(ctx context.Context, params *dynamodb.PutItemInput, optFns ...func(*dynamodb.Options)) (*dynamodb.PutItemOutput, error)
+	Query(ctx context.Context, params *dynamodb.QueryInput, optFns ...func(*dynamodb.Options)) (*dynamodb.QueryOutput, error)
+}
+
 type RepositoryAdapter struct {
-	dbClient  *dynamodb.Client
+	dbClient  DynamoDBClientInterface
 	tableName string
 }
 
 func NewRepository(client *dynamodb.Client, tableName string) matchannouncement.Repository {
+	return &RepositoryAdapter{
+		dbClient:  client,
+		tableName: tableName,
+	}
+}
+
+// NewRepositoryWithInterface allows injecting a mock client for testing
+func NewRepositoryWithInterface(client DynamoDBClientInterface, tableName string) matchannouncement.Repository {
 	return &RepositoryAdapter{
 		dbClient:  client,
 		tableName: tableName,
@@ -106,7 +120,10 @@ func (repo *RepositoryAdapter) fetchWithFilters(ctx context.Context, queryInput 
 	var results []matchannouncement.Entity
 	var lastEvaluatedKey map[string]types.AttributeValue
 
-	for len(results) < itemsNeeded {
+	// If limit is 0, fetch all items that pass the filter (no limit)
+	hasLimit := itemsNeeded > 0
+
+	for {
 		if lastEvaluatedKey != nil {
 			queryInput.ExclusiveStartKey = lastEvaluatedKey
 		}
@@ -118,7 +135,8 @@ func (repo *RepositoryAdapter) fetchWithFilters(ctx context.Context, queryInput 
 
 		results = append(results, pageResults...)
 
-		if nextKey == nil || len(results) >= itemsNeeded {
+		// Break if no more pages or if we have enough items (when limit is set)
+		if nextKey == nil || (hasLimit && len(results) >= itemsNeeded) {
 			break
 		}
 		lastEvaluatedKey = nextKey
@@ -182,14 +200,24 @@ func (repo *RepositoryAdapter) countTotal(ctx context.Context, query matchannoun
 	}
 
 	totalCount := 0
-	paginator := dynamodb.NewQueryPaginator(repo.dbClient, queryInput)
+	var lastEvaluatedKey map[string]types.AttributeValue
 
-	for paginator.HasMorePages() {
-		resp, err := paginator.NextPage(ctx)
+	for {
+		if lastEvaluatedKey != nil {
+			queryInput.ExclusiveStartKey = lastEvaluatedKey
+		}
+
+		resp, err := repo.dbClient.Query(ctx, queryInput)
 		if err != nil {
 			return 0, err
 		}
+
 		totalCount += len(resp.Items)
+
+		if resp.LastEvaluatedKey == nil {
+			break
+		}
+		lastEvaluatedKey = resp.LastEvaluatedKey
 	}
 
 	return totalCount, nil

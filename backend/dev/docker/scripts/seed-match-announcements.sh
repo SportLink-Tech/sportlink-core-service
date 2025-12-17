@@ -20,22 +20,16 @@ print_banner() {
 print_banner "Insertando anuncios de partidos de ejemplo en DynamoDB..."
 
 # Obtener fecha/hora actual como base
-# Intentar usar timezone de Argentina, fallback a UTC
-if TZ="America/Argentina/Buenos_Aires" date +%s >/dev/null 2>&1; then
-    TZ_AR="America/Argentina/Buenos_Aires"
-    NOW=$(TZ="$TZ_AR" date +%s)
-    TODAY_DATE=$(TZ="$TZ_AR" date +%Y-%m-%d)
-    # Calcular inicio del día en el timezone de Argentina
-    TODAY_START=$(TZ="$TZ_AR" date -d "${TODAY_DATE} 00:00:00" +%s 2>/dev/null || TZ="$TZ_AR" date +%s -d "${TODAY_DATE} 00:00:00")
-else
-    NOW=$(date +%s)
-    TODAY_DATE=$(date +%Y-%m-%d)
-    TODAY_START=$(date -d "${TODAY_DATE} 00:00:00" +%s 2>/dev/null || date -u -d "${TODAY_DATE} 00:00:00" +%s)
-fi
+# IMPORTANTE: TODAY_START debe calcularse en UTC para que coincida con el parser del backend
+# que usa time.Parse() que parsea fechas en UTC por defecto
+NOW=$(date +%s)
+TODAY_DATE=$(date -u +%Y-%m-%d)  # Fecha de hoy en UTC
+# Calcular inicio del día en UTC (para que coincida con el parser del backend)
+TODAY_START=$(date -u -d "${TODAY_DATE} 00:00:00" +%s 2>/dev/null || date -u +%s -d "${TODAY_DATE} 00:00:00")
 
 # Debug: mostrar fechas calculadas
-echo "Fecha de ejecución: $(date -d "@${NOW}" '+%Y-%m-%d %H:%M:%S')"
-echo "Hoy (${TODAY_DATE}) comienza en timestamp: ${TODAY_START}"
+echo "Fecha de ejecución (UTC): $(date -u -d "@${NOW}" '+%Y-%m-%d %H:%M:%S')"
+echo "Hoy (${TODAY_DATE} UTC) comienza en timestamp: ${TODAY_START}"
 echo "Timestamp actual: ${NOW}"
 
 # Función para eliminar anuncios antiguos (con Day < TODAY_START)
@@ -205,12 +199,8 @@ insert_match_announcement() {
     
     rm -f "$temp_file"
     
-    # Formatear fecha para mostrar (usar el timezone disponible)
-    if TZ="America/Argentina/Buenos_Aires" date -d "@${day_seconds}" "+%Y-%m-%d" >/dev/null 2>&1; then
-        local date_str=$(TZ="America/Argentina/Buenos_Aires" date -d "@${day_seconds}" "+%Y-%m-%d")
-    else
-        local date_str=$(date -d "@${day_seconds}" "+%Y-%m-%d" 2>/dev/null || date -u -d "@${day_seconds}" "+%Y-%m-%d")
-    fi
+    # Formatear fecha para mostrar (usar UTC para consistencia)
+    local date_str=$(date -u -d "@${day_seconds}" "+%Y-%m-%d" 2>/dev/null || date -u +%Y-%m-%d)
     echo "✓ Anuncio insertado: ${team_name} - ${sport} - ${date_str} ${hour}:00 - ${status}"
 }
 

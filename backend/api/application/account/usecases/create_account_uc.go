@@ -29,12 +29,17 @@ func (uc *CreateAccountUC) Invoke(ctx context.Context, input account.Entity) (*a
 		return nil, errors.New(errMsg)
 	}
 
+	// Ensure ID is generated using domain method
+	if input.ID == "" {
+		input = account.NewAccount(input.Email, input.Nickname, input.Password)
+	}
+
 	result, err := uc.repository.Find(ctx, account.DomainQuery{
-		Email: input.Email,
+		Emails: []string{input.Email},
 	})
 
-	if err == nil {
-		return nil, err
+	if err != nil {
+		return nil, fmt.Errorf("error while checking if account exists: %w", err)
 	}
 
 	if len(result) > 0 {

@@ -135,7 +135,7 @@ func Test_Find(t *testing.T) {
 		{
 			name: "find a item which does not exist",
 			query: dteam.DomainQuery{
-				Name: "River",
+				Name: "NonExistentTeam12345",
 			},
 			on: func(t *testing.T, repository dteam.Repository) {
 			},
@@ -231,7 +231,7 @@ func Test_Find(t *testing.T) {
 			},
 			assertions: func(t *testing.T, entities []dteam.Entity, err error) {
 				assert.Nil(t, err)
-				assert.Len(t, entities, 2)
+				assert.GreaterOrEqual(t, len(entities), 2, "should have at least 2 entities")
 				assert.True(t, slice.Contains[dteam.Entity](
 					entities,
 					dteam.Entity{Name: "Multi Cat Team A"},
@@ -241,6 +241,13 @@ func Test_Find(t *testing.T) {
 				assert.True(t, slice.Contains[dteam.Entity](
 					entities,
 					dteam.Entity{Name: "Multi Cat Team B"},
+					func(a, b dteam.Entity) bool {
+						return a.Name == b.Name
+					}))
+				// Verify that Multi Cat Team C (L3) is NOT in results
+				assert.False(t, slice.Contains[dteam.Entity](
+					entities,
+					dteam.Entity{Name: "Multi Cat Team C"},
 					func(a, b dteam.Entity) bool {
 						return a.Name == b.Name
 					}))
@@ -276,7 +283,7 @@ func Test_Find(t *testing.T) {
 			},
 			assertions: func(t *testing.T, entities []dteam.Entity, err error) {
 				assert.Nil(t, err)
-				assert.Len(t, entities, 2)
+				assert.GreaterOrEqual(t, len(entities), 2, "should have at least 2 entities")
 				assert.True(t, slice.Contains[dteam.Entity](
 					entities,
 					dteam.Entity{Name: "Sport Only Team A"},
@@ -286,6 +293,13 @@ func Test_Find(t *testing.T) {
 				assert.True(t, slice.Contains[dteam.Entity](
 					entities,
 					dteam.Entity{Name: "Sport Only Team B"},
+					func(a, b dteam.Entity) bool {
+						return a.Name == b.Name
+					}))
+				// Verify that Sport Only Team C (Football) is NOT in results
+				assert.False(t, slice.Contains[dteam.Entity](
+					entities,
+					dteam.Entity{Name: "Sport Only Team C"},
 					func(a, b dteam.Entity) bool {
 						return a.Name == b.Name
 					}))

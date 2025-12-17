@@ -14,7 +14,7 @@ type Dto struct {
 
 func From(entity player.Entity) (Dto, error) {
 	if entity.ID == "" {
-		return Dto{}, fmt.Errorf("Id could not be empty")
+		return Dto{}, fmt.Errorf("id could not be empty")
 	}
 
 	return Dto{

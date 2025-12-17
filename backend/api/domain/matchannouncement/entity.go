@@ -4,7 +4,7 @@ import (
 	"sportlink/api/domain/common"
 	"time"
 
-	"github.com/google/uuid"
+	"github.com/oklog/ulid/v2"
 )
 
 // Entity represents a match announcement in the domain
@@ -33,7 +33,7 @@ func NewMatchAnnouncement(
 	createdAt time.Time,
 ) Entity {
 	return Entity{
-		ID:                 uuid.New().String(),
+		ID:                 generateMatchAnnouncementID(),
 		TeamName:           teamName,
 		Sport:              sport,
 		Day:                day,
@@ -43,4 +43,10 @@ func NewMatchAnnouncement(
 		Status:             status,
 		CreatedAt:          createdAt,
 	}
+}
+
+// generateMatchAnnouncementID generates a ULID for the match announcement
+func generateMatchAnnouncementID() string {
+	entropy := ulid.DefaultEntropy()
+	return ulid.MustNew(ulid.Timestamp(time.Now()), entropy).String()
 }

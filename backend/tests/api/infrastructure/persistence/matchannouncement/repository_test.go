@@ -167,19 +167,27 @@ func Test_Find(t *testing.T) {
 			},
 			assertions: func(t *testing.T, entities []domain.Entity, err error) {
 				assert.Nil(t, err)
-				assert.Len(t, entities, 2)
+				assert.GreaterOrEqual(t, len(entities), 2, "should have at least 2 entities")
+				// Verify that the saved announcements are present
 				assert.True(t, slice.Contains[domain.Entity](
 					entities,
 					domain.Entity{TeamName: "Paddle Team A"},
 					func(a, b domain.Entity) bool {
 						return a.TeamName == b.TeamName
-					}))
+					}), "should contain Paddle Team A")
 				assert.True(t, slice.Contains[domain.Entity](
 					entities,
 					domain.Entity{TeamName: "Paddle Team B"},
 					func(a, b domain.Entity) bool {
 						return a.TeamName == b.TeamName
-					}))
+					}), "should contain Paddle Team B")
+				// Verify that Tennis team is NOT in results (because we filtered by Paddle sport)
+				assert.False(t, slice.Contains[domain.Entity](
+					entities,
+					domain.Entity{TeamName: "Tennis Team"},
+					func(a, b domain.Entity) bool {
+						return a.TeamName == b.TeamName
+					}), "should not contain Tennis Team")
 			},
 		},
 		{

@@ -2,12 +2,20 @@ package testcontainer
 
 import (
 	"context"
-	"github.com/testcontainers/testcontainers-go"
+	"time"
+
 	"testing"
+
+	"github.com/testcontainers/testcontainers-go"
 )
 
 func SportLinkContainer(t *testing.T, ctx context.Context) testcontainers.Container {
-	return createContainer(t, ctx, containerRequest())
+	// Create a context with timeout for container startup
+	// The wait strategy has its own timeout, but we also need a context timeout
+	containerCtx, cancel := context.WithTimeout(ctx, 3*time.Minute)
+	defer cancel()
+
+	return createContainer(t, containerCtx, containerRequest())
 }
 
 func GetContainerEndpoint(t *testing.T, container testcontainers.Container, ctx context.Context) string {

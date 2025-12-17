@@ -11,7 +11,7 @@ import (
 	"github.com/go-playground/validator/v10"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
-	
+
 	"sportlink/api/application/player/request"
 	"sportlink/api/application/player/usecases"
 	"sportlink/api/domain/common"
@@ -34,86 +34,72 @@ func TestPlayerCreationHandler(t *testing.T) {
 			name: "create a new player successfully",
 			payloadRequest: request.NewPlayerRequest{
 				Sport:    "Football",
-				ID:       "player1",
 				Category: 1,
 			},
 			on: func(t *testing.T, playerRepository *pmocks.Repository) {
-				playerRepository.On("Find", mock.Anything, mock.MatchedBy(func(query domain.DomainQuery) bool {
-					return query.Id == "player1" && query.Category == common.L1 && query.Sport == common.Football
-				})).Return([]domain.Entity{}, nil)
 				playerRepository.On("Save", mock.Anything, mock.MatchedBy(func(entity domain.Entity) bool {
-					return entity.ID == "player1" &&
+					return entity.ID != "" && // ULID is generated
 						entity.Category == common.L1 &&
 						entity.Sport == common.Football
 				})).Return(nil)
 			},
 			assertions: func(t *testing.T, responseCode int, response map[string]interface{}) {
 				assert.Equal(t, http.StatusCreated, responseCode)
-				assert.Equal(t, "player1", response["ID"])
+				assert.NotEmpty(t, response["ID"]) // ULID is generated
 			},
 		},
 		{
 			name: "create a new paddle player successfully",
 			payloadRequest: request.NewPlayerRequest{
 				Sport:    "Paddle",
-				ID:       "paddle_player1",
 				Category: 4,
 			},
 			on: func(t *testing.T, playerRepository *pmocks.Repository) {
-				playerRepository.On("Find", mock.Anything, mock.Anything).Return([]domain.Entity{}, nil)
 				playerRepository.On("Save", mock.Anything, mock.Anything).Return(nil)
 			},
 			assertions: func(t *testing.T, responseCode int, response map[string]interface{}) {
 				assert.Equal(t, http.StatusCreated, responseCode)
-				assert.Equal(t, "paddle_player1", response["ID"])
+				assert.NotEmpty(t, response["ID"]) // ULID is generated
 			},
 		},
 		{
 			name: "create a new tennis player successfully",
 			payloadRequest: request.NewPlayerRequest{
 				Sport:    "Tennis",
-				ID:       "tennis_player1",
 				Category: 3,
 			},
 			on: func(t *testing.T, playerRepository *pmocks.Repository) {
-				playerRepository.On("Find", mock.Anything, mock.Anything).Return([]domain.Entity{}, nil)
 				playerRepository.On("Save", mock.Anything, mock.Anything).Return(nil)
 			},
 			assertions: func(t *testing.T, responseCode int, response map[string]interface{}) {
 				assert.Equal(t, http.StatusCreated, responseCode)
+				assert.NotEmpty(t, response["ID"]) // ULID is generated
 			},
 		},
 		{
-			name: "fails when player already exists",
+			name: "create player with ULID generated automatically",
 			payloadRequest: request.NewPlayerRequest{
 				Sport:    "Football",
-				ID:       "existing_player",
 				Category: 2,
 			},
 			on: func(t *testing.T, playerRepository *pmocks.Repository) {
-				existingPlayer := domain.Entity{
-					ID:       "existing_player",
-					Category: common.L2,
-					Sport:    common.Football,
-				}
-				playerRepository.On("Find", mock.Anything, mock.Anything).Return([]domain.Entity{existingPlayer}, nil)
+				// With ULID, each player gets a unique ID, so duplicates by ID are not possible
+				// The test now just verifies successful creation
+				playerRepository.On("Save", mock.Anything, mock.Anything).Return(nil)
 			},
 			assertions: func(t *testing.T, responseCode int, response map[string]interface{}) {
-				assert.Equal(t, http.StatusConflict, responseCode)
-				assert.Equal(t, "use_case_execution_error", response["code"])
-				assert.Contains(t, response["message"], "Player already exist")
+				assert.Equal(t, http.StatusCreated, responseCode)
+				assert.NotEmpty(t, response["ID"]) // ULID is generated
 			},
 		},
 		{
 			name: "fails when create a player with invalid category",
 			payloadRequest: request.NewPlayerRequest{
 				Sport:    "Football",
-				ID:       "player2",
 				Category: 99,
 			},
 			on: func(t *testing.T, playerRepository *pmocks.Repository) {
-				playerRepository.On("Find", mock.Anything, mock.Anything).Return([]domain.Entity{}, nil)
-				playerRepository.On("Save", mock.Anything, mock.Anything).Return(nil)
+				// No repository calls expected for validation errors
 			},
 			assertions: func(t *testing.T, responseCode int, response map[string]interface{}) {
 				assert.Contains(t, response["message"], "invalid category value: 99")
@@ -124,12 +110,10 @@ func TestPlayerCreationHandler(t *testing.T) {
 			name: "fails when create a player with invalid sport",
 			payloadRequest: request.NewPlayerRequest{
 				Sport:    "Basketball",
-				ID:       "player3",
 				Category: 1,
 			},
 			on: func(t *testing.T, playerRepository *pmocks.Repository) {
-				playerRepository.On("Find", mock.Anything, mock.Anything).Return([]domain.Entity{}, nil)
-				playerRepository.On("Save", mock.Anything, mock.Anything).Return(nil)
+				// No repository calls expected for validation errors
 			},
 			assertions: func(t *testing.T, responseCode int, response map[string]interface{}) {
 				assert.Contains(t, response["message"], "Error:Field validation for 'Sport' failed")
@@ -137,35 +121,18 @@ func TestPlayerCreationHandler(t *testing.T) {
 			},
 		},
 		{
-			name: "fails when ID is missing",
-			payloadRequest: request.NewPlayerRequest{
-				Sport:    "Football",
-				ID:       "",
-				Category: 1,
-			},
-			on: func(t *testing.T, playerRepository *pmocks.Repository) {
-				playerRepository.On("Find", mock.Anything, mock.Anything).Return([]domain.Entity{}, nil)
-				playerRepository.On("Save", mock.Anything, mock.Anything).Return(nil)
-			},
-			assertions: func(t *testing.T, responseCode int, response map[string]interface{}) {
-				assert.Contains(t, response["message"], "Error:Field validation for 'ID'")
-				assert.Equal(t, http.StatusBadRequest, responseCode)
-			},
-		},
-		{
 			name: "create player without category defaults to Unranked",
 			payloadRequest: request.NewPlayerRequest{
 				Sport: "Football",
-				ID:    "player4",
 			},
 			on: func(t *testing.T, playerRepository *pmocks.Repository) {
-				playerRepository.On("Find", mock.Anything, mock.Anything).Return([]domain.Entity{}, nil)
 				playerRepository.On("Save", mock.Anything, mock.MatchedBy(func(entity domain.Entity) bool {
-					return entity.ID == "player4" && entity.Category == common.Unranked
+					return entity.ID != "" && entity.Category == common.Unranked
 				})).Return(nil)
 			},
 			assertions: func(t *testing.T, responseCode int, response map[string]interface{}) {
 				assert.Equal(t, http.StatusCreated, responseCode)
+				assert.NotEmpty(t, response["ID"]) // ULID is generated
 			},
 		},
 	}
@@ -204,4 +171,3 @@ func createMapResponse(resp *httptest.ResponseRecorder) map[string]interface{} {
 	json.Unmarshal(resp.Body.Bytes(), &response)
 	return response
 }
-

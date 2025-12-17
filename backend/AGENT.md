@@ -362,13 +362,24 @@ for _, tc := range testCases {
 
 ### Using Matchers
 
-- **Always use specific matchers** - Never use `mock.Anything` except in contexts (e.g., `context.Context`)
+- **ALWAYS use specific matchers** - `mock.Anything` is a **TERRIBLE PRACTICE** that must be avoided
 - **Use `mock.MatchedBy()`** for complex validation logic
-- **Be specific** about what you're matching
+- **Be specific** about what you're matching - validate the actual values being passed
+
+### Why mock.Anything is BAD
+
+Using `mock.Anything` is a **code smell** that indicates you're not really testing anything meaningful:
+
+❌ **Why it's terrible**:
+- You're only testing that the mock was **called**, not **how** it was called
+- You're not validating the actual data being passed
+- Bugs can slip through because you're not verifying the correct values
+- Tests become meaningless - they pass even when the code is wrong
+- It's essentially saying "I don't care what data is passed" which defeats the purpose of testing
 
 ### Examples
 
-✅ **Good** (Specific matchers):
+✅ **Good** (Specific matchers - validates the actual data):
 ```go
 useCaseMock.On("Invoke", mock.MatchedBy(func(entity domain.Entity) bool {
     return entity.TeamName == "Boca" &&
@@ -377,20 +388,39 @@ useCaseMock.On("Invoke", mock.MatchedBy(func(entity domain.Entity) bool {
 })).Return(expectedEntity, nil)
 ```
 
-❌ **Bad** (Using mock.Anything):
+✅ **Good** (For DynamoDB queries - validates query structure):
 ```go
-useCaseMock.On("Invoke", mock.Anything).Return(expectedEntity, nil)
+mockClient.On("Query", mock.Anything, mock.MatchedBy(func(input *dynamodb.QueryInput) bool {
+    return input.Limit != nil && 
+           *input.Limit == 100 &&
+           input.FilterExpression != nil
+})).Return(&dynamodb.QueryOutput{...}, nil)
 ```
 
-### Exception: Context Parameters
+❌ **Bad** (Using mock.Anything - doesn't validate data):
+```go
+useCaseMock.On("Invoke", mock.Anything).Return(expectedEntity, nil)
+// This test passes even if you pass completely wrong data!
+```
 
-The only exception is for `context.Context` parameters, where `mock.Anything` is acceptable:
+❌ **Bad** (Using mock.Anything for query inputs):
+```go
+mockClient.On("Query", mock.Anything, mock.Anything).Return(&dynamodb.QueryOutput{...}, nil)
+// You're not testing what query parameters are being used!
+```
+
+### Exception: Context Parameters ONLY
+
+The **ONLY** exception is for `context.Context` parameters, where `mock.Anything` is acceptable:
 
 ```go
 repository.On("Save", mock.Anything, mock.MatchedBy(func(entity Entity) bool {
-    return entity.Name == "Boca"
+    return entity.Name == "Boca" &&
+           entity.Category == common.L5
 })).Return(nil)
 ```
+
+**Important**: Even though we use `mock.Anything` for context, we **still validate** all other parameters with specific matchers.
 
 ## Deterministic Tests
 

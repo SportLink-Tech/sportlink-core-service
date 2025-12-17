@@ -34,7 +34,7 @@ func TestCreateAccountUC_Invoke(t *testing.T) {
 						entity.Password == "SportLink-Password1234"
 				})).Return([]error{})
 				repository.On("Find", mock.Anything, mock.MatchedBy(func(query account.DomainQuery) bool {
-					return query.Email == "cabrerajjorge@gmail.com"
+					return len(query.Emails) == 1 && query.Emails[0] == "cabrerajjorge@gmail.com"
 				})).Return([]account.Entity{}, nil)
 				repository.On("Save", mock.Anything, mock.MatchedBy(func(entity account.Entity) bool {
 					return entity.Email == "cabrerajjorge@gmail.com" &&
@@ -61,13 +61,13 @@ func TestCreateAccountUC_Invoke(t *testing.T) {
 				existingAccount := account.Entity{
 					Email:    "existing@example.com",
 					Nickname: "existing",
-					Password: "SportLink-Password1234",
+					Password: "$2a$10$existinghashedpasswordexample",
 				}
 				validator.On("Check", mock.MatchedBy(func(entity account.Entity) bool {
 					return entity.Email == "existing@example.com"
 				})).Return([]error{})
 				repository.On("Find", mock.Anything, mock.MatchedBy(func(query account.DomainQuery) bool {
-					return query.Email == "existing@example.com"
+					return len(query.Emails) == 1 && query.Emails[0] == "existing@example.com"
 				})).Return([]account.Entity{existingAccount}, nil)
 			},
 			then: func(t *testing.T, result *account.Entity, err error) {
@@ -113,7 +113,7 @@ func TestCreateAccountUC_Invoke(t *testing.T) {
 					return entity.Email == "cabrerajjorge@gmail.com"
 				})).Return([]error{})
 				repository.On("Find", mock.Anything, mock.MatchedBy(func(query account.DomainQuery) bool {
-					return query.Email == "cabrerajjorge@gmail.com"
+					return len(query.Emails) == 1 && query.Emails[0] == "cabrerajjorge@gmail.com"
 				})).Return([]account.Entity{}, errors.New("database connection error"))
 			},
 			then: func(t *testing.T, result *account.Entity, err error) {
@@ -135,7 +135,7 @@ func TestCreateAccountUC_Invoke(t *testing.T) {
 					return entity.Email == "cabrerajjorge@gmail.com"
 				})).Return([]error{})
 				repository.On("Find", mock.Anything, mock.MatchedBy(func(query account.DomainQuery) bool {
-					return query.Email == "cabrerajjorge@gmail.com"
+					return len(query.Emails) == 1 && query.Emails[0] == "cabrerajjorge@gmail.com"
 				})).Return([]account.Entity{}, nil)
 				repository.On("Save", mock.Anything, mock.MatchedBy(func(entity account.Entity) bool {
 					return entity.Email == "cabrerajjorge@gmail.com"
@@ -161,10 +161,11 @@ func TestCreateAccountUC_Invoke(t *testing.T) {
 						entity.Password == "P@ssw0rd!123"
 				})).Return([]error{})
 				repository.On("Find", mock.Anything, mock.MatchedBy(func(query account.DomainQuery) bool {
-					return query.Email == "test@example.com"
+					return len(query.Emails) == 1 && query.Emails[0] == "test@example.com"
 				})).Return([]account.Entity{}, nil)
 				repository.On("Save", mock.Anything, mock.MatchedBy(func(entity account.Entity) bool {
 					return entity.Email == "test@example.com" &&
+						entity.Nickname == "testuser" &&
 						entity.Password == "P@ssw0rd!123"
 				})).Return(nil)
 			},
