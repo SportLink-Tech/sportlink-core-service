@@ -18,6 +18,7 @@ export interface Team {
   Stats: TeamStats
   Sport: Sport
   Members: Player[]
+  OwnerAccountID?: string
 }
 
 export interface CreateTeamRequest {
@@ -25,6 +26,7 @@ export interface CreateTeamRequest {
   name: string
   category?: number
   players?: string[]
+  owner_account_id?: string
 }
 
 export interface ApiError {

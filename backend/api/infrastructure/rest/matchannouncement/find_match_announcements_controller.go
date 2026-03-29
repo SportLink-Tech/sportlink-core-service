@@ -93,6 +93,20 @@ func (sc *DefaultController) buildDomainQuery(c *gin.Context) (matchannouncement
 		c.Query("locality"),
 	)
 
+	// Parse geo filter (takes precedence over text location when present)
+	geoFilter, err := sc.queryParser.GeoFilter(
+		c.Query("lat"),
+		c.Query("lng"),
+		c.Query("radiusKm"),
+	)
+	if err != nil {
+		return query, err
+	}
+	if geoFilter != nil {
+		query.GeoFilter = geoFilter
+		query.Location = nil // geo filter replaces text location filter
+	}
+
 	// Parse limit
 	limit, err := sc.queryParser.Limit(c.Query("limit"))
 	if err != nil {

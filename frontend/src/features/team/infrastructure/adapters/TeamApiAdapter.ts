@@ -10,8 +10,8 @@ const API_BASE_URL = '/api'
  * Following Hexagonal Architecture - Adapter implements Port
  */
 export class TeamApiAdapter implements TeamRepository {
-  async createTeam(request: CreateTeamRequest): Promise<{ data: Team; status: number }> {
-    const response = await fetch(`${API_BASE_URL}/team`, {
+  async createTeam(accountId: string, request: CreateTeamRequest): Promise<{ data: Team; status: number }> {
+    const response = await fetch(`${API_BASE_URL}/account/${accountId}/team`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -24,6 +24,27 @@ export class TeamApiAdapter implements TeamRepository {
     if (!response.ok) {
       const error: ApiError = data
       throw new Error(error.message || 'Error creating team')
+    }
+
+    return {
+      data,
+      status: response.status
+    }
+  }
+
+  async listAccountTeams(accountId: string): Promise<{ data: Team[]; status: number }> {
+    const response = await fetch(`${API_BASE_URL}/account/${accountId}/team`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    })
+
+    const data = await response.json()
+
+    if (!response.ok) {
+      const error: ApiError = data
+      throw new Error(error.message || 'Error listing account teams')
     }
 
     return {

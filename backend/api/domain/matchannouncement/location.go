@@ -4,9 +4,11 @@ import "time"
 
 // Location represents the geographic location of a match
 type Location struct {
-	Country  string
-	Province string
-	Locality string
+	Country   string
+	Province  string
+	Locality  string
+	Latitude  float64
+	Longitude float64
 }
 
 func NewLocation(country, province, locality string) Location {
@@ -15,6 +17,21 @@ func NewLocation(country, province, locality string) Location {
 		Province: province,
 		Locality: locality,
 	}
+}
+
+func NewLocationWithCoords(country, province, locality string, latitude, longitude float64) Location {
+	return Location{
+		Country:   country,
+		Province:  province,
+		Locality:  locality,
+		Latitude:  latitude,
+		Longitude: longitude,
+	}
+}
+
+// HasCoords returns true if the location has valid GPS coordinates
+func (l Location) HasCoords() bool {
+	return l.Latitude != 0 || l.Longitude != 0
 }
 
 // GetTimezone returns the timezone associated with the location

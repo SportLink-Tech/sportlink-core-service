@@ -32,6 +32,7 @@ func TestCreateTeamUC_Invoke(t *testing.T) {
 				*common.NewStats(10, 0, 0),
 				common.Football,
 				make([]player.Entity, 0),
+				"",
 			),
 			on: func(t *testing.T, playerRepository *pmocks.Repository, teamRepository *mmocks.Repository) {
 				teamRepository.On("Save", mock.Anything, mock.MatchedBy(func(team team.Entity) bool {
@@ -50,6 +51,7 @@ func TestCreateTeamUC_Invoke(t *testing.T) {
 					*common.NewStats(10, 0, 0),
 					common.Football,
 					make([]player.Entity, 0),
+					"",
 				)
 				assert.Equal(t, expected.ID, response.ID)
 				assert.Equal(t, expected.Name, response.Name)
@@ -76,6 +78,7 @@ func TestCreateTeamUC_Invoke(t *testing.T) {
 						Sport:    common.Football,
 					},
 				},
+				"",
 			),
 			on: func(t *testing.T, playerRepository *pmocks.Repository, teamRepository *mmocks.Repository) {
 				teamRepository.On("Save", mock.Anything, mock.MatchedBy(func(team team.Entity) bool {
@@ -120,6 +123,7 @@ func TestCreateTeamUC_Invoke(t *testing.T) {
 							Sport:    common.Football,
 						},
 					},
+					"",
 				)
 				assert.Equal(t, expected.ID, response.ID)
 				assert.Equal(t, expected.Name, response.Name)
@@ -147,6 +151,7 @@ func TestCreateTeamUC_Invoke(t *testing.T) {
 						Sport:    common.Football,
 					},
 				},
+				"",
 			),
 			on: func(t *testing.T, playerRepository *pmocks.Repository, teamRepository *mmocks.Repository) {
 				teamRepository.On("Save", mock.Anything, mock.MatchedBy(func(team team.Entity) bool {
@@ -181,6 +186,7 @@ func TestCreateTeamUC_Invoke(t *testing.T) {
 				*common.NewStats(10, 0, 0),
 				common.Football,
 				make([]player.Entity, 0),
+				"",
 			),
 			on: func(t *testing.T, playerRepository *pmocks.Repository, teamRepository *mmocks.Repository) {
 				teamRepository.On("Save", mock.Anything, mock.MatchedBy(func(team team.Entity) bool {

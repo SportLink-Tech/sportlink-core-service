@@ -7,7 +7,7 @@ import (
 	"sportlink/api/domain/team"
 )
 
-func CreationRequestToEntity(request team2.NewTeamRequest) (team.Entity, error) {
+func CreationRequestToEntity(request team2.NewTeamRequest, ownerAccountID string) (team.Entity, error) {
 	category, err := common.GetCategory(request.Category)
 	if err != nil {
 		return team.Entity{}, err
@@ -18,5 +18,5 @@ func CreationRequestToEntity(request team2.NewTeamRequest) (team.Entity, error) 
 	for _, playerId := range request.PlayerIds {
 		players = append(players, player.Entity{ID: playerId})
 	}
-	return team.NewTeam(request.Name, category, *stats, sport, players), nil
+	return team.NewTeam(request.Name, category, *stats, sport, players, ownerAccountID), nil
 }

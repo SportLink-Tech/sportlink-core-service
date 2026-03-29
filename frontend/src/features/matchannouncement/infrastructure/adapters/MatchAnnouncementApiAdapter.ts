@@ -61,7 +61,11 @@ export class MatchAnnouncementApiAdapter implements MatchAnnouncementRepository 
       queryParams.append('toDate', query.toDate)
     }
 
-    if (query.location) {
+    if (query.geoFilter) {
+      queryParams.append('lat', query.geoFilter.latitude.toString())
+      queryParams.append('lng', query.geoFilter.longitude.toString())
+      queryParams.append('radiusKm', query.geoFilter.radiusKm.toString())
+    } else if (query.location) {
       if (query.location.country) {
         queryParams.append('country', query.location.country)
       }

@@ -19,6 +19,7 @@ import PersonIcon from '@mui/icons-material/Person'
 import AddCircleIcon from '@mui/icons-material/AddCircle'
 import LogoutIcon from '@mui/icons-material/Logout'
 import GroupAddIcon from '@mui/icons-material/GroupAdd'
+import GroupsIcon from '@mui/icons-material/Groups'
 import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown'
 import EventIcon from '@mui/icons-material/Event'
 
@@ -193,9 +194,9 @@ export function Layout({ children }: LayoutProps) {
                 <AddCircleIcon sx={{ mr: 2, fontSize: 24, color: 'text.secondary' }} />
                 <Typography variant="body1">Publicar Partido</Typography>
               </MenuItem>
-              <MenuItem 
+              <MenuItem
                 onClick={() => handleNavigate('/create-team')}
-                sx={{ 
+                sx={{
                   py: 1.5,
                   px: 2,
                   '&:hover': { bgcolor: 'rgba(0, 0, 0, 0.04)' }
@@ -203,6 +204,17 @@ export function Layout({ children }: LayoutProps) {
               >
                 <GroupAddIcon sx={{ mr: 2, fontSize: 24, color: 'text.secondary' }} />
                 <Typography variant="body1">Agregar equipo</Typography>
+              </MenuItem>
+              <MenuItem
+                onClick={() => handleNavigate('/my-teams')}
+                sx={{
+                  py: 1.5,
+                  px: 2,
+                  '&:hover': { bgcolor: 'rgba(0, 0, 0, 0.04)' }
+                }}
+              >
+                <GroupsIcon sx={{ mr: 2, fontSize: 24, color: 'text.secondary' }} />
+                <Typography variant="body1">Mis equipos</Typography>
               </MenuItem>
             </Box>
 

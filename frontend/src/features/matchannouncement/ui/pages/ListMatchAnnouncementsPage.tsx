@@ -19,7 +19,7 @@ import SportsIcon from '@mui/icons-material/Sports'
 import GroupsIcon from '@mui/icons-material/Groups'
 import AccessTimeIcon from '@mui/icons-material/AccessTime'
 import { useMatchAnnouncementContext } from '../../context/MatchAnnouncementContext'
-import { MatchAnnouncement } from '../../../../shared/types/matchAnnouncement'
+import { MatchAnnouncement, GeoFilter } from '../../../../shared/types/matchAnnouncement'
 import { MatchAnnouncementFilters } from '../components/MatchAnnouncementFilters'
 
 const ITEMS_PER_PAGE = 9 // 3 filas x 3 columnas
@@ -37,6 +37,7 @@ export function ListMatchAnnouncementsPage() {
   const [selectedSports, setSelectedSports] = useState<string[]>([])
   const [fromDate, setFromDate] = useState<string>('')
   const [toDate, setToDate] = useState<string>('')
+  const [geoFilter, setGeoFilter] = useState<GeoFilter | undefined>(undefined)
 
   const loadAnnouncements = useCallback(async () => {
     setLoading(true)
@@ -60,6 +61,9 @@ export function ListMatchAnnouncementsPage() {
     if (toDate) {
       query.toDate = toDate
     }
+    if (geoFilter) {
+      query.geoFilter = geoFilter
+    }
 
     const result = await findMatchAnnouncementsUseCase.execute(query)
 
@@ -77,7 +81,7 @@ export function ListMatchAnnouncementsPage() {
     }
 
     setLoading(false)
-  }, [currentPage, findMatchAnnouncementsUseCase, selectedSports, fromDate, toDate])
+  }, [currentPage, findMatchAnnouncementsUseCase, selectedSports, fromDate, toDate, geoFilter])
 
   useEffect(() => {
     loadAnnouncements()
@@ -189,10 +193,11 @@ export function ListMatchAnnouncementsPage() {
     }
   }
 
-  const handleFiltersChange = (filters: { sports: string[]; fromDate: string; toDate: string }) => {
+  const handleFiltersChange = (filters: { sports: string[]; fromDate: string; toDate: string; geoFilter?: GeoFilter }) => {
     setSelectedSports(filters.sports)
     setFromDate(filters.fromDate)
     setToDate(filters.toDate)
+    setGeoFilter(filters.geoFilter)
     // Reset to first page when filters change
     setCurrentPage(1)
   }

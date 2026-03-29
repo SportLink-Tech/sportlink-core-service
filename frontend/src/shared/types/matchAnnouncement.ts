@@ -11,6 +11,8 @@ export interface MatchAnnouncement {
     country: string
     province: string
     locality: string
+    latitude?: number
+    longitude?: number
   }
   admitted_categories: {
     type: 'SPECIFIC' | 'GREATER_THAN' | 'LESS_THAN' | 'BETWEEN'
@@ -34,6 +36,8 @@ export interface CreateMatchAnnouncementRequest {
     country: string
     province: string
     locality: string
+    latitude?: number
+    longitude?: number
   }
   admitted_categories: {
     type: 'SPECIFIC' | 'GREATER_THAN' | 'LESS_THAN' | 'BETWEEN'
@@ -41,6 +45,12 @@ export interface CreateMatchAnnouncementRequest {
     min_level?: number
     max_level?: number
   }
+}
+
+export interface GeoFilter {
+  latitude: number
+  longitude: number
+  radiusKm: number
 }
 
 export interface FindMatchAnnouncementsQuery {
@@ -54,6 +64,7 @@ export interface FindMatchAnnouncementsQuery {
     province?: string
     locality?: string
   }
+  geoFilter?: GeoFilter
   limit?: number
   offset?: number
 }

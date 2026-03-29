@@ -16,9 +16,11 @@ type TimeSlot struct {
 }
 
 type Location struct {
-	Country  string `json:"country" validate:"required"`
-	Province string `json:"province" validate:"required"`
-	Locality string `json:"locality" validate:"required"`
+	Country   string   `json:"country" validate:"required"`
+	Province  string   `json:"province" validate:"required"`
+	Locality  string   `json:"locality" validate:"required"`
+	Latitude  *float64 `json:"latitude,omitempty"`
+	Longitude *float64 `json:"longitude,omitempty"`
 }
 
 type CategoryRangeInput struct {

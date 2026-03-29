@@ -3,13 +3,17 @@ package matchannouncement
 import (
 	"context"
 	"fmt"
+	"math"
 	"sportlink/api/domain/matchannouncement"
+	"sync"
+	"time"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue"
 	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/expression"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
+	"github.com/mmcloughlin/geohash"
 )
 
 type RepositoryAdapter struct {
@@ -50,6 +54,10 @@ const (
 )
 
 func (repo *RepositoryAdapter) Find(ctx context.Context, query matchannouncement.DomainQuery) (matchannouncement.Page, error) {
+	if query.GeoFilter != nil {
+		return repo.findByGeoFilter(ctx, query)
+	}
+
 	keyCond := expression.KeyEqual(expression.Key("EntityId"), expression.Value("Entity#MatchAnnouncement"))
 
 	builder := expression.NewBuilder().WithKeyCondition(keyCond)
@@ -227,7 +235,7 @@ func From(entity matchannouncement.Entity) (Dto, error) {
 		maxLevel = int(entity.AdmittedCategories.MaxLevel)
 	}
 
-	return Dto{
+	dto := Dto{
 		EntityId:   "Entity#MatchAnnouncement",
 		Id:         entity.ID,
 		TeamName:   entity.TeamName,
@@ -245,7 +253,147 @@ func From(entity matchannouncement.Entity) (Dto, error) {
 		Status:     entity.Status.String(),
 		CreatedAt:  createdAt,
 		ExpiresAt:  expiresAt,
-	}, nil
+	}
+
+	if entity.Location.HasCoords() {
+		prefix := geohash.EncodeWithPrecision(entity.Location.Latitude, entity.Location.Longitude, 3)
+		lat := entity.Location.Latitude
+		lng := entity.Location.Longitude
+		dto.GeohashPrefix = &prefix
+		dto.Latitude = &lat
+		dto.Longitude = &lng
+	}
+
+	return dto, nil
+}
+
+const geoIndexName = "GeohashPrefix-Day-index"
+
+var noTime = time.Time{}
+
+// findByGeoFilter queries the GSI for each of the 9 geohash cells covering the search radius,
+// merges results, then filters in-memory by exact Haversine distance.
+func (repo *RepositoryAdapter) findByGeoFilter(ctx context.Context, query matchannouncement.DomainQuery) (matchannouncement.Page, error) {
+	gf := query.GeoFilter
+	targetHash := geohash.EncodeWithPrecision(gf.Latitude, gf.Longitude, 3)
+	cells := append(geohash.Neighbors(targetHash), targetHash)
+
+	type cellResult struct {
+		entities []matchannouncement.Entity
+		err      error
+	}
+
+	results := make([]cellResult, len(cells))
+	var wg sync.WaitGroup
+
+	for i, cell := range cells {
+		wg.Add(1)
+		go func(idx int, hashCell string) {
+			defer wg.Done()
+			entities, err := repo.queryGSICell(ctx, hashCell, query)
+			results[idx] = cellResult{entities: entities, err: err}
+		}(i, cell)
+	}
+	wg.Wait()
+
+	var merged []matchannouncement.Entity
+	seen := make(map[string]bool)
+	for _, r := range results {
+		if r.err != nil {
+			return matchannouncement.Page{}, r.err
+		}
+		for _, e := range r.entities {
+			if !seen[e.ID] {
+				seen[e.ID] = true
+				merged = append(merged, e)
+			}
+		}
+	}
+
+	// Filter by exact Haversine distance
+	var filtered []matchannouncement.Entity
+	for _, e := range merged {
+		if e.Location.HasCoords() {
+			dist := haversineKm(gf.Latitude, gf.Longitude, e.Location.Latitude, e.Location.Longitude)
+			if dist <= gf.RadiusKm {
+				filtered = append(filtered, e)
+			}
+		}
+	}
+
+	total := len(filtered)
+	filtered = applyPagination(filtered, query.Limit, query.Offset)
+	if filtered == nil {
+		filtered = []matchannouncement.Entity{}
+	}
+	return matchannouncement.Page{Entities: filtered, Total: total}, nil
+}
+
+// queryGSICell queries the GSI for a single geohash cell, applying non-geo filters via FilterExpression.
+func (repo *RepositoryAdapter) queryGSICell(ctx context.Context, hashCell string, query matchannouncement.DomainQuery) ([]matchannouncement.Entity, error) {
+	keyCond := expression.KeyEqual(expression.Key("GeohashPrefix"), expression.Value(hashCell))
+	if !query.FromDate.IsZero() && !query.ToDate.IsZero() {
+		keyCond = keyCond.And(expression.KeyBetween(
+			expression.Key("Day"),
+			expression.Value(query.FromDate.Unix()),
+			expression.Value(query.ToDate.Unix()),
+		))
+	} else if !query.FromDate.IsZero() {
+		keyCond = keyCond.And(expression.KeyGreaterThanEqual(expression.Key("Day"), expression.Value(query.FromDate.Unix())))
+	} else if !query.ToDate.IsZero() {
+		keyCond = keyCond.And(expression.KeyLessThanEqual(expression.Key("Day"), expression.Value(query.ToDate.Unix())))
+	}
+
+	builder := expression.NewBuilder().WithKeyCondition(keyCond)
+
+	// Apply non-geo filters (date range already handled in key condition above)
+	geoQuery := query
+	geoQuery.GeoFilter = nil
+	geoQuery.FromDate = noTime
+	geoQuery.ToDate = noTime
+	includeFilters(geoQuery, &builder)
+
+	expr, err := builder.Build()
+	if err != nil {
+		return nil, err
+	}
+
+	queryInput := &dynamodb.QueryInput{
+		TableName:                 aws.String(repo.tableName),
+		IndexName:                 aws.String(geoIndexName),
+		KeyConditionExpression:    expr.KeyCondition(),
+		ExpressionAttributeNames:  expr.Names(),
+		ExpressionAttributeValues: expr.Values(),
+		FilterExpression:          expr.Filter(),
+	}
+
+	var entities []matchannouncement.Entity
+	paginator := dynamodb.NewQueryPaginator(repo.dbClient, queryInput)
+	for paginator.HasMorePages() {
+		page, err := paginator.NextPage(ctx)
+		if err != nil {
+			return nil, err
+		}
+		for _, item := range page.Items {
+			dto, err := repo.unmarshalItem(item)
+			if err != nil {
+				return nil, err
+			}
+			entities = append(entities, dto.ToDomain())
+		}
+	}
+	return entities, nil
+}
+
+// haversineKm returns the great-circle distance in km between two GPS coordinates.
+func haversineKm(lat1, lng1, lat2, lng2 float64) float64 {
+	const R = 6371.0
+	dLat := (lat2 - lat1) * math.Pi / 180
+	dLng := (lng2 - lng1) * math.Pi / 180
+	a := math.Sin(dLat/2)*math.Sin(dLat/2) +
+		math.Cos(lat1*math.Pi/180)*math.Cos(lat2*math.Pi/180)*
+			math.Sin(dLng/2)*math.Sin(dLng/2)
+	return R * 2 * math.Atan2(math.Sqrt(a), math.Sqrt(1-a))
 }
 
 // applyDynamoDBLimit sets the DynamoDB query limit, accounting for offset and filters

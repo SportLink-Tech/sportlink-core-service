@@ -6,7 +6,8 @@ import { Team, CreateTeamRequest } from '../../../../shared/types/team'
  * Following Hexagonal Architecture - Domain defines the interface
  */
 export interface TeamRepository {
-  createTeam(request: CreateTeamRequest): Promise<{ data: Team; status: number }>
+  createTeam(accountId: string, request: CreateTeamRequest): Promise<{ data: Team; status: number }>
   findTeam(sport: string, teamName?: string, categories?: number[]): Promise<{ data: Team[]; status: number }>
+  listAccountTeams(accountId: string): Promise<{ data: Team[]; status: number }>
 }
 

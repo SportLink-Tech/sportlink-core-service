@@ -8,10 +8,11 @@ import (
 
 // TODO faltan las stats
 type Dto struct {
-	EntityId string `dynamodbav:"EntityId"`
-	Id       string `dynamodbav:"Id"`
-	Category int    `dynamodbav:"Category"`
-	Sport    string `dynamodbav:"Sport"`
+	EntityId       string `dynamodbav:"EntityId"`
+	Id             string `dynamodbav:"Id"`
+	Category       int    `dynamodbav:"Category"`
+	Sport          string `dynamodbav:"Sport"`
+	OwnerAccountId string `dynamodbav:"OwnerAccountId,omitempty"`
 }
 
 func (d *Dto) ToDomain() team.Entity {
@@ -20,12 +21,13 @@ func (d *Dto) ToDomain() team.Entity {
 	name := extractNameFromID(d.Id)
 
 	return team.Entity{
-		ID:       d.Id,
-		Name:     name,
-		Category: common.Category(d.Category),
-		Sport:    common.Sport(d.Sport),
-		Stats:    *common.NewStats(0, 0, 0), // Default stats (not persisted yet)
-		Members:  []player.Entity{},         // Default empty members (not persisted yet)
+		ID:             d.Id,
+		Name:           name,
+		Category:       common.Category(d.Category),
+		Sport:          common.Sport(d.Sport),
+		Stats:          *common.NewStats(0, 0, 0), // Default stats (not persisted yet)
+		Members:        []player.Entity{},         // Default empty members (not persisted yet)
+		OwnerAccountID: d.OwnerAccountId,
 	}
 }
 

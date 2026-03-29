@@ -7,12 +7,13 @@ import (
 )
 
 type Entity struct {
-	ID       string
-	Name     string
-	Category common.Category
-	Stats    common.Stats
-	Sport    common.Sport
-	Members  []player.Entity
+	ID             string
+	Name           string
+	Category       common.Category
+	Stats          common.Stats
+	Sport          common.Sport
+	Members        []player.Entity
+	OwnerAccountID string
 }
 
 func NewTeam(
@@ -21,14 +22,16 @@ func NewTeam(
 	stats common.Stats,
 	sport common.Sport,
 	members []player.Entity,
+	ownerAccountID string,
 ) Entity {
 	return Entity{
-		ID:       generateTeamID(sport, name),
-		Name:     name,
-		Category: category,
-		Stats:    stats,
-		Sport:    sport,
-		Members:  members,
+		ID:             generateTeamID(sport, name),
+		Name:           name,
+		Category:       category,
+		Stats:          stats,
+		Sport:          sport,
+		Members:        members,
+		OwnerAccountID: ownerAccountID,
 	}
 }
 

@@ -33,10 +33,12 @@ import CheckCircleIcon from '@mui/icons-material/CheckCircle'
 import LocationOnIcon from '@mui/icons-material/LocationOn'
 import AccessTimeIcon from '@mui/icons-material/AccessTime'
 import GroupsIcon from '@mui/icons-material/Groups'
+import MyLocationIcon from '@mui/icons-material/MyLocation'
 import { SportSelect } from '../../../../shared/components/atoms/SportSelect'
 import { Sport } from '../../../../shared/types/team'
 import { useMatchAnnouncementContext } from '../../context/MatchAnnouncementContext'
 import { MatchAnnouncement } from '../../../../shared/types/matchAnnouncement'
+import { useGeolocation } from '../../../../shared/hooks/useGeolocation'
 
 const SPORTS: Sport[] = ['Football', 'Paddle', 'Tennis']
 
@@ -54,6 +56,7 @@ export function CreateMatchAnnouncementPage() {
   const [country, setCountry] = useState('Argentina')
   const [province, setProvince] = useState('Buenos Aires')
   const [locality, setLocality] = useState('')
+  const geo = useGeolocation()
   
   const [categoryRangeType, setCategoryRangeType] = useState<'SPECIFIC' | 'GREATER_THAN' | 'LESS_THAN' | 'BETWEEN'>('SPECIFIC')
   const [selectedCategories, setSelectedCategories] = useState<number[]>([])
@@ -145,6 +148,9 @@ export function CreateMatchAnnouncementPage() {
         country,
         province,
         locality,
+        ...(geo.status === 'granted' && geo.latitude !== null && geo.longitude !== null
+          ? { latitude: geo.latitude, longitude: geo.longitude }
+          : {}),
       },
       admitted_categories: admittedCategories,
     })
@@ -211,8 +217,13 @@ export function CreateMatchAnnouncementPage() {
     return date.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' })
   }
 
+  const isTimeSlotValid = () => {
+    if (!startTime || !endTime) return true // campo vacío, lo maneja otro check
+    return endTime > startTime
+  }
+
   const isFormValid = () => {
-    return teamName && day && startTime && endTime && locality &&
+    return teamName && day && startTime && endTime && locality && isTimeSlotValid() &&
       (categoryRangeType === 'SPECIFIC' ? selectedCategories.length > 0 : true)
   }
 
@@ -323,8 +334,14 @@ export function CreateMatchAnnouncementPage() {
                         fullWidth
                         required
                         InputLabelProps={{ shrink: true }}
-                        error={attempted && !endTime}
-                        helperText={attempted && !endTime ? "Campo obligatorio" : ""}
+                        error={attempted && (!endTime || !isTimeSlotValid())}
+                        helperText={
+                          attempted && !endTime
+                            ? "Campo obligatorio"
+                            : attempted && !isTimeSlotValid()
+                            ? "La hora de fin debe ser posterior a la de inicio"
+                            : ""
+                        }
                       />
                     </Grid>
                   </Grid>
@@ -365,6 +382,44 @@ export function CreateMatchAnnouncementPage() {
                       />
                     </Grid>
                   </Grid>
+
+                  {/* Geolocation */}
+                  <Box>
+                    <Button
+                      variant="outlined"
+                      size="small"
+                      startIcon={
+                        geo.status === 'loading'
+                          ? <CircularProgress size={16} />
+                          : geo.status === 'granted'
+                          ? <CheckCircleIcon color="success" />
+                          : <MyLocationIcon />
+                      }
+                      onClick={geo.status === 'granted' ? geo.reset : geo.requestLocation}
+                      disabled={geo.status === 'loading'}
+                      color={geo.status === 'granted' ? 'success' : 'primary'}
+                    >
+                      {geo.status === 'loading' && 'Detectando ubicación...'}
+                      {geo.status === 'granted' && `Ubicación detectada (${geo.latitude?.toFixed(4)}, ${geo.longitude?.toFixed(4)})`}
+                      {(geo.status === 'idle' || geo.status === 'denied' || geo.status === 'unavailable') && 'Usar mi ubicación actual'}
+                    </Button>
+
+                    {geo.status === 'denied' && (
+                      <Alert severity="warning" sx={{ mt: 1 }} icon={false}>
+                        No se pudo acceder a tu ubicación. El partido se publicará sin coordenadas y no aparecerá en búsquedas por proximidad. Podés habilitarlo desde la configuración de tu navegador.
+                      </Alert>
+                    )}
+                    {geo.status === 'unavailable' && (
+                      <Alert severity="info" sx={{ mt: 1 }} icon={false}>
+                        Tu dispositivo no soporta geolocalización. El partido se publicará sin coordenadas.
+                      </Alert>
+                    )}
+                    {geo.status === 'idle' && (
+                      <Typography variant="caption" color="text.secondary" display="block" sx={{ mt: 0.5 }}>
+                        Opcional. Sin coordenadas el partido no aparece en búsquedas por proximidad.
+                      </Typography>
+                    )}
+                  </Box>
 
                   {/* Category Range */}
                   <Typography variant="subtitle1" fontWeight={600} sx={{ mt: 2 }}>

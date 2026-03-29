@@ -9,7 +9,7 @@ import { TeamRepository } from '../ports/TeamRepository'
 export class CreateTeamUseCase {
   constructor(private readonly teamRepository: TeamRepository) {}
 
-  async execute(request: CreateTeamRequest): Promise<{ team: Team | null; success: boolean; error?: string }> {
+  async execute(accountId: string, request: CreateTeamRequest): Promise<{ team: Team | null; success: boolean; error?: string }> {
     try {
       // Business rule: Validate team name
       if (!request.name || request.name.trim().length === 0) {
@@ -29,7 +29,7 @@ export class CreateTeamUseCase {
         }
       }
 
-      const response = await this.teamRepository.createTeam(request)
+      const response = await this.teamRepository.createTeam(accountId, request)
       
       // Check HTTP status
       if (response.status === 201) {

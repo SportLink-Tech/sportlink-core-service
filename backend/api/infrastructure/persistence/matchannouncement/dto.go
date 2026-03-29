@@ -7,28 +7,36 @@ import (
 )
 
 type Dto struct {
-	EntityId   string `dynamodbav:"EntityId"`   // "Entity#MatchAnnouncement"
-	Id         string `dynamodbav:"Id"`         // Generated UUID
-	TeamName   string `dynamodbav:"TeamName"`   // Team name
-	Sport      string `dynamodbav:"Sport"`      // Sport type
-	Day        int64  `dynamodbav:"Day"`        // Unix timestamp of the day
-	StartTime  int64  `dynamodbav:"StartTime"`  // Unix timestamp of start time
-	EndTime    int64  `dynamodbav:"EndTime"`    // Unix timestamp of end time
-	Country    string `dynamodbav:"Country"`    // Location country
-	Province   string `dynamodbav:"Province"`   // Location province
-	Locality   string `dynamodbav:"Locality"`   // Location locality
-	RangeType  string `dynamodbav:"RangeType"`  // Category range type
-	Categories []int  `dynamodbav:"Categories"` // Specific categories
-	MinLevel   int    `dynamodbav:"MinLevel"`   // Minimum category level
-	MaxLevel   int    `dynamodbav:"MaxLevel"`   // Maximum category level
-	Status     string `dynamodbav:"Status"`     // Announcement status
-	CreatedAt  int64  `dynamodbav:"CreatedAt"`  // Unix timestamp of creation
-	ExpiresAt  int64  `dynamodbav:"ExpiresAt"`  // TTL for DynamoDB (Unix timestamp)
+	EntityId      string   `dynamodbav:"EntityId"`                // "Entity#MatchAnnouncement"
+	Id            string   `dynamodbav:"Id"`                      // Generated UUID
+	TeamName      string   `dynamodbav:"TeamName"`                // Team name
+	Sport         string   `dynamodbav:"Sport"`                   // Sport type
+	Day           int64    `dynamodbav:"Day"`                     // Unix timestamp of the day
+	StartTime     int64    `dynamodbav:"StartTime"`               // Unix timestamp of start time
+	EndTime       int64    `dynamodbav:"EndTime"`                 // Unix timestamp of end time
+	Country       string   `dynamodbav:"Country"`                 // Location country
+	Province      string   `dynamodbav:"Province"`                // Location province
+	Locality      string   `dynamodbav:"Locality"`                // Location locality
+	GeohashPrefix *string  `dynamodbav:"GeohashPrefix,omitempty"` // Geohash prefix (precision 3) for GSI — absent when no coords
+	Latitude      *float64 `dynamodbav:"Latitude,omitempty"`      // GPS latitude — absent when no coords
+	Longitude     *float64 `dynamodbav:"Longitude,omitempty"`     // GPS longitude — absent when no coords
+	RangeType     string   `dynamodbav:"RangeType"`               // Category range type
+	Categories    []int    `dynamodbav:"Categories"`              // Specific categories
+	MinLevel      int      `dynamodbav:"MinLevel"`                // Minimum category level
+	MaxLevel      int      `dynamodbav:"MaxLevel"`                // Maximum category level
+	Status        string   `dynamodbav:"Status"`                  // Announcement status
+	CreatedAt     int64    `dynamodbav:"CreatedAt"`               // Unix timestamp of creation
+	ExpiresAt     int64    `dynamodbav:"ExpiresAt"`               // TTL for DynamoDB (Unix timestamp)
 }
 
 func (d *Dto) ToDomain() matchannouncement.Entity {
 	// Convert timestamps to time.Time using the location's timezone
-	location := matchannouncement.NewLocation(d.Country, d.Province, d.Locality)
+	var location matchannouncement.Location
+	if d.Latitude != nil && d.Longitude != nil {
+		location = matchannouncement.NewLocationWithCoords(d.Country, d.Province, d.Locality, *d.Latitude, *d.Longitude)
+	} else {
+		location = matchannouncement.NewLocation(d.Country, d.Province, d.Locality)
+	}
 	tz := location.GetTimezone()
 
 	day := time.Unix(d.Day, 0).In(tz)

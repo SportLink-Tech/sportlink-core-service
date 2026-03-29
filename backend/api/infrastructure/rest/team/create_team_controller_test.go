@@ -165,17 +165,17 @@ func TestTeamCreationHandlerWithEmptyFields(t *testing.T) {
 			retrieveTeamUC := usecases.NewRetrieveTeamUC(teamRepository)
 			findTeamUC := usecases.NewFindTeamUC(teamRepository)
 
-			controller := team.NewController(createTeamUC, retrieveTeamUC, findTeamUC, validator)
+			controller := team.NewController(createTeamUC, retrieveTeamUC, findTeamUC, findTeamUC, validator)
 
 			gin.SetMode(gin.TestMode)
 			router := gin.Default()
 			router.Use(middleware.ErrorHandler())
-			router.POST("/team", controller.CreateTeam)
+			router.POST("/account/:accountId/team", controller.CreateTeam)
 
 			// given
 			tc.on(t, playerRepository, teamRepository)
 			jsonData, _ := json.Marshal(tc.payloadRequest)
-			req, _ := http.NewRequest("POST", "/team", bytes.NewBuffer(jsonData))
+			req, _ := http.NewRequest("POST", "/account/test-account/team", bytes.NewBuffer(jsonData))
 			resp := httptest.NewRecorder()
 
 			// when

@@ -43,6 +43,10 @@ func (repo *RepositoryAdapter) Save(ctx context.Context, entity team.Entity) err
 }
 
 func (repo *RepositoryAdapter) Find(ctx context.Context, query team.DomainQuery) ([]team.Entity, error) {
+	if query.OwnerAccountID != "" {
+		return repo.findByOwner(ctx, query.OwnerAccountID)
+	}
+
 	keyCond := expression.KeyEqual(expression.Key("EntityId"), expression.Value("Entity#Team"))
 
 	if query.Name != "" && len(query.Sports) > 0 {
@@ -112,11 +116,47 @@ func From(entity team.Entity) (Dto, error) {
 	}
 
 	return Dto{
-		EntityId: "Entity#Team",
-		Id:       entity.ID,
-		Category: int(entity.Category),
-		Sport:    string(entity.Sport),
+		EntityId:       "Entity#Team",
+		Id:             entity.ID,
+		Category:       int(entity.Category),
+		Sport:          string(entity.Sport),
+		OwnerAccountId: entity.OwnerAccountID,
 	}, nil
+}
+
+func (repo *RepositoryAdapter) findByOwner(ctx context.Context, ownerAccountID string) ([]team.Entity, error) {
+	keyCond := expression.KeyEqual(expression.Key("OwnerAccountId"), expression.Value(ownerAccountID))
+
+	expr, err := expression.NewBuilder().WithKeyCondition(keyCond).Build()
+	if err != nil {
+		return []team.Entity{}, err
+	}
+
+	indexName := "OwnerAccountId-index"
+	resp, err := repo.dbClient.Query(ctx, &dynamodb.QueryInput{
+		TableName:                 aws.String(repo.tableName),
+		IndexName:                 aws.String(indexName),
+		KeyConditionExpression:    expr.KeyCondition(),
+		ExpressionAttributeNames:  expr.Names(),
+		ExpressionAttributeValues: expr.Values(),
+	})
+	if err != nil {
+		return []team.Entity{}, err
+	}
+
+	var results []team.Entity
+	for _, item := range resp.Items {
+		var dto Dto
+		if err := attributevalue.UnmarshalMap(item, &dto); err != nil {
+			return []team.Entity{}, fmt.Errorf("failed to unmarshal item: %w", err)
+		}
+		results = append(results, dto.ToDomain())
+	}
+
+	if results == nil {
+		return []team.Entity{}, nil
+	}
+	return results, nil
 }
 
 func includeFilters(query team.DomainQuery, builder *expression.Builder) {

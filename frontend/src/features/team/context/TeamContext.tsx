@@ -1,6 +1,7 @@
 import { createContext, useContext, ReactNode } from 'react'
 import { CreateTeamUseCase } from '../domain/usecases/CreateTeamUseCase'
 import { SearchTeamUseCase } from '../domain/usecases/SearchTeamUseCase'
+import { ListAccountTeamsUseCase } from '../domain/usecases/ListAccountTeamsUseCase'
 import { TeamApiAdapter } from '../infrastructure/adapters/TeamApiAdapter'
 
 /**
@@ -10,6 +11,7 @@ import { TeamApiAdapter } from '../infrastructure/adapters/TeamApiAdapter'
 interface TeamContextType {
   createTeamUseCase: CreateTeamUseCase
   searchTeamUseCase: SearchTeamUseCase
+  listAccountTeamsUseCase: ListAccountTeamsUseCase
 }
 
 const TeamContext = createContext<TeamContextType | undefined>(undefined)
@@ -30,10 +32,12 @@ export function TeamProvider({ children }: { children: ReactNode }) {
   // This applies the Dependency Inversion Principle
   const createTeamUseCase = new CreateTeamUseCase(teamApiAdapter)
   const searchTeamUseCase = new SearchTeamUseCase(teamApiAdapter)
+  const listAccountTeamsUseCase = new ListAccountTeamsUseCase(teamApiAdapter)
 
   const value: TeamContextType = {
     createTeamUseCase,
     searchTeamUseCase,
+    listAccountTeamsUseCase,
   }
 
   return <TeamContext.Provider value={value}>{children}</TeamContext.Provider>

@@ -18,6 +18,13 @@ type Repository interface {
 	Find(ctx context.Context, query DomainQuery) (Page, error)
 }
 
+// GeoFilter represents a geolocation-based proximity filter
+type GeoFilter struct {
+	Latitude  float64 // Center latitude
+	Longitude float64 // Center longitude
+	RadiusKm  float64 // Search radius in kilometers
+}
+
 // DomainQuery represents the search criteria for match announcements
 type DomainQuery struct {
 	Sports     []common.Sport    // Search by multiple sports
@@ -25,7 +32,8 @@ type DomainQuery struct {
 	Statuses   []Status          // Search by multiple statuses
 	FromDate   time.Time         // Announcements from this date
 	ToDate     time.Time         // Announcements until this date
-	Location   *Location         // Search by location (optional)
+	Location   *Location         // Search by exact location text (optional)
+	GeoFilter  *GeoFilter        // Search by proximity (optional, uses GSI)
 	Limit      int               // Maximum number of results to return (0 = no limit)
 	Offset     int               // Number of results to skip (0 = no offset)
 }
@@ -37,6 +45,7 @@ func NewDomainQuery(
 	fromDate time.Time,
 	toDate time.Time,
 	location *Location,
+	geoFilter *GeoFilter,
 	limit int,
 	offset int,
 ) *DomainQuery {
@@ -47,6 +56,7 @@ func NewDomainQuery(
 		FromDate:   fromDate,
 		ToDate:     toDate,
 		Location:   location,
+		GeoFilter:  geoFilter,
 		Limit:      limit,
 		Offset:     offset,
 	}

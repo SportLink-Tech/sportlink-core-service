@@ -9,8 +9,16 @@ import {
   TextField,
   Button,
   Box,
+  Switch,
+  Slider,
+  Alert,
+  CircularProgress,
+  Tooltip,
 } from '@mui/material'
 import SearchIcon from '@mui/icons-material/Search'
+import MyLocationIcon from '@mui/icons-material/MyLocation'
+import { useGeolocation } from '../../../../shared/hooks/useGeolocation'
+import { GeoFilter } from '../../../../shared/types/matchAnnouncement'
 
 interface MatchAnnouncementFiltersProps {
   selectedSports: string[]
@@ -20,6 +28,7 @@ interface MatchAnnouncementFiltersProps {
     sports: string[]
     fromDate: string
     toDate: string
+    geoFilter?: GeoFilter
   }) => void
 }
 
@@ -34,14 +43,40 @@ export function MatchAnnouncementFilters({
   const [localSports, setLocalSports] = useState<string[]>(selectedSports)
   const [localFromDate, setLocalFromDate] = useState(fromDate)
   const [localToDate, setLocalToDate] = useState(toDate)
+  const [geoEnabled, setGeoEnabled] = useState(false)
+  const [radiusKm, setRadiusKm] = useState(50)
+  const geo = useGeolocation()
+
+  const handleGeoToggle = (enabled: boolean) => {
+    setGeoEnabled(enabled)
+    if (enabled && geo.status === 'idle') {
+      geo.requestLocation()
+    }
+    if (!enabled) {
+      geo.reset()
+    }
+  }
 
   const handleSearch = () => {
+    const geoFilter: GeoFilter | undefined =
+      geoEnabled && geo.status === 'granted' && geo.latitude !== null && geo.longitude !== null
+        ? { latitude: geo.latitude, longitude: geo.longitude, radiusKm }
+        : undefined
+
     onFiltersChange({
       sports: localSports,
       fromDate: localFromDate,
       toDate: localToDate,
+      geoFilter,
     })
   }
+
+  // Si el usuario habilitó geo pero luego fue denied/unavailable, desactivar el toggle
+  useEffect(() => {
+    if (geoEnabled && (geo.status === 'denied' || geo.status === 'unavailable')) {
+      setGeoEnabled(false)
+    }
+  }, [geo.status, geoEnabled])
 
   // Sincronizar valores locales cuando cambian desde fuera
   useEffect(() => {
@@ -194,6 +229,77 @@ export function MatchAnnouncementFilters({
               }}
             />
           </Stack>
+        </Box>
+
+        {/* Cerca de mí */}
+        <Box
+          sx={{
+            px: { xs: 3, md: 4 },
+            py: { xs: 2.5, md: 3 },
+            borderBottom: { xs: '1px solid #e0e0e0', md: 'none' },
+            borderRight: { md: '1px solid #e0e0e0' },
+            flex: { md: 1 },
+          }}
+        >
+          <Stack direction="row" alignItems="center" justifyContent="space-between">
+            <Typography
+              variant="caption"
+              sx={{
+                fontWeight: 700,
+                color: 'text.secondary',
+                textTransform: 'uppercase',
+                fontSize: '0.7rem',
+                letterSpacing: '0.8px',
+              }}
+            >
+              Cerca de mí
+            </Typography>
+            <Tooltip title={geo.status === 'unavailable' ? 'Tu dispositivo no soporta geolocalización' : ''}>
+              <span>
+                <Switch
+                  size="small"
+                  checked={geoEnabled}
+                  onChange={(e) => handleGeoToggle(e.target.checked)}
+                  disabled={geo.status === 'unavailable' || geo.status === 'loading'}
+                />
+              </span>
+            </Tooltip>
+          </Stack>
+
+          {geoEnabled && geo.status === 'loading' && (
+            <Stack direction="row" spacing={1} alignItems="center" sx={{ mt: 1 }}>
+              <CircularProgress size={14} />
+              <Typography variant="caption" color="text.secondary">Detectando ubicación...</Typography>
+            </Stack>
+          )}
+
+          {geoEnabled && geo.status === 'granted' && (
+            <Box sx={{ mt: 1, px: 0.5 }}>
+              <Stack direction="row" alignItems="center" spacing={1}>
+                <MyLocationIcon sx={{ fontSize: 14, color: 'success.main' }} />
+                <Typography variant="caption" color="text.secondary" sx={{ flex: 1 }}>
+                  Radio: <strong>{radiusKm} km</strong>
+                </Typography>
+              </Stack>
+              <Slider
+                value={radiusKm}
+                onChange={(_, v) => setRadiusKm(v as number)}
+                min={5}
+                max={100}
+                step={5}
+                size="small"
+                sx={{ mt: 0.5 }}
+              />
+            </Box>
+          )}
+
+          {geo.status === 'denied' && (
+            <Alert severity="warning" sx={{ mt: 1, py: 0 }} icon={false}>
+              <Typography variant="caption">
+                Permiso denegado. Habilitalo en tu navegador.
+              </Typography>
+            </Alert>
+          )}
         </Box>
 
         {/* Botón Buscar - Grande y destacado */}

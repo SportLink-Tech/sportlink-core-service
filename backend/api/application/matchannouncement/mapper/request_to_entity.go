@@ -32,15 +32,20 @@ func parseDateTime(dateTimeStr string, loc *time.Location) (time.Time, error) {
 }
 
 func CreationRequestToEntity(req request.NewMatchAnnouncementRequest) (matchannouncement.Entity, error) {
-	// Parse day
-	day, err := time.Parse("2006-01-02", req.Day)
+	// Build location first to get timezone
+	var location matchannouncement.Location
+	if req.Location.Latitude != nil && req.Location.Longitude != nil {
+		location = matchannouncement.NewLocationWithCoords(req.Location.Country, req.Location.Province, req.Location.Locality, *req.Location.Latitude, *req.Location.Longitude)
+	} else {
+		location = matchannouncement.NewLocation(req.Location.Country, req.Location.Province, req.Location.Locality)
+	}
+	tz := location.GetTimezone()
+
+	// Parse day in the location's timezone (not UTC) to avoid off-by-one day errors
+	day, err := time.ParseInLocation("2006-01-02", req.Day, tz)
 	if err != nil {
 		return matchannouncement.Entity{}, fmt.Errorf("invalid day format: %w", err)
 	}
-
-	// Build location first to get timezone
-	location := matchannouncement.NewLocation(req.Location.Country, req.Location.Province, req.Location.Locality)
-	tz := location.GetTimezone()
 
 	// Parse time slot (try with and without timezone)
 	startTime, err := parseDateTime(req.TimeSlot.StartTime, tz)

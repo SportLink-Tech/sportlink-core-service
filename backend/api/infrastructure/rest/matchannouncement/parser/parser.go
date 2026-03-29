@@ -16,6 +16,7 @@ type QueryParser interface {
 	Statuses(statusesQuery string) ([]matchannouncement.Status, error)
 	Date(dateQuery string) (time.Time, error)
 	Location(country, province, locality string) *matchannouncement.Location
+	GeoFilter(lat, lng, radiusKm string) (*matchannouncement.GeoFilter, error)
 	Limit(limitQuery string) (int, error)
 	Offset(offsetQuery string) (int, error)
 }
@@ -130,6 +131,41 @@ func (p *DefaultQueryParser) Location(country, province, locality string) *match
 		Province: province,
 		Locality: locality,
 	}
+}
+
+// GeoFilter parses latitude, longitude and radiusKm strings into a GeoFilter.
+// Returns nil when all three are empty (geo filter not requested).
+func (p *DefaultQueryParser) GeoFilter(lat, lng, radiusKm string) (*matchannouncement.GeoFilter, error) {
+	if lat == "" && lng == "" && radiusKm == "" {
+		return nil, nil
+	}
+
+	latVal, err := strconv.ParseFloat(lat, 64)
+	if err != nil {
+		return nil, fmt.Errorf("invalid latitude format: %s", lat)
+	}
+
+	lngVal, err := strconv.ParseFloat(lng, 64)
+	if err != nil {
+		return nil, fmt.Errorf("invalid longitude format: %s", lng)
+	}
+
+	radius := 100.0 // default radius in km
+	if radiusKm != "" {
+		radius, err = strconv.ParseFloat(radiusKm, 64)
+		if err != nil {
+			return nil, fmt.Errorf("invalid radiusKm format: %s", radiusKm)
+		}
+		if radius <= 0 {
+			return nil, fmt.Errorf("radiusKm must be positive, got: %f", radius)
+		}
+	}
+
+	return &matchannouncement.GeoFilter{
+		Latitude:  latVal,
+		Longitude: lngVal,
+		RadiusKm:  radius,
+	}, nil
 }
 
 // Limit parses a limit string into an integer

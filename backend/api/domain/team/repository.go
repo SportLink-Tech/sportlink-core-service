@@ -16,8 +16,9 @@ type ID struct {
 }
 
 type DomainQuery struct {
-	Name       string
-	Ids        []string
-	Categories []common.Category
-	Sports     []common.Sport
+	Name           string
+	Ids            []string
+	Categories     []common.Category
+	Sports         []common.Sport
+	OwnerAccountID string // When set, queries the GSI to list teams by owner
 }

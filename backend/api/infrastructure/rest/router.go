@@ -52,8 +52,9 @@ func Routes(router *gin.Engine) {
 	playerController := cplayer.NewController(&createPlayer, customValidator)
 	router.POST("/player", playerController.CreatePlayer)
 
-	teamController := cteam.NewController(createTeam, retrieveTeam, findTeam, customValidator)
-	router.POST("/team", teamController.CreateTeam)
+	teamController := cteam.NewController(createTeam, retrieveTeam, findTeam, findTeam, customValidator)
+	router.POST("/account/:accountId/team", teamController.CreateTeam)
+	router.GET("/account/:accountId/team", teamController.ListAccountTeams)
 	router.GET("/sport/:sport/team/:team", teamController.RetrieveTeam)
 	router.GET("/sport/:sport/team", teamController.FindTeam)
 

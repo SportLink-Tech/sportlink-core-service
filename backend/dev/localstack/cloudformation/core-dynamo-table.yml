@@ -11,11 +11,38 @@ Resources:
           AttributeType: S
         - AttributeName: Id
           AttributeType: S
+        - AttributeName: GeohashPrefix
+          AttributeType: S
+        - AttributeName: Day
+          AttributeType: N
+        - AttributeName: OwnerAccountId
+          AttributeType: S
       KeySchema:
         - AttributeName: EntityId
           KeyType: HASH
         - AttributeName: Id
           KeyType: RANGE
+      GlobalSecondaryIndexes:
+        - IndexName: GeohashPrefix-Day-index
+          KeySchema:
+            - AttributeName: GeohashPrefix
+              KeyType: HASH
+            - AttributeName: Day
+              KeyType: RANGE
+          Projection:
+            ProjectionType: ALL
+          ProvisionedThroughput:
+            ReadCapacityUnits: 5
+            WriteCapacityUnits: 5
+        - IndexName: OwnerAccountId-index
+          KeySchema:
+            - AttributeName: OwnerAccountId
+              KeyType: HASH
+          Projection:
+            ProjectionType: ALL
+          ProvisionedThroughput:
+            ReadCapacityUnits: 5
+            WriteCapacityUnits: 5
       ProvisionedThroughput:
         ReadCapacityUnits: 5
         WriteCapacityUnits: 5

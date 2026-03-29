@@ -21,9 +21,11 @@ type TimeSlotResponse struct {
 }
 
 type LocationResponse struct {
-	Country  string `json:"country"`
-	Province string `json:"province"`
-	Locality string `json:"locality"`
+	Country   string   `json:"country"`
+	Province  string   `json:"province"`
+	Locality  string   `json:"locality"`
+	Latitude  *float64 `json:"latitude,omitempty"`
+	Longitude *float64 `json:"longitude,omitempty"`
 }
 
 type CategoryRangeResponse struct {

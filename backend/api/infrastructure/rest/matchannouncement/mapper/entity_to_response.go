@@ -5,6 +5,19 @@ import (
 	"sportlink/api/infrastructure/rest/matchannouncement/response"
 )
 
+func locationToResponse(loc matchannouncement.Location) response.LocationResponse {
+	r := response.LocationResponse{
+		Country:  loc.Country,
+		Province: loc.Province,
+		Locality: loc.Locality,
+	}
+	if loc.HasCoords() {
+		r.Latitude = &loc.Latitude
+		r.Longitude = &loc.Longitude
+	}
+	return r
+}
+
 // EntityToResponse converts a domain entity to an API response DTO
 func EntityToResponse(entity matchannouncement.Entity) response.MatchAnnouncementResponse {
 	return response.MatchAnnouncementResponse{
@@ -16,11 +29,7 @@ func EntityToResponse(entity matchannouncement.Entity) response.MatchAnnouncemen
 			StartTime: entity.TimeSlot.StartTime,
 			EndTime:   entity.TimeSlot.EndTime,
 		},
-		Location: response.LocationResponse{
-			Country:  entity.Location.Country,
-			Province: entity.Location.Province,
-			Locality: entity.Location.Locality,
-		},
+		Location: locationToResponse(entity.Location),
 		AdmittedCategories: categoryRangeToResponse(entity.AdmittedCategories),
 		Status:             entity.Status.String(),
 		CreatedAt:          entity.CreatedAt,
