@@ -31,7 +31,7 @@ func parseDateTime(dateTimeStr string, loc *time.Location) (time.Time, error) {
 	return time.Time{}, fmt.Errorf("unable to parse datetime: %s", dateTimeStr)
 }
 
-func CreationRequestToEntity(req request.NewMatchAnnouncementRequest) (matchannouncement.Entity, error) {
+func CreationRequestToEntity(req request.NewMatchAnnouncementRequest, ownerAccountID string) (matchannouncement.Entity, error) {
 	// Build location first to get timezone
 	var location matchannouncement.Location
 	if req.Location.Latitude != nil && req.Location.Longitude != nil {
@@ -119,5 +119,6 @@ func CreationRequestToEntity(req request.NewMatchAnnouncementRequest) (matchanno
 		categoryRange,
 		matchannouncement.StatusPending,
 		createdAt,
+		ownerAccountID,
 	), nil
 }

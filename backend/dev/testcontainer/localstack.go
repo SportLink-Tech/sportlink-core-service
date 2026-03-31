@@ -3,6 +3,7 @@ package testcontainer
 import (
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/testcontainers/testcontainers-go"
 	"github.com/testcontainers/testcontainers-go/wait"
@@ -26,7 +27,8 @@ func containerRequest() testcontainers.ContainerRequest {
 			"DEFAULT_REGION": "us-east-1",
 			"AWS_REGION":     "us-east-1",
 		},
-		WaitingFor: wait.ForLog("All services created."),
+		WaitingFor: wait.ForLog("All services created and database seeded.").
+			WithStartupTimeout(2 * time.Minute),
 		Mounts: []testcontainers.ContainerMount{
 			testcontainers.BindMount(sqsPath, "/opt/code/localstack/sqs-queue.yml"),
 			testcontainers.BindMount(coreDynamoTablePath, "/opt/code/localstack/core-dynamo-table.yml"),

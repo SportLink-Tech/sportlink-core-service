@@ -27,6 +27,7 @@ type GeoFilter struct {
 
 // DomainQuery represents the search criteria for match announcements
 type DomainQuery struct {
+	IDs        []string          // Search by specific IDs
 	Sports     []common.Sport    // Search by multiple sports
 	Categories []common.Category // Search by multiple admitted categories
 	Statuses   []Status          // Search by multiple statuses
@@ -39,6 +40,7 @@ type DomainQuery struct {
 }
 
 func NewDomainQuery(
+	ids []string,
 	sports []common.Sport,
 	categories []common.Category,
 	statuses []Status,
@@ -50,6 +52,7 @@ func NewDomainQuery(
 	offset int,
 ) *DomainQuery {
 	return &DomainQuery{
+		IDs:        ids,
 		Sports:     sports,
 		Categories: categories,
 		Statuses:   statuses,

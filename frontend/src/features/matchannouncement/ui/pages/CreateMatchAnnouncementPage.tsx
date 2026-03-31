@@ -23,7 +23,6 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
-  Autocomplete,
   Grow,
   Fade,
 } from '@mui/material'
@@ -35,20 +34,24 @@ import AccessTimeIcon from '@mui/icons-material/AccessTime'
 import GroupsIcon from '@mui/icons-material/Groups'
 import MyLocationIcon from '@mui/icons-material/MyLocation'
 import { SportSelect } from '../../../../shared/components/atoms/SportSelect'
-import { Sport } from '../../../../shared/types/team'
+import { Sport, Team } from '../../../../shared/types/team'
 import { useMatchAnnouncementContext } from '../../context/MatchAnnouncementContext'
 import { MatchAnnouncement } from '../../../../shared/types/matchAnnouncement'
 import { useGeolocation } from '../../../../shared/hooks/useGeolocation'
+import { useTeamContext } from '../../../team/context/TeamContext'
+import { CURRENT_ACCOUNT_ID } from '../../../../shared/constants/session'
 
 const SPORTS: Sport[] = ['Football', 'Paddle', 'Tennis']
 
 export function CreateMatchAnnouncementPage() {
   const { createMatchAnnouncementUseCase } = useMatchAnnouncementContext()
+  const { listAccountTeamsUseCase } = useTeamContext()
   const navigate = useNavigate()
 
   const [sport, setSport] = useState<Sport>('Paddle')
+  const handleSportChange = (newSport: Sport) => { setSport(newSport); setTeamName('') }
   const [teamName, setTeamName] = useState('')
-  const [availableTeams, setAvailableTeams] = useState<string[]>([])
+  const [userTeams, setUserTeams] = useState<Team[]>([])
   const [loadingTeams, setLoadingTeams] = useState(false)
   const [day, setDay] = useState('')
   const [startTime, setStartTime] = useState('')
@@ -63,6 +66,7 @@ export function CreateMatchAnnouncementPage() {
   const [minLevel, setMinLevel] = useState<number>(1)
   const [maxLevel, setMaxLevel] = useState<number>(7)
 
+  const [reverseGeoLoading, setReverseGeoLoading] = useState(false)
   const [loading, setLoading] = useState(false)
   const [showSuccessDialog, setShowSuccessDialog] = useState(false)
   const [createdAnnouncement, setCreatedAnnouncement] = useState<MatchAnnouncement | null>(null)
@@ -70,29 +74,37 @@ export function CreateMatchAnnouncementPage() {
   const [errorMessage, setErrorMessage] = useState('')
   const [attempted, setAttempted] = useState(false)
 
-  // Load teams when sport changes
+  // Reverse geocode when geolocation is granted
+  useEffect(() => {
+    if (geo.status === 'granted' && geo.latitude !== null && geo.longitude !== null) {
+      setReverseGeoLoading(true)
+      fetch(
+        `https://nominatim.openstreetmap.org/reverse?lat=${geo.latitude}&lon=${geo.longitude}&format=json`,
+        { headers: { 'Accept-Language': 'es' } }
+      )
+        .then((res) => res.json())
+        .then((data) => {
+          const addr = data.address
+          if (addr?.country) setCountry(addr.country)
+          if (addr?.state) setProvince(addr.state)
+          const loc = addr?.city || addr?.town || addr?.village || addr?.municipality || addr?.suburb || ''
+          if (loc) setLocality(loc)
+        })
+        .catch(console.error)
+        .finally(() => setReverseGeoLoading(false))
+    }
+  }, [geo.status, geo.latitude, geo.longitude])
+
+  // Load user teams on mount
   useEffect(() => {
     const fetchTeams = async () => {
       setLoadingTeams(true)
-      try {
-        const response = await fetch(`/sport/${sport}/team`)
-        if (response.ok) {
-          const teams = await response.json()
-          const teamNames = teams.map((team: any) => team.Name)
-          setAvailableTeams(teamNames)
-        } else {
-          setAvailableTeams([])
-        }
-      } catch (error) {
-        console.error('Error fetching teams:', error)
-        setAvailableTeams([])
-      } finally {
-        setLoadingTeams(false)
-      }
+      const result = await listAccountTeamsUseCase.execute(CURRENT_ACCOUNT_ID)
+      setUserTeams(result.teams)
+      setLoadingTeams(false)
     }
-
     fetchTeams()
-  }, [sport])
+  }, [])
 
   const handleCategoryChange = (category: number) => {
     setSelectedCategories((prev) =>
@@ -257,44 +269,38 @@ export function CreateMatchAnnouncementPage() {
             <CardContent>
               <form onSubmit={handleSubmit}>
                 <Stack spacing={3}>
-                  {/* Team Name - Autocomplete */}
-                  <Autocomplete
-                    value={teamName}
-                    onChange={(_, newValue) => setTeamName(newValue || '')}
-                    inputValue={teamName}
-                    onInputChange={(_, newInputValue) => setTeamName(newInputValue)}
-                    options={availableTeams}
-                    loading={loadingTeams}
-                    freeSolo
-                    renderInput={(params) => (
-                      <TextField
-                        {...params}
-                        label="Nombre del Equipo"
-                        required
-                        placeholder="Ej: Boca Junior"
-                        error={attempted && !teamName}
-                        helperText={
-                          attempted && !teamName
-                            ? "Campo obligatorio"
-                            : attempted && availableTeams.length > 0 && !availableTeams.includes(teamName)
-                            ? "⚠️ Este equipo no existe. Verifica el nombre o créalo primero."
-                            : ""
-                        }
-                        InputProps={{
-                          ...params.InputProps,
-                          endAdornment: (
-                            <>
-                              {loadingTeams ? <CircularProgress color="inherit" size={20} /> : null}
-                              {params.InputProps.endAdornment}
-                            </>
-                          ),
-                        }}
-                      />
+                  {/* Team Name - Select from user's teams */}
+                  <FormControl fullWidth required error={attempted && !teamName}>
+                    <InputLabel>Equipo</InputLabel>
+                    <Select
+                      value={teamName}
+                      onChange={(e) => setTeamName(e.target.value)}
+                      label="Equipo"
+                      disabled={loadingTeams}
+                      startAdornment={loadingTeams ? <CircularProgress size={20} sx={{ mr: 1 }} /> : null}
+                    >
+                      {userTeams
+                        .filter((t) => t.Sport === sport)
+                        .map((t) => (
+                          <MenuItem key={t.Name} value={t.Name}>
+                            {t.Name}
+                          </MenuItem>
+                        ))}
+                      {!loadingTeams && userTeams.filter((t) => t.Sport === sport).length === 0 && (
+                        <MenuItem disabled value="">
+                          No tenés equipos de {sport}
+                        </MenuItem>
+                      )}
+                    </Select>
+                    {attempted && !teamName && (
+                      <Typography variant="caption" color="error" sx={{ mt: 0.5, ml: 1.5 }}>
+                        Campo obligatorio
+                      </Typography>
                     )}
-                  />
+                  </FormControl>
 
                   {/* Sport */}
-                  <SportSelect sports={SPORTS} value={sport} onChange={setSport} />
+                  <SportSelect sports={SPORTS} value={sport} onChange={handleSportChange} />
 
                   {/* Date */}
                   <TextField
@@ -400,7 +406,7 @@ export function CreateMatchAnnouncementPage() {
                       color={geo.status === 'granted' ? 'success' : 'primary'}
                     >
                       {geo.status === 'loading' && 'Detectando ubicación...'}
-                      {geo.status === 'granted' && `Ubicación detectada (${geo.latitude?.toFixed(4)}, ${geo.longitude?.toFixed(4)})`}
+                      {geo.status === 'granted' && (reverseGeoLoading ? 'Obteniendo dirección...' : 'Ubicación detectada')}
                       {(geo.status === 'idle' || geo.status === 'denied' || geo.status === 'unavailable') && 'Usar mi ubicación actual'}
                     </Button>
 

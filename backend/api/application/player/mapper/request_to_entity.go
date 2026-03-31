@@ -11,14 +11,8 @@ func CreationRequestToEntity(req request.NewPlayerRequest) (player.Entity, error
 	if err != nil {
 		return player.Entity{}, err
 	}
-	
+
 	sport := common.Sport(req.Sport)
-	
-	return player.Entity{
-		ID:       req.ID,
-		Category: category,
-		Sport:    sport,
-	}, nil
+
+	return player.NewPlayer(category, sport), nil
 }
-
-

@@ -23,7 +23,8 @@ func (sc *DefaultController) CreateMatchAnnouncement(c *gin.Context) {
 		return
 	}
 
-	input, err := mapper.CreationRequestToEntity(newMatchAnnouncementRequest)
+	accountID := c.Param("accountId")
+	input, err := mapper.CreationRequestToEntity(newMatchAnnouncementRequest, accountID)
 	if err != nil {
 		c.Error(errors.RequestValidationFailed(err.Error()))
 		return

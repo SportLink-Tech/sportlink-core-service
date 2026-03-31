@@ -17,22 +17,14 @@ func NewCreatePlayerUC(repository player.Repository) CreatePlayerUC {
 }
 
 func (uc *CreatePlayerUC) Invoke(ctx context.Context, input player.Entity) (*player.Entity, error) {
-	result, err := uc.repository.Find(ctx, player.DomainQuery{
-		Id:       input.ID,
-		Category: input.Category,
-		Sport:    input.Sport,
-	})
-
-	// If find returns results without error, player already exists
-	if err == nil && len(result) > 0 {
-		return nil, fmt.Errorf("Player already exist: %+v", input)
-	}
+	// With ULID, each player gets a unique ID, so we don't need to check for duplicates by ID
+	// If needed, we could check by Category and Sport, but typically players are unique entities
 
 	// Save the new player
-	err = uc.repository.Save(ctx, input)
+	err := uc.repository.Save(ctx, input)
 	if err != nil {
 		return nil, fmt.Errorf("error while inserting player in database: %w", err)
 	}
-	
+
 	return &input, nil
 }

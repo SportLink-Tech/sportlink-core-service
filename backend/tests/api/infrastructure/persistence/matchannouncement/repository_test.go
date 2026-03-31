@@ -43,7 +43,8 @@ func Test_Save(t *testing.T) {
 				location,
 				domain.NewSpecificCategories([]common.Category{5, 6, 7}),
 				domain.StatusPending,
-				time.Now().In(tz),
+				time.Now().In(tz),	"",
+
 			),
 			assertions: func(t *testing.T, err error) {
 				assert.Nil(t, err)
@@ -59,7 +60,8 @@ func Test_Save(t *testing.T) {
 				location,
 				domain.NewGreaterThanCategory(5),
 				domain.StatusPending,
-				time.Now().In(tz),
+				time.Now().In(tz),	"",
+
 			),
 			assertions: func(t *testing.T, err error) {
 				assert.Nil(t, err)
@@ -75,7 +77,8 @@ func Test_Save(t *testing.T) {
 				location,
 				domain.NewLessThanCategory(3),
 				domain.StatusPending,
-				time.Now().In(tz),
+				time.Now().In(tz),	"",
+
 			),
 			assertions: func(t *testing.T, err error) {
 				assert.Nil(t, err)
@@ -130,7 +133,8 @@ func Test_Find(t *testing.T) {
 					location,
 					domain.NewSpecificCategories([]common.Category{5}),
 					domain.StatusPending,
-					time.Now().In(tz),
+					time.Now().In(tz),	"",
+
 				))
 				if err != nil {
 					t.Fatal(err)
@@ -144,7 +148,8 @@ func Test_Find(t *testing.T) {
 					location,
 					domain.NewSpecificCategories([]common.Category{6}),
 					domain.StatusPending,
-					time.Now().In(tz),
+					time.Now().In(tz),	"",
+
 				))
 				if err != nil {
 					t.Fatal(err)
@@ -159,7 +164,8 @@ func Test_Find(t *testing.T) {
 					location,
 					domain.NewSpecificCategories([]common.Category{5}),
 					domain.StatusPending,
-					time.Now().In(tz),
+					time.Now().In(tz),	"",
+
 				))
 				if err != nil {
 					t.Fatal(err)
@@ -167,19 +173,27 @@ func Test_Find(t *testing.T) {
 			},
 			assertions: func(t *testing.T, entities []domain.Entity, err error) {
 				assert.Nil(t, err)
-				assert.Len(t, entities, 2)
+				assert.GreaterOrEqual(t, len(entities), 2, "should have at least 2 entities")
+				// Verify that the saved announcements are present
 				assert.True(t, slice.Contains[domain.Entity](
 					entities,
 					domain.Entity{TeamName: "Paddle Team A"},
 					func(a, b domain.Entity) bool {
 						return a.TeamName == b.TeamName
-					}))
+					}), "should contain Paddle Team A")
 				assert.True(t, slice.Contains[domain.Entity](
 					entities,
 					domain.Entity{TeamName: "Paddle Team B"},
 					func(a, b domain.Entity) bool {
 						return a.TeamName == b.TeamName
-					}))
+					}), "should contain Paddle Team B")
+				// Verify that Tennis team is NOT in results (because we filtered by Paddle sport)
+				assert.False(t, slice.Contains[domain.Entity](
+					entities,
+					domain.Entity{TeamName: "Tennis Team"},
+					func(a, b domain.Entity) bool {
+						return a.TeamName == b.TeamName
+					}), "should not contain Tennis Team")
 			},
 		},
 		{
@@ -200,7 +214,8 @@ func Test_Find(t *testing.T) {
 					location,
 					domain.NewSpecificCategories([]common.Category{2}),
 					domain.StatusPending,
-					time.Now().In(tz),
+					time.Now().In(tz),	"",
+
 				))
 
 				repository.Save(ctx, domain.NewMatchAnnouncement(
@@ -211,7 +226,8 @@ func Test_Find(t *testing.T) {
 					location,
 					domain.NewSpecificCategories([]common.Category{2}),
 					domain.StatusConfirmed,
-					time.Now().In(tz),
+					time.Now().In(tz),	"",
+
 				))
 
 				repository.Save(ctx, domain.NewMatchAnnouncement(
@@ -222,7 +238,8 @@ func Test_Find(t *testing.T) {
 					location,
 					domain.NewSpecificCategories([]common.Category{2}),
 					domain.StatusCancelled,
-					time.Now().In(tz),
+					time.Now().In(tz),	"",
+
 				))
 			},
 			assertions: func(t *testing.T, entities []domain.Entity, err error) {
@@ -255,7 +272,8 @@ func Test_Find(t *testing.T) {
 					location,
 					betweenRange,
 					domain.StatusPending,
-					time.Now().In(tz),
+					time.Now().In(tz),	"",
+
 				))
 
 				// Wrong sport
@@ -268,7 +286,8 @@ func Test_Find(t *testing.T) {
 					location,
 					betweenRange2,
 					domain.StatusPending,
-					time.Now().In(tz),
+					time.Now().In(tz),	"",
+
 				))
 
 				// Wrong status
@@ -281,7 +300,8 @@ func Test_Find(t *testing.T) {
 					location,
 					betweenRange3,
 					domain.StatusConfirmed,
-					time.Now().In(tz),
+					time.Now().In(tz),	"",
+
 				))
 			},
 			assertions: func(t *testing.T, entities []domain.Entity, err error) {

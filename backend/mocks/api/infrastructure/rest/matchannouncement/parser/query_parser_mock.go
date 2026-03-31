@@ -209,6 +209,36 @@ func (_m *QueryParser) Offset(offsetQuery string) (int, error) {
 	return r0, r1
 }
 
+// GeoFilter provides a mock function with given fields: lat, lng, radiusKm
+func (_m *QueryParser) GeoFilter(lat string, lng string, radiusKm string) (*matchannouncement.GeoFilter, error) {
+	ret := _m.Called(lat, lng, radiusKm)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GeoFilter")
+	}
+
+	var r0 *matchannouncement.GeoFilter
+	var r1 error
+	if rf, ok := ret.Get(0).(func(string, string, string) (*matchannouncement.GeoFilter, error)); ok {
+		return rf(lat, lng, radiusKm)
+	}
+	if rf, ok := ret.Get(0).(func(string, string, string) *matchannouncement.GeoFilter); ok {
+		r0 = rf(lat, lng, radiusKm)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*matchannouncement.GeoFilter)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(string, string, string) error); ok {
+		r1 = rf(lat, lng, radiusKm)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // NewQueryParser creates a new instance of QueryParser. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.
 // The first argument is typically a *testing.T value.
 func NewQueryParser(t interface {

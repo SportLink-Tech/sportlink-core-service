@@ -16,12 +16,26 @@ import (
 	"github.com/mmcloughlin/geohash"
 )
 
+// DynamoDBClientInterface defines the interface for DynamoDB operations needed by the repository
+type DynamoDBClientInterface interface {
+	PutItem(ctx context.Context, params *dynamodb.PutItemInput, optFns ...func(*dynamodb.Options)) (*dynamodb.PutItemOutput, error)
+	Query(ctx context.Context, params *dynamodb.QueryInput, optFns ...func(*dynamodb.Options)) (*dynamodb.QueryOutput, error)
+}
+
 type RepositoryAdapter struct {
-	dbClient  *dynamodb.Client
+	dbClient  DynamoDBClientInterface
 	tableName string
 }
 
 func NewRepository(client *dynamodb.Client, tableName string) matchannouncement.Repository {
+	return &RepositoryAdapter{
+		dbClient:  client,
+		tableName: tableName,
+	}
+}
+
+// NewRepositoryWithInterface allows injecting a mock client for testing
+func NewRepositoryWithInterface(client DynamoDBClientInterface, tableName string) matchannouncement.Repository {
 	return &RepositoryAdapter{
 		dbClient:  client,
 		tableName: tableName,
@@ -58,7 +72,15 @@ func (repo *RepositoryAdapter) Find(ctx context.Context, query matchannouncement
 		return repo.findByGeoFilter(ctx, query)
 	}
 
+	if len(query.IDs) > 1 {
+		return repo.findByMultipleIDs(ctx, query)
+	}
+
 	keyCond := expression.KeyEqual(expression.Key("EntityId"), expression.Value("Entity#MatchAnnouncement"))
+
+	if len(query.IDs) == 1 {
+		keyCond = expression.KeyAnd(keyCond, expression.KeyEqual(expression.Key("Id"), expression.Value(query.IDs[0])))
+	}
 
 	builder := expression.NewBuilder().WithKeyCondition(keyCond)
 	includeFilters(query, &builder)
@@ -97,6 +119,31 @@ func (repo *RepositoryAdapter) Find(ctx context.Context, query matchannouncement
 	}, nil
 }
 
+func (repo *RepositoryAdapter) findByMultipleIDs(ctx context.Context, query matchannouncement.DomainQuery) (matchannouncement.Page, error) {
+	seen := make(map[string]bool)
+	var all []matchannouncement.Entity
+
+	for _, id := range query.IDs {
+		singleQuery := query
+		singleQuery.IDs = []string{id}
+		page, err := repo.Find(ctx, singleQuery)
+		if err != nil {
+			return matchannouncement.Page{}, err
+		}
+		for _, e := range page.Entities {
+			if !seen[e.ID] {
+				seen[e.ID] = true
+				all = append(all, e)
+			}
+		}
+	}
+
+	if all == nil {
+		all = []matchannouncement.Entity{}
+	}
+	return matchannouncement.Page{Entities: all, Total: len(all)}, nil
+}
+
 func (repo *RepositoryAdapter) buildQueryInput(expr expression.Expression) *dynamodb.QueryInput {
 	return &dynamodb.QueryInput{
 		TableName:                 aws.String(repo.tableName),
@@ -114,7 +161,10 @@ func (repo *RepositoryAdapter) fetchWithFilters(ctx context.Context, queryInput 
 	var results []matchannouncement.Entity
 	var lastEvaluatedKey map[string]types.AttributeValue
 
-	for len(results) < itemsNeeded {
+	// If limit is 0, fetch all items that pass the filter (no limit)
+	hasLimit := itemsNeeded > 0
+
+	for {
 		if lastEvaluatedKey != nil {
 			queryInput.ExclusiveStartKey = lastEvaluatedKey
 		}
@@ -126,7 +176,8 @@ func (repo *RepositoryAdapter) fetchWithFilters(ctx context.Context, queryInput 
 
 		results = append(results, pageResults...)
 
-		if nextKey == nil || len(results) >= itemsNeeded {
+		// Break if no more pages or if we have enough items (when limit is set)
+		if nextKey == nil || (hasLimit && len(results) >= itemsNeeded) {
 			break
 		}
 		lastEvaluatedKey = nextKey
@@ -190,14 +241,24 @@ func (repo *RepositoryAdapter) countTotal(ctx context.Context, query matchannoun
 	}
 
 	totalCount := 0
-	paginator := dynamodb.NewQueryPaginator(repo.dbClient, queryInput)
+	var lastEvaluatedKey map[string]types.AttributeValue
 
-	for paginator.HasMorePages() {
-		resp, err := paginator.NextPage(ctx)
+	for {
+		if lastEvaluatedKey != nil {
+			queryInput.ExclusiveStartKey = lastEvaluatedKey
+		}
+
+		resp, err := repo.dbClient.Query(ctx, queryInput)
 		if err != nil {
 			return 0, err
 		}
+
 		totalCount += len(resp.Items)
+
+		if resp.LastEvaluatedKey == nil {
+			break
+		}
+		lastEvaluatedKey = resp.LastEvaluatedKey
 	}
 
 	return totalCount, nil
@@ -236,23 +297,24 @@ func From(entity matchannouncement.Entity) (Dto, error) {
 	}
 
 	dto := Dto{
-		EntityId:   "Entity#MatchAnnouncement",
-		Id:         entity.ID,
-		TeamName:   entity.TeamName,
-		Sport:      string(entity.Sport),
-		Day:        day,
-		StartTime:  startTime,
-		EndTime:    endTime,
-		Country:    entity.Location.Country,
-		Province:   entity.Location.Province,
-		Locality:   entity.Location.Locality,
-		RangeType:  string(entity.AdmittedCategories.Type),
-		Categories: categories,
-		MinLevel:   minLevel,
-		MaxLevel:   maxLevel,
-		Status:     entity.Status.String(),
-		CreatedAt:  createdAt,
-		ExpiresAt:  expiresAt,
+		EntityId:       "Entity#MatchAnnouncement",
+		Id:             entity.ID,
+		TeamName:       entity.TeamName,
+		Sport:          string(entity.Sport),
+		Day:            day,
+		StartTime:      startTime,
+		EndTime:        endTime,
+		Country:        entity.Location.Country,
+		Province:       entity.Location.Province,
+		Locality:       entity.Location.Locality,
+		RangeType:      string(entity.AdmittedCategories.Type),
+		Categories:     categories,
+		MinLevel:       minLevel,
+		MaxLevel:       maxLevel,
+		Status:         entity.Status.String(),
+		CreatedAt:      createdAt,
+		ExpiresAt:      expiresAt,
+		OwnerAccountId: entity.OwnerAccountID,
 	}
 
 	if entity.Location.HasCoords() {

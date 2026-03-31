@@ -48,6 +48,7 @@ func TestFindMatchAnnouncements(t *testing.T) {
 				parserMock.On("Date", "2025-12-01").Return(time.Date(2025, 12, 1, 0, 0, 0, 0, time.UTC), nil)
 				parserMock.On("Date", "").Return(time.Time{}, nil)
 				parserMock.On("Location", "", "", "").Return(nil)
+				parserMock.On("GeoFilter", "", "", "").Return(nil, nil)
 				parserMock.On("Limit", "").Return(0, nil)
 				parserMock.On("Offset", "").Return(0, nil)
 
@@ -94,6 +95,7 @@ func TestFindMatchAnnouncements(t *testing.T) {
 				parserMock.On("Statuses", "").Return(nil, nil)
 				parserMock.On("Date", "").Return(time.Time{}, nil).Twice()
 				parserMock.On("Location", "", "", "").Return(nil)
+				parserMock.On("GeoFilter", "", "", "").Return(nil, nil)
 				parserMock.On("Limit", "").Return(0, nil)
 				parserMock.On("Offset", "").Return(0, nil)
 
@@ -167,6 +169,7 @@ func TestFindMatchAnnouncements(t *testing.T) {
 				parserMock.On("Statuses", "").Return(nil, nil)
 				parserMock.On("Date", "").Return(time.Time{}, nil).Twice()
 				parserMock.On("Location", "", "", "").Return(nil)
+				parserMock.On("GeoFilter", "", "", "").Return(nil, nil)
 				parserMock.On("Limit", "").Return(0, nil)
 				parserMock.On("Offset", "").Return(0, nil)
 
@@ -191,6 +194,7 @@ func TestFindMatchAnnouncements(t *testing.T) {
 				parserMock.On("Statuses", "").Return(nil, nil)
 				parserMock.On("Date", "").Return(time.Time{}, nil).Twice()
 				parserMock.On("Location", "", "", "").Return(nil)
+				parserMock.On("GeoFilter", "", "", "").Return(nil, nil)
 				parserMock.On("Limit", "").Return(0, nil)
 				parserMock.On("Offset", "").Return(0, nil)
 
@@ -226,6 +230,7 @@ func TestFindMatchAnnouncements(t *testing.T) {
 				parserMock.On("Date", "").Return(time.Time{}, nil).Twice()
 				location := domain.NewLocation("Argentina", "Buenos Aires", "Palermo")
 				parserMock.On("Location", "Argentina", "Buenos Aires", "Palermo").Return(&location)
+				parserMock.On("GeoFilter", "", "", "").Return(nil, nil)
 				parserMock.On("Limit", "").Return(0, nil)
 				parserMock.On("Offset", "").Return(0, nil)
 
@@ -274,6 +279,7 @@ func TestFindMatchAnnouncements(t *testing.T) {
 				parserMock.On("Date", "2025-12-01").Return(fromDate, nil)
 				parserMock.On("Date", "2025-12-31").Return(toDate, nil)
 				parserMock.On("Location", "", "", "").Return(nil)
+				parserMock.On("GeoFilter", "", "", "").Return(nil, nil)
 				parserMock.On("Limit", "").Return(0, nil)
 				parserMock.On("Offset", "").Return(0, nil)
 
@@ -356,7 +362,8 @@ func createTestAnnouncement(teamName string, sport common.Sport, status domain.S
 		location,
 		categoryRange,
 		status,
-		time.Now(),
+		time.Now(),	"",
+
 	)
 }
 

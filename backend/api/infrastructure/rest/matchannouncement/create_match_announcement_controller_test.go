@@ -62,7 +62,8 @@ func TestCreateMatchAnnouncement(t *testing.T) {
 					domain.NewLocation("Argentina", "Buenos Aires", "Palermo"),
 					domain.NewGreaterThanCategory(common.L4),
 					domain.StatusPending,
-					time.Now(),
+					time.Now(),	"",
+
 				)
 
 				useCaseMock.On("Invoke", mock.Anything, mock.MatchedBy(func(entity domain.Entity) bool {
@@ -258,7 +259,8 @@ func TestCreateMatchAnnouncement(t *testing.T) {
 					domain.NewLocation("Argentina", "Buenos Aires", "Palermo"),
 					domain.NewSpecificCategories([]common.Category{common.L4, common.L5, common.L6}),
 					domain.StatusPending,
-					time.Now(),
+					time.Now(),	"",
+
 				)
 
 				useCaseMock.On("Invoke", mock.Anything, mock.MatchedBy(func(entity domain.Entity) bool {
@@ -305,7 +307,8 @@ func TestCreateMatchAnnouncement(t *testing.T) {
 					domain.NewLocation("Argentina", "Buenos Aires", "Palermo"),
 					categoryRange,
 					domain.StatusPending,
-					time.Now(),
+					time.Now(),	"",
+
 				)
 
 				useCaseMock.On("Invoke", mock.Anything, mock.MatchedBy(func(entity domain.Entity) bool {
@@ -334,12 +337,12 @@ func TestCreateMatchAnnouncement(t *testing.T) {
 			gin.SetMode(gin.TestMode)
 			router := gin.Default()
 			router.Use(middleware.ErrorHandler())
-			router.POST("/match-announcement", controller.CreateMatchAnnouncement)
+			router.POST("/account/:accountId/match-announcement", controller.CreateMatchAnnouncement)
 
 			// Given
 			tc.on(t, useCaseMock)
 			jsonData, _ := json.Marshal(tc.payload)
-			req, _ := http.NewRequest("POST", "/match-announcement", bytes.NewBuffer(jsonData))
+			req, _ := http.NewRequest("POST", "/account/test-account-id/match-announcement", bytes.NewBuffer(jsonData))
 			req.Header.Set("Content-Type", "application/json")
 			resp := httptest.NewRecorder()
 

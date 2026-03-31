@@ -8,10 +8,7 @@ type Repository interface {
 }
 
 type DomainQuery struct {
-	Id        string
 	Ids       []string
-	Email     string
 	Emails    []string
-	Nickname  string
 	Nicknames []string
 }
