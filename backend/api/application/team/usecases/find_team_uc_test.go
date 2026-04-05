@@ -2,7 +2,7 @@ package usecases_test
 
 import (
 	"context"
-	"fmt"
+	"errors"
 	"sportlink/api/application/team/usecases"
 	"sportlink/api/domain/common"
 	"sportlink/api/domain/player"
@@ -12,88 +12,82 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
 )
 
-func TestFindTeamUC_Invoke(t *testing.T) {
+func TestNewFindTeamUC(t *testing.T) {
+	ctx := context.Background()
+	findErr := errors.New("database connection error")
 
 	tests := []struct {
 		name  string
 		query team.DomainQuery
-		on    func(t *testing.T, repository *mmocks.Repository)
+		given func(t *testing.T, repository *mmocks.Repository)
 		then  func(t *testing.T, result *[]team.Entity, err error)
 	}{
 		{
-			name: "find teams successfully - multiple results",
+			name: "given repository returns multiple teams when invoke then returns pointer to slice",
 			query: team.DomainQuery{
 				Sports: []common.Sport{common.Football},
 				Name:   "Boca",
 			},
-			on: func(t *testing.T, repository *mmocks.Repository) {
+			given: func(t *testing.T, repository *mmocks.Repository) {
 				repository.On("Find", mock.Anything, mock.MatchedBy(func(query team.DomainQuery) bool {
 					return len(query.Sports) == 1 &&
 						query.Sports[0] == common.Football &&
 						query.Name == "Boca"
 				})).Return([]team.Entity{
 					{
-						Name:     "Boca Juniors",
-						Sport:    common.Football,
-						Category: common.L1,
-						Stats:    *common.NewStats(10, 5, 2),
-						Members:  []player.Entity{},
+						Name: "Boca Juniors", Sport: common.Football, Category: common.L1,
+						Stats: *common.NewStats(10, 5, 2), Members: []player.Entity{},
 					},
 					{
-						Name:     "Boca Unidos",
-						Sport:    common.Football,
-						Category: common.L2,
-						Stats:    *common.NewStats(5, 3, 1),
-						Members:  []player.Entity{},
+						Name: "Boca Unidos", Sport: common.Football, Category: common.L2,
+						Stats: *common.NewStats(5, 3, 1), Members: []player.Entity{},
 					},
 				}, nil)
 			},
 			then: func(t *testing.T, result *[]team.Entity, err error) {
-				assert.NoError(t, err)
-				assert.NotNil(t, result)
+				require.NoError(t, err)
+				require.NotNil(t, result)
 				assert.Len(t, *result, 2)
 				assert.Equal(t, "Boca Juniors", (*result)[0].Name)
 				assert.Equal(t, "Boca Unidos", (*result)[1].Name)
 			},
 		},
 		{
-			name: "find teams successfully - single result",
+			name: "given repository returns single team when invoke then returns one element",
 			query: team.DomainQuery{
 				Sports: []common.Sport{common.Paddle},
 				Name:   "Los Delfines",
 			},
-			on: func(t *testing.T, repository *mmocks.Repository) {
+			given: func(t *testing.T, repository *mmocks.Repository) {
 				repository.On("Find", mock.Anything, mock.MatchedBy(func(query team.DomainQuery) bool {
 					return len(query.Sports) == 1 &&
 						query.Sports[0] == common.Paddle &&
 						query.Name == "Los Delfines"
 				})).Return([]team.Entity{
 					{
-						Name:     "Los Delfines",
-						Sport:    common.Paddle,
-						Category: common.L7,
-						Stats:    *common.NewStats(15, 2, 1),
-						Members:  []player.Entity{},
+						Name: "Los Delfines", Sport: common.Paddle, Category: common.L7,
+						Stats: *common.NewStats(15, 2, 1), Members: []player.Entity{},
 					},
 				}, nil)
 			},
 			then: func(t *testing.T, result *[]team.Entity, err error) {
-				assert.NoError(t, err)
-				assert.NotNil(t, result)
+				require.NoError(t, err)
+				require.NotNil(t, result)
 				assert.Len(t, *result, 1)
 				assert.Equal(t, "Los Delfines", (*result)[0].Name)
 				assert.Equal(t, common.Paddle, (*result)[0].Sport)
 			},
 		},
 		{
-			name: "find teams successfully - no results",
+			name: "given repository returns empty when invoke then returns empty slice pointer",
 			query: team.DomainQuery{
 				Sports: []common.Sport{common.Tennis},
 				Name:   "NonExistent",
 			},
-			on: func(t *testing.T, repository *mmocks.Repository) {
+			given: func(t *testing.T, repository *mmocks.Repository) {
 				repository.On("Find", mock.Anything, mock.MatchedBy(func(query team.DomainQuery) bool {
 					return len(query.Sports) == 1 &&
 						query.Sports[0] == common.Tennis &&
@@ -101,46 +95,44 @@ func TestFindTeamUC_Invoke(t *testing.T) {
 				})).Return([]team.Entity{}, nil)
 			},
 			then: func(t *testing.T, result *[]team.Entity, err error) {
-				assert.NoError(t, err)
-				assert.NotNil(t, result)
+				require.NoError(t, err)
+				require.NotNil(t, result)
 				assert.Empty(t, *result)
 			},
 		},
 		{
-			name: "find teams fails - repository error",
+			name: "given repository fails when invoke then returns error",
 			query: team.DomainQuery{
 				Sports: []common.Sport{common.Football},
 				Name:   "River",
 			},
-			on: func(t *testing.T, repository *mmocks.Repository) {
+			given: func(t *testing.T, repository *mmocks.Repository) {
 				repository.On("Find", mock.Anything, mock.MatchedBy(func(query team.DomainQuery) bool {
 					return len(query.Sports) == 1 &&
 						query.Sports[0] == common.Football &&
 						query.Name == "River"
-				})).Return([]team.Entity{}, fmt.Errorf("database connection error"))
+				})).Return([]team.Entity{}, findErr)
 			},
 			then: func(t *testing.T, result *[]team.Entity, err error) {
-				assert.Error(t, err)
-				assert.Equal(t, "database connection error", err.Error())
-				assert.Nil(t, result)
+				require.Error(t, err)
+				require.Nil(t, result)
+				assert.ErrorIs(t, err, findErr)
 			},
 		},
 	}
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// setup
+			t.Parallel()
 			teamRepository := &mmocks.Repository{}
 			uc := usecases.NewFindTeamUC(teamRepository)
 
-			// given
-			tt.on(t, teamRepository)
+			tt.given(t, teamRepository)
 
-			// when
-			result, err := uc.Invoke(context.Background(), tt.query)
+			result, err := uc.Invoke(ctx, tt.query)
 
-			// then
 			tt.then(t, result, err)
+			teamRepository.AssertExpectations(t)
 		})
 	}
-
 }

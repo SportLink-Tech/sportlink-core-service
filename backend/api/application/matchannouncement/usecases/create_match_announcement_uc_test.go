@@ -17,7 +17,7 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
-func TestCreateMatchAnnouncementUC_Invoke(t *testing.T) {
+func TestNewCreateMatchAnnouncementUC(t *testing.T) {
 
 	location := matchannouncement.NewLocation("Argentina", "Buenos Aires", "CABA")
 	tz := location.GetTimezone()
@@ -36,11 +36,11 @@ func TestCreateMatchAnnouncementUC_Invoke(t *testing.T) {
 	tests := []struct {
 		name  string
 		input matchannouncement.Entity
-		on    func(t *testing.T, repository *mmocks.Repository, teamRepository *tmocks.Repository)
+		given func(t *testing.T, repository *mmocks.Repository, teamRepository *tmocks.Repository)
 		then  func(t *testing.T, result *matchannouncement.Entity, err error)
 	}{
 		{
-			name: "save match announcement successfully",
+			name: "given valid announcement and team exists when invoke then saves and returns entity",
 			input: matchannouncement.Entity{
 				TeamName:           "Thunder Strikers",
 				Sport:              common.Paddle,
@@ -51,7 +51,7 @@ func TestCreateMatchAnnouncementUC_Invoke(t *testing.T) {
 				Status:             matchannouncement.StatusPending,
 				CreatedAt:          time.Now().In(tz),
 			},
-			on: func(t *testing.T, repository *mmocks.Repository, teamRepository *tmocks.Repository) {
+			given: func(t *testing.T, repository *mmocks.Repository, teamRepository *tmocks.Repository) {
 				// Mock team exists
 				teamRepository.On("Find", mock.Anything, mock.MatchedBy(func(query team.DomainQuery) bool {
 					return query.Name == "Thunder Strikers" &&
@@ -73,7 +73,7 @@ func TestCreateMatchAnnouncementUC_Invoke(t *testing.T) {
 			},
 		},
 		{
-			name: "save match announcement with GreaterThan category range successfully",
+			name: "given greater than category range and team exists when invoke then saves and returns entity",
 			input: matchannouncement.Entity{
 				TeamName:           "Thunder Strikers",
 				Sport:              common.Paddle,
@@ -84,7 +84,7 @@ func TestCreateMatchAnnouncementUC_Invoke(t *testing.T) {
 				Status:             matchannouncement.StatusPending,
 				CreatedAt:          time.Now().In(tz),
 			},
-			on: func(t *testing.T, repository *mmocks.Repository, teamRepository *tmocks.Repository) {
+			given: func(t *testing.T, repository *mmocks.Repository, teamRepository *tmocks.Repository) {
 				// Mock team exists
 				teamRepository.On("Find", mock.Anything, mock.MatchedBy(func(query team.DomainQuery) bool {
 					return query.Name == "Thunder Strikers" &&
@@ -104,7 +104,7 @@ func TestCreateMatchAnnouncementUC_Invoke(t *testing.T) {
 			},
 		},
 		{
-			name: "when team does not exist then announcement cannot be created",
+			name: "given team does not exist when invoke then returns error and does not save",
 			input: matchannouncement.Entity{
 				TeamName:           "NonExistent Team",
 				Sport:              common.Paddle,
@@ -115,7 +115,7 @@ func TestCreateMatchAnnouncementUC_Invoke(t *testing.T) {
 				Status:             matchannouncement.StatusPending,
 				CreatedAt:          time.Now().In(tz),
 			},
-			on: func(t *testing.T, repository *mmocks.Repository, teamRepository *tmocks.Repository) {
+			given: func(t *testing.T, repository *mmocks.Repository, teamRepository *tmocks.Repository) {
 				// Mock team does not exist (empty slice)
 				teamRepository.On("Find", mock.Anything, mock.MatchedBy(func(query team.DomainQuery) bool {
 					return query.Name == "NonExistent Team" &&
@@ -129,7 +129,7 @@ func TestCreateMatchAnnouncementUC_Invoke(t *testing.T) {
 			},
 		},
 		{
-			name: "when team repository throws an error then announcement cannot be created",
+			name: "given team repository fails when invoke then returns wrapped find error",
 			input: matchannouncement.Entity{
 				TeamName:           "Thunder Strikers",
 				Sport:              common.Paddle,
@@ -140,7 +140,7 @@ func TestCreateMatchAnnouncementUC_Invoke(t *testing.T) {
 				Status:             matchannouncement.StatusPending,
 				CreatedAt:          time.Now().In(tz),
 			},
-			on: func(t *testing.T, repository *mmocks.Repository, teamRepository *tmocks.Repository) {
+			given: func(t *testing.T, repository *mmocks.Repository, teamRepository *tmocks.Repository) {
 				// Mock team repository error
 				teamRepository.On("Find", mock.Anything, mock.MatchedBy(func(query team.DomainQuery) bool {
 					return query.Name == "Thunder Strikers"
@@ -153,7 +153,7 @@ func TestCreateMatchAnnouncementUC_Invoke(t *testing.T) {
 			},
 		},
 		{
-			name: "when announcement repository throws an error then it must be retrieved",
+			name: "given team exists but save fails when invoke then returns wrapped save error",
 			input: matchannouncement.Entity{
 				TeamName:           "Thunder Strikers",
 				Sport:              common.Paddle,
@@ -164,7 +164,7 @@ func TestCreateMatchAnnouncementUC_Invoke(t *testing.T) {
 				Status:             matchannouncement.StatusPending,
 				CreatedAt:          time.Now().In(tz),
 			},
-			on: func(t *testing.T, repository *mmocks.Repository, teamRepository *tmocks.Repository) {
+			given: func(t *testing.T, repository *mmocks.Repository, teamRepository *tmocks.Repository) {
 				// Mock team exists
 				teamRepository.On("Find", mock.Anything, mock.MatchedBy(func(query team.DomainQuery) bool {
 					return query.Name == "Thunder Strikers"
@@ -180,7 +180,7 @@ func TestCreateMatchAnnouncementUC_Invoke(t *testing.T) {
 			},
 		},
 		{
-			name: "when team name is empty then announcement cannot be created",
+			name: "given empty team name when invoke then returns validation error",
 			input: matchannouncement.Entity{
 				TeamName:           "",
 				Sport:              common.Paddle,
@@ -191,7 +191,7 @@ func TestCreateMatchAnnouncementUC_Invoke(t *testing.T) {
 				Status:             matchannouncement.StatusPending,
 				CreatedAt:          time.Now().In(tz),
 			},
-			on: func(t *testing.T, repository *mmocks.Repository, teamRepository *tmocks.Repository) {
+			given: func(t *testing.T, repository *mmocks.Repository, teamRepository *tmocks.Repository) {
 				// No mocks needed, validation happens before
 			},
 			then: func(t *testing.T, result *matchannouncement.Entity, err error) {
@@ -201,7 +201,7 @@ func TestCreateMatchAnnouncementUC_Invoke(t *testing.T) {
 			},
 		},
 		{
-			name: "when day is in the past then announcement cannot be created",
+			name: "given day is in the past when invoke then returns validation error",
 			input: matchannouncement.Entity{
 				TeamName:           "Thunder Strikers",
 				Sport:              common.Paddle,
@@ -212,7 +212,7 @@ func TestCreateMatchAnnouncementUC_Invoke(t *testing.T) {
 				Status:             matchannouncement.StatusPending,
 				CreatedAt:          time.Now().In(tz),
 			},
-			on: func(t *testing.T, repository *mmocks.Repository, teamRepository *tmocks.Repository) {
+			given: func(t *testing.T, repository *mmocks.Repository, teamRepository *tmocks.Repository) {
 				// No mocks needed, validation happens before
 			},
 			then: func(t *testing.T, result *matchannouncement.Entity, err error) {
@@ -222,7 +222,7 @@ func TestCreateMatchAnnouncementUC_Invoke(t *testing.T) {
 			},
 		},
 		{
-			name: "when location is empty then announcement cannot be created",
+			name: "given incomplete location when invoke then returns validation error",
 			input: matchannouncement.Entity{
 				TeamName:           "Thunder Strikers",
 				Sport:              common.Paddle,
@@ -233,7 +233,7 @@ func TestCreateMatchAnnouncementUC_Invoke(t *testing.T) {
 				Status:             matchannouncement.StatusPending,
 				CreatedAt:          time.Now().In(tz),
 			},
-			on: func(t *testing.T, repository *mmocks.Repository, teamRepository *tmocks.Repository) {
+			given: func(t *testing.T, repository *mmocks.Repository, teamRepository *tmocks.Repository) {
 				// No mocks needed, validation happens before
 			},
 			then: func(t *testing.T, result *matchannouncement.Entity, err error) {
@@ -252,13 +252,15 @@ func TestCreateMatchAnnouncementUC_Invoke(t *testing.T) {
 			uc := usecases.NewCreateMatchAnnouncementUC(repo, teamRepo)
 
 			// given
-			tt.on(t, repo, teamRepo)
+			tt.given(t, repo, teamRepo)
 
 			// when
 			result, err := uc.Invoke(context.Background(), tt.input)
 
 			// then
 			tt.then(t, result, err)
+			repo.AssertExpectations(t)
+			teamRepo.AssertExpectations(t)
 		})
 	}
 }

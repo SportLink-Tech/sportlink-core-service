@@ -10,24 +10,28 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
 )
 
-func TestCreateAccountUC_Invoke(t *testing.T) {
+func TestNewCreateAccountUC(t *testing.T) {
 	ctx := context.Background()
-	testCases := []struct {
+	findErr := errors.New("database connection error")
+	saveErr := errors.New("database error")
+
+	tests := []struct {
 		name  string
 		input account.Entity
-		on    func(t *testing.T, repository *amocks.Repository, validator *amocks.Validator)
+		given func(t *testing.T, repository *amocks.Repository, validator *amocks.Validator)
 		then  func(t *testing.T, result *account.Entity, err error)
 	}{
 		{
-			name: "given valid account when creating then returns created account",
+			name: "given valid account and email is available when invoke then saves and returns entity",
 			input: account.Entity{
 				Email:    "cabrerajjorge@gmail.com",
 				Nickname: "jorge",
 				Password: "SportLink-Password1234",
 			},
-			on: func(t *testing.T, repository *amocks.Repository, validator *amocks.Validator) {
+			given: func(t *testing.T, repository *amocks.Repository, validator *amocks.Validator) {
 				validator.On("Check", mock.MatchedBy(func(entity account.Entity) bool {
 					return entity.Email == "cabrerajjorge@gmail.com" &&
 						entity.Nickname == "jorge" &&
@@ -43,21 +47,21 @@ func TestCreateAccountUC_Invoke(t *testing.T) {
 				})).Return(nil)
 			},
 			then: func(t *testing.T, result *account.Entity, err error) {
-				assert.NoError(t, err)
-				assert.NotNil(t, result)
+				require.NoError(t, err)
+				require.NotNil(t, result)
 				assert.Equal(t, "cabrerajjorge@gmail.com", result.Email)
 				assert.Equal(t, "jorge", result.Nickname)
 				assert.Equal(t, "SportLink-Password1234", result.Password)
 			},
 		},
 		{
-			name: "given account already exists when creating then returns error",
+			name: "given account already exists when invoke then returns error and does not save",
 			input: account.Entity{
 				Email:    "existing@example.com",
 				Nickname: "existing",
 				Password: "SportLink-Password1234",
 			},
-			on: func(t *testing.T, repository *amocks.Repository, validator *amocks.Validator) {
+			given: func(t *testing.T, repository *amocks.Repository, validator *amocks.Validator) {
 				existingAccount := account.Entity{
 					Email:    "existing@example.com",
 					Nickname: "existing",
@@ -71,19 +75,19 @@ func TestCreateAccountUC_Invoke(t *testing.T) {
 				})).Return([]account.Entity{existingAccount}, nil)
 			},
 			then: func(t *testing.T, result *account.Entity, err error) {
-				assert.Error(t, err)
-				assert.Nil(t, result)
+				require.Error(t, err)
+				require.Nil(t, result)
 				assert.Contains(t, err.Error(), "account already exist")
 			},
 		},
 		{
-			name: "given validation fails when creating then returns validation error",
+			name: "given validation fails when invoke then returns validation error and does not touch repository",
 			input: account.Entity{
 				Email:    "invalid-email",
 				Nickname: "ab",
 				Password: "weak",
 			},
-			on: func(t *testing.T, repository *amocks.Repository, validator *amocks.Validator) {
+			given: func(t *testing.T, repository *amocks.Repository, validator *amocks.Validator) {
 				validator.On("Check", mock.MatchedBy(func(entity account.Entity) bool {
 					return entity.Email == "invalid-email"
 				})).Return([]error{
@@ -93,8 +97,8 @@ func TestCreateAccountUC_Invoke(t *testing.T) {
 				})
 			},
 			then: func(t *testing.T, result *account.Entity, err error) {
-				assert.Error(t, err)
-				assert.Nil(t, result)
+				require.Error(t, err)
+				require.Nil(t, result)
 				assert.Contains(t, err.Error(), "validation failed")
 				assert.Contains(t, err.Error(), "email: invalid email format")
 				assert.Contains(t, err.Error(), "nickname: nickname must be at least 3 characters long")
@@ -102,35 +106,35 @@ func TestCreateAccountUC_Invoke(t *testing.T) {
 			},
 		},
 		{
-			name: "given repository find returns error when creating then returns error",
+			name: "given find fails when invoke then returns wrapped error",
 			input: account.Entity{
 				Email:    "cabrerajjorge@gmail.com",
 				Nickname: "jorge",
 				Password: "SportLink-Password1234",
 			},
-			on: func(t *testing.T, repository *amocks.Repository, validator *amocks.Validator) {
+			given: func(t *testing.T, repository *amocks.Repository, validator *amocks.Validator) {
 				validator.On("Check", mock.MatchedBy(func(entity account.Entity) bool {
 					return entity.Email == "cabrerajjorge@gmail.com"
 				})).Return([]error{})
 				repository.On("Find", mock.Anything, mock.MatchedBy(func(query account.DomainQuery) bool {
 					return len(query.Emails) == 1 && query.Emails[0] == "cabrerajjorge@gmail.com"
-				})).Return([]account.Entity{}, errors.New("database connection error"))
+				})).Return([]account.Entity{}, findErr)
 			},
 			then: func(t *testing.T, result *account.Entity, err error) {
-				assert.Error(t, err)
-				assert.Nil(t, result)
+				require.Error(t, err)
+				require.Nil(t, result)
 				assert.Contains(t, err.Error(), "error while checking if account exists")
-				assert.Contains(t, err.Error(), "database connection error")
+				assert.ErrorIs(t, err, findErr)
 			},
 		},
 		{
-			name: "given repository save fails when creating then returns error",
+			name: "given save fails when invoke then returns wrapped error",
 			input: account.Entity{
 				Email:    "cabrerajjorge@gmail.com",
 				Nickname: "jorge",
 				Password: "SportLink-Password1234",
 			},
-			on: func(t *testing.T, repository *amocks.Repository, validator *amocks.Validator) {
+			given: func(t *testing.T, repository *amocks.Repository, validator *amocks.Validator) {
 				validator.On("Check", mock.MatchedBy(func(entity account.Entity) bool {
 					return entity.Email == "cabrerajjorge@gmail.com"
 				})).Return([]error{})
@@ -139,23 +143,23 @@ func TestCreateAccountUC_Invoke(t *testing.T) {
 				})).Return([]account.Entity{}, nil)
 				repository.On("Save", mock.Anything, mock.MatchedBy(func(entity account.Entity) bool {
 					return entity.Email == "cabrerajjorge@gmail.com"
-				})).Return(errors.New("database error"))
+				})).Return(saveErr)
 			},
 			then: func(t *testing.T, result *account.Entity, err error) {
-				assert.Error(t, err)
-				assert.Nil(t, result)
+				require.Error(t, err)
+				require.Nil(t, result)
 				assert.Contains(t, err.Error(), "error while inserting account in database")
-				assert.Contains(t, err.Error(), "database error")
+				assert.ErrorIs(t, err, saveErr)
 			},
 		},
 		{
-			name: "given valid account with special characters in password when creating then returns created account",
+			name: "given valid account with special password characters when invoke then succeeds",
 			input: account.Entity{
 				Email:    "test@example.com",
 				Nickname: "testuser",
 				Password: "P@ssw0rd!123",
 			},
-			on: func(t *testing.T, repository *amocks.Repository, validator *amocks.Validator) {
+			given: func(t *testing.T, repository *amocks.Repository, validator *amocks.Validator) {
 				validator.On("Check", mock.MatchedBy(func(entity account.Entity) bool {
 					return entity.Email == "test@example.com" &&
 						entity.Password == "P@ssw0rd!123"
@@ -170,8 +174,8 @@ func TestCreateAccountUC_Invoke(t *testing.T) {
 				})).Return(nil)
 			},
 			then: func(t *testing.T, result *account.Entity, err error) {
-				assert.NoError(t, err)
-				assert.NotNil(t, result)
+				require.NoError(t, err)
+				require.NotNil(t, result)
 				assert.Equal(t, "test@example.com", result.Email)
 				assert.Equal(t, "testuser", result.Nickname)
 				assert.Equal(t, "P@ssw0rd!123", result.Password)
@@ -179,21 +183,20 @@ func TestCreateAccountUC_Invoke(t *testing.T) {
 		},
 	}
 
-	for _, tt := range testCases {
+	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// set up
-			repository := amocks.NewRepository(t)
-			validator := amocks.NewValidator(t)
+			t.Parallel()
+			repository := &amocks.Repository{}
+			validator := &amocks.Validator{}
 			uc := usecases.NewCreateAccountUC(repository, validator)
 
-			// given
-			tt.on(t, repository, validator)
+			tt.given(t, repository, validator)
 
-			// when
 			result, err := uc.Invoke(ctx, tt.input)
 
-			// then
 			tt.then(t, result, err)
+			repository.AssertExpectations(t)
+			validator.AssertExpectations(t)
 		})
 	}
 }

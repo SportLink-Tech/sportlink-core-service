@@ -147,6 +147,10 @@ generate-mocks:
 	$(eval REPO_FILE=$(shell grep -rl "type Repository interface" backend/api/domain/player | sed 's|.*/||' | sed 's|\.go||'))
 	@# Ejecutar mockery usando el nombre de archivo encontrado como prefijo
 	cd backend && mockery --name=Repository --dir=api/domain/player --output=mocks/api/domain/player --outpkg=mocks --case=underscore --filename=$(REPO_FILE)_mock.go
+
+	@# Repository para user
+	$(eval REPO_FILE=$(shell grep -rl "type Repository interface" backend/api/domain/user | sed 's|.*/||' | sed 's|\.go||'))
+	cd backend && mockery --name=Repository --dir=api/domain/user --output=mocks/api/domain/user --outpkg=mocks --case=underscore --filename=$(REPO_FILE)_mock.go
 	@echo "Mocks generated successfully in backend/mocks/"
 
 # Frontend commands

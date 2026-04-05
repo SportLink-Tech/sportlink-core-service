@@ -16,8 +16,8 @@ const API_BASE_URL = '/api'
  * Following Hexagonal Architecture - Adapter implements Port
  */
 export class MatchAnnouncementApiAdapter implements MatchAnnouncementRepository {
-  async create(request: CreateMatchAnnouncementRequest): Promise<{ data: MatchAnnouncement; status: number }> {
-    const response = await fetch(`${API_BASE_URL}/match-announcement`, {
+  async create(accountId: string, request: CreateMatchAnnouncementRequest): Promise<{ data: MatchAnnouncement; status: number }> {
+    const response = await fetch(`${API_BASE_URL}/account/${accountId}/match-announcement`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

@@ -10,15 +10,18 @@ import (
 type Dto struct {
 	EntityId       string `dynamodbav:"EntityId"`
 	Id             string `dynamodbav:"Id"`
+	Name           string `dynamodbav:"Name,omitempty"`
 	Category       int    `dynamodbav:"Category"`
 	Sport          string `dynamodbav:"Sport"`
 	OwnerAccountId string `dynamodbav:"OwnerAccountId,omitempty"`
 }
 
 func (d *Dto) ToDomain() team.Entity {
-	// Extract name from ID format: SPORT#<sport>#NAME#<name>
-	// For backward compatibility, if ID doesn't match the format, use ID as name
-	name := extractNameFromID(d.Id)
+	// Use stored Name if available, otherwise extract from ID format: SPORT#<sport>#NAME#<name>
+	name := d.Name
+	if name == "" {
+		name = extractNameFromID(d.Id)
+	}
 
 	return team.Entity{
 		ID:             d.Id,

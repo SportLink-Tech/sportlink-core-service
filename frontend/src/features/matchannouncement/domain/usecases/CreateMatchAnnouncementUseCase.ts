@@ -5,7 +5,7 @@ import { getErrorMessage } from '../../../../shared/utils/errorMessages'
 export class CreateMatchAnnouncementUseCase {
   constructor(private repository: MatchAnnouncementRepository) {}
 
-  async execute(request: CreateMatchAnnouncementRequest): Promise<{ announcement: MatchAnnouncement; success: boolean; error?: string }> {
+  async execute(accountId: string, request: CreateMatchAnnouncementRequest): Promise<{ announcement: MatchAnnouncement; success: boolean; error?: string }> {
     try {
       // Validations
       if (!request.team_name || request.team_name.trim().length === 0) {
@@ -24,7 +24,7 @@ export class CreateMatchAnnouncementUseCase {
         return { announcement: {} as MatchAnnouncement, success: false, error: 'La ubicación completa es obligatoria' }
       }
 
-      const response = await this.repository.create(request)
+      const response = await this.repository.create(accountId, request)
 
       if (response.status === 201 || response.status === 200) {
         return { announcement: response.data, success: true }

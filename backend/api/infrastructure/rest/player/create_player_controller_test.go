@@ -13,126 +13,91 @@ import (
 	"github.com/stretchr/testify/mock"
 
 	"sportlink/api/application/player/request"
-	"sportlink/api/application/player/usecases"
 	"sportlink/api/domain/common"
 	domain "sportlink/api/domain/player"
 	"sportlink/api/infrastructure/middleware"
 	"sportlink/api/infrastructure/rest/player"
-	pmocks "sportlink/mocks/api/domain/player"
+	amocks "sportlink/mocks/api/application"
 )
 
-func TestPlayerCreationHandler(t *testing.T) {
-	validator := validator.New()
+func TestCreatePlayer(t *testing.T) {
+	v := validator.New()
 
 	testCases := []struct {
 		name           string
 		payloadRequest request.NewPlayerRequest
-		on             func(t *testing.T, playerRepository *pmocks.Repository)
-		assertions     func(t *testing.T, responseCode int, response map[string]interface{})
+		given          func(t *testing.T, uc *amocks.UseCase[domain.Entity, domain.Entity])
+		then           func(t *testing.T, responseCode int, response map[string]interface{})
 	}{
 		{
-			name: "create a new player successfully",
+			name: "given use case succeeds when creating player then returns created",
 			payloadRequest: request.NewPlayerRequest{
 				Sport:    "Football",
 				Category: 1,
 			},
-			on: func(t *testing.T, playerRepository *pmocks.Repository) {
-				playerRepository.On("Save", mock.Anything, mock.MatchedBy(func(entity domain.Entity) bool {
-					return entity.ID != "" && // ULID is generated
-						entity.Category == common.L1 &&
-						entity.Sport == common.Football
-				})).Return(nil)
+			given: func(t *testing.T, uc *amocks.UseCase[domain.Entity, domain.Entity]) {
+				out := domain.NewPlayer(common.L1, common.Football)
+				uc.On("Invoke", mock.Anything, mock.MatchedBy(func(e domain.Entity) bool {
+					return e.Category == common.L1 && e.Sport == common.Football
+				})).Return(&out, nil)
 			},
-			assertions: func(t *testing.T, responseCode int, response map[string]interface{}) {
+			then: func(t *testing.T, responseCode int, response map[string]interface{}) {
 				assert.Equal(t, http.StatusCreated, responseCode)
-				assert.NotEmpty(t, response["ID"]) // ULID is generated
+				assert.NotEmpty(t, response["ID"])
 			},
 		},
 		{
-			name: "create a new paddle player successfully",
-			payloadRequest: request.NewPlayerRequest{
-				Sport:    "Paddle",
-				Category: 4,
-			},
-			on: func(t *testing.T, playerRepository *pmocks.Repository) {
-				playerRepository.On("Save", mock.Anything, mock.Anything).Return(nil)
-			},
-			assertions: func(t *testing.T, responseCode int, response map[string]interface{}) {
-				assert.Equal(t, http.StatusCreated, responseCode)
-				assert.NotEmpty(t, response["ID"]) // ULID is generated
-			},
-		},
-		{
-			name: "create a new tennis player successfully",
-			payloadRequest: request.NewPlayerRequest{
-				Sport:    "Tennis",
-				Category: 3,
-			},
-			on: func(t *testing.T, playerRepository *pmocks.Repository) {
-				playerRepository.On("Save", mock.Anything, mock.Anything).Return(nil)
-			},
-			assertions: func(t *testing.T, responseCode int, response map[string]interface{}) {
-				assert.Equal(t, http.StatusCreated, responseCode)
-				assert.NotEmpty(t, response["ID"]) // ULID is generated
-			},
-		},
-		{
-			name: "create player with ULID generated automatically",
+			name: "given use case fails when creating player then returns conflict",
 			payloadRequest: request.NewPlayerRequest{
 				Sport:    "Football",
-				Category: 2,
+				Category: 1,
 			},
-			on: func(t *testing.T, playerRepository *pmocks.Repository) {
-				// With ULID, each player gets a unique ID, so duplicates by ID are not possible
-				// The test now just verifies successful creation
-				playerRepository.On("Save", mock.Anything, mock.Anything).Return(nil)
+			given: func(t *testing.T, uc *amocks.UseCase[domain.Entity, domain.Entity]) {
+				uc.On("Invoke", mock.Anything, mock.Anything).Return(nil, assert.AnError)
 			},
-			assertions: func(t *testing.T, responseCode int, response map[string]interface{}) {
-				assert.Equal(t, http.StatusCreated, responseCode)
-				assert.NotEmpty(t, response["ID"]) // ULID is generated
+			then: func(t *testing.T, responseCode int, response map[string]interface{}) {
+				assert.Equal(t, http.StatusConflict, responseCode)
+				assert.Equal(t, "use_case_execution_error", response["code"])
 			},
 		},
 		{
-			name: "fails when create a player with invalid category",
+			name: "given invalid category when creating then returns bad request",
 			payloadRequest: request.NewPlayerRequest{
 				Sport:    "Football",
 				Category: 99,
 			},
-			on: func(t *testing.T, playerRepository *pmocks.Repository) {
-				// No repository calls expected for validation errors
-			},
-			assertions: func(t *testing.T, responseCode int, response map[string]interface{}) {
-				assert.Contains(t, response["message"], "invalid category value: 99")
+			given: func(t *testing.T, uc *amocks.UseCase[domain.Entity, domain.Entity]) {},
+			then: func(t *testing.T, responseCode int, response map[string]interface{}) {
 				assert.Equal(t, http.StatusBadRequest, responseCode)
+				assert.Contains(t, response["message"], "invalid category value")
 			},
 		},
 		{
-			name: "fails when create a player with invalid sport",
+			name: "given invalid sport when creating then returns bad request",
 			payloadRequest: request.NewPlayerRequest{
 				Sport:    "Basketball",
 				Category: 1,
 			},
-			on: func(t *testing.T, playerRepository *pmocks.Repository) {
-				// No repository calls expected for validation errors
-			},
-			assertions: func(t *testing.T, responseCode int, response map[string]interface{}) {
-				assert.Contains(t, response["message"], "Error:Field validation for 'Sport' failed")
+			given: func(t *testing.T, uc *amocks.UseCase[domain.Entity, domain.Entity]) {},
+			then: func(t *testing.T, responseCode int, response map[string]interface{}) {
 				assert.Equal(t, http.StatusBadRequest, responseCode)
+				assert.Contains(t, response["message"], "Sport")
 			},
 		},
 		{
-			name: "create player without category defaults to Unranked",
+			name: "given empty category defaults when creating then invokes use case with unranked",
 			payloadRequest: request.NewPlayerRequest{
 				Sport: "Football",
 			},
-			on: func(t *testing.T, playerRepository *pmocks.Repository) {
-				playerRepository.On("Save", mock.Anything, mock.MatchedBy(func(entity domain.Entity) bool {
-					return entity.ID != "" && entity.Category == common.Unranked
-				})).Return(nil)
+			given: func(t *testing.T, uc *amocks.UseCase[domain.Entity, domain.Entity]) {
+				out := domain.NewPlayer(common.Unranked, common.Football)
+				uc.On("Invoke", mock.Anything, mock.MatchedBy(func(e domain.Entity) bool {
+					return e.Category == common.Unranked && e.Sport == common.Football
+				})).Return(&out, nil)
 			},
-			assertions: func(t *testing.T, responseCode int, response map[string]interface{}) {
+			then: func(t *testing.T, responseCode int, response map[string]interface{}) {
 				assert.Equal(t, http.StatusCreated, responseCode)
-				assert.NotEmpty(t, response["ID"]) // ULID is generated
+				assert.NotEmpty(t, response["ID"])
 			},
 		},
 	}
@@ -140,34 +105,24 @@ func TestPlayerCreationHandler(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
-			playerRepository := new(pmocks.Repository)
-			createPlayerUC := usecases.NewCreatePlayerUC(playerRepository)
+			uc := amocks.NewUseCase[domain.Entity, domain.Entity](t)
+			tc.given(t, uc)
 
-			controller := player.NewController(&createPlayerUC, validator)
-
+			controller := player.NewController(uc, v)
 			gin.SetMode(gin.TestMode)
-			router := gin.Default()
-			router.Use(middleware.ErrorHandler())
-			router.POST("/player", controller.CreatePlayer)
+			r := gin.Default()
+			r.Use(middleware.ErrorHandler())
+			r.POST("/player", controller.CreatePlayer)
 
-			// given
-			tc.on(t, playerRepository)
 			jsonData, _ := json.Marshal(tc.payloadRequest)
-			req, _ := http.NewRequest("POST", "/player", bytes.NewBuffer(jsonData))
-			resp := httptest.NewRecorder()
+			req, _ := http.NewRequest(http.MethodPost, "/player", bytes.NewBuffer(jsonData))
+			req.Header.Set("Content-Type", "application/json")
+			rec := httptest.NewRecorder()
+			r.ServeHTTP(rec, req)
 
-			// when
-			router.ServeHTTP(resp, req)
-
-			// then
-			response := createMapResponse(resp)
-			tc.assertions(t, resp.Code, response)
+			var response map[string]interface{}
+			_ = json.Unmarshal(rec.Body.Bytes(), &response)
+			tc.then(t, rec.Code, response)
 		})
 	}
-}
-
-func createMapResponse(resp *httptest.ResponseRecorder) map[string]interface{} {
-	var response map[string]interface{}
-	json.Unmarshal(resp.Body.Bytes(), &response)
-	return response
 }

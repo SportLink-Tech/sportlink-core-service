@@ -15,7 +15,7 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
-func TestFindMatchAnnouncementUC_Invoke(t *testing.T) {
+func TestNewFindMatchAnnouncementUC(t *testing.T) {
 
 	location := matchannouncement.NewLocation("Argentina", "Buenos Aires", "CABA")
 	tz := location.GetTimezone()
@@ -28,7 +28,7 @@ func TestFindMatchAnnouncementUC_Invoke(t *testing.T) {
 	tests := []struct {
 		name  string
 		query matchannouncement.DomainQuery
-		on    func(t *testing.T, repository *mmocks.Repository)
+		given func(t *testing.T, repository *mmocks.Repository)
 		then  func(t *testing.T, result *usecases.FindMatchAnnouncementResult, err error)
 	}{
 		{
@@ -38,7 +38,7 @@ func TestFindMatchAnnouncementUC_Invoke(t *testing.T) {
 				Limit:  9,
 				Offset: 0,
 			},
-			on: func(t *testing.T, repository *mmocks.Repository) {
+			given: func(t *testing.T, repository *mmocks.Repository) {
 				repository.On("Find", mock.Anything, mock.MatchedBy(func(query matchannouncement.DomainQuery) bool {
 					return len(query.Sports) == 1 && query.Sports[0] == common.Paddle
 				})).Return(matchannouncement.Page{
@@ -86,7 +86,7 @@ func TestFindMatchAnnouncementUC_Invoke(t *testing.T) {
 				Limit:  9,
 				Offset: 9,
 			},
-			on: func(t *testing.T, repository *mmocks.Repository) {
+			given: func(t *testing.T, repository *mmocks.Repository) {
 				repository.On("Find", mock.Anything, mock.MatchedBy(func(query matchannouncement.DomainQuery) bool {
 					return len(query.Sports) == 1 && query.Sports[0] == common.Tennis
 				})).Return(matchannouncement.Page{
@@ -127,7 +127,7 @@ func TestFindMatchAnnouncementUC_Invoke(t *testing.T) {
 				Limit:  9,
 				Offset: 0,
 			},
-			on: func(t *testing.T, repository *mmocks.Repository) {
+			given: func(t *testing.T, repository *mmocks.Repository) {
 				repository.On("Find", mock.Anything, mock.MatchedBy(func(query matchannouncement.DomainQuery) bool {
 					return len(query.Statuses) == 2 &&
 						reflect.DeepEqual(query.Statuses, []matchannouncement.Status{
@@ -185,7 +185,7 @@ func TestFindMatchAnnouncementUC_Invoke(t *testing.T) {
 				Limit:    9,
 				Offset:   0,
 			},
-			on: func(t *testing.T, repository *mmocks.Repository) {
+			given: func(t *testing.T, repository *mmocks.Repository) {
 				repository.On("Find", mock.Anything, mock.MatchedBy(func(query matchannouncement.DomainQuery) bool {
 					return !query.FromDate.IsZero() && !query.ToDate.IsZero()
 				})).Return(matchannouncement.Page{
@@ -223,7 +223,7 @@ func TestFindMatchAnnouncementUC_Invoke(t *testing.T) {
 				Limit:  9,
 				Offset: 0,
 			},
-			on: func(t *testing.T, repository *mmocks.Repository) {
+			given: func(t *testing.T, repository *mmocks.Repository) {
 				repository.On("Find", mock.Anything, mock.MatchedBy(func(query matchannouncement.DomainQuery) bool {
 					return query.Location != nil &&
 						query.Location.Country == "Argentina" &&
@@ -259,7 +259,7 @@ func TestFindMatchAnnouncementUC_Invoke(t *testing.T) {
 				Limit:    9,
 				Offset:   0,
 			},
-			on: func(t *testing.T, repository *mmocks.Repository) {
+			given: func(t *testing.T, repository *mmocks.Repository) {
 				repository.On("Find", mock.Anything, mock.MatchedBy(func(query matchannouncement.DomainQuery) bool {
 					return len(query.Sports) == 1 &&
 						query.Sports[0] == common.Paddle &&
@@ -296,7 +296,7 @@ func TestFindMatchAnnouncementUC_Invoke(t *testing.T) {
 				Limit:  9,
 				Offset: 0,
 			},
-			on: func(t *testing.T, repository *mmocks.Repository) {
+			given: func(t *testing.T, repository *mmocks.Repository) {
 				repository.On("Find", mock.Anything, mock.MatchedBy(func(query matchannouncement.DomainQuery) bool {
 					return len(query.Sports) == 1
 				})).Return(matchannouncement.Page{
@@ -319,7 +319,7 @@ func TestFindMatchAnnouncementUC_Invoke(t *testing.T) {
 				Limit:  9,
 				Offset: 0,
 			},
-			on: func(t *testing.T, repository *mmocks.Repository) {
+			given: func(t *testing.T, repository *mmocks.Repository) {
 				repository.On("Find", mock.Anything, mock.MatchedBy(func(query matchannouncement.DomainQuery) bool {
 					return len(query.Sports) == 1 && query.Sports[0] == common.Paddle
 				})).Return(matchannouncement.Page{}, fmt.Errorf("database connection error"))
@@ -337,7 +337,7 @@ func TestFindMatchAnnouncementUC_Invoke(t *testing.T) {
 				Limit:  0,
 				Offset: 0,
 			},
-			on: func(t *testing.T, repository *mmocks.Repository) {
+			given: func(t *testing.T, repository *mmocks.Repository) {
 				repository.On("Find", mock.Anything, mock.MatchedBy(func(query matchannouncement.DomainQuery) bool {
 					return len(query.Sports) == 1 && query.Sports[0] == common.Paddle
 				})).Return(matchannouncement.Page{
@@ -374,13 +374,14 @@ func TestFindMatchAnnouncementUC_Invoke(t *testing.T) {
 			uc := usecases.NewFindMatchAnnouncementUC(repo)
 
 			// given
-			tt.on(t, repo)
+			tt.given(t, repo)
 
 			// when
 			result, err := uc.Invoke(context.Background(), tt.query)
 
 			// then
 			tt.then(t, result, err)
+			repo.AssertExpectations(t)
 		})
 	}
 }

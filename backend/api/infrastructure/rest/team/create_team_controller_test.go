@@ -5,153 +5,109 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
-	request2 "sportlink/api/application/team/request"
-	"sportlink/api/application/team/usecases"
-	"sportlink/api/domain/common"
-	"sportlink/api/domain/player"
-	team2 "sportlink/api/domain/team"
-	"sportlink/api/infrastructure/middleware"
-	"sportlink/api/infrastructure/rest/team"
-	pmocks "sportlink/mocks/api/domain/player"
-	tmocks "sportlink/mocks/api/domain/team"
 	"testing"
 
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+
+	request2 "sportlink/api/application/team/request"
+	"sportlink/api/domain/common"
+	"sportlink/api/domain/player"
+	team2 "sportlink/api/domain/team"
+	"sportlink/api/infrastructure/middleware"
+	"sportlink/api/infrastructure/rest/team"
+	amocks "sportlink/mocks/api/application"
 )
 
-func TestTeamCreationHandlerWithEmptyFields(t *testing.T) {
-	validator := validator.New()
+func TestCreateTeam(t *testing.T) {
+	v := validator.New()
 
 	testCases := []struct {
 		name           string
 		payloadRequest request2.NewTeamRequest
-		on             func(t *testing.T, playerRepository *pmocks.Repository, teamRepository *tmocks.Repository)
-		assertions     func(t *testing.T, responseCode int, response map[string]interface{})
+		given          func(t *testing.T, create *amocks.UseCase[team2.Entity, team2.Entity])
+		then           func(t *testing.T, responseCode int, response map[string]interface{})
 	}{
 		{
-			name: "create a new Boca Juniors team with player ids successfully",
+			name: "given use case succeeds when creating team with players then returns created",
 			payloadRequest: request2.NewTeamRequest{
 				Sport:     "Football",
 				Name:      "Boca Juniors",
 				Category:  1,
 				PlayerIds: []string{"1", "2"},
 			},
-			on: func(t *testing.T, playerRepository *pmocks.Repository, teamRepository *tmocks.Repository) {
-				teamRepository.On("Save", mock.Anything, mock.MatchedBy(func(entity team2.Entity) bool {
-					return entity.Sport == common.Football &&
-						entity.Stats == *common.NewStats(0, 0, 0) &&
-						entity.Name == "Boca Juniors" &&
-						entity.Category == common.L1
-				})).Return(nil)
-				playerRepository.On("Find", mock.Anything, mock.Anything).Return([]player.Entity{
-					{
-						ID: "1",
-					},
-					{
-						ID: "2",
-					},
-				}, nil)
+			given: func(t *testing.T, create *amocks.UseCase[team2.Entity, team2.Entity]) {
+				out := team2.NewTeam("Boca Juniors", common.L1, *common.NewStats(0, 0, 0), common.Football,
+					[]player.Entity{{ID: "1"}, {ID: "2"}}, "test-account")
+				create.On("Invoke", mock.Anything, mock.MatchedBy(func(e team2.Entity) bool {
+					return e.Name == "Boca Juniors" && e.Sport == common.Football && e.OwnerAccountID == "test-account"
+				})).Return(&out, nil)
 			},
-			assertions: func(t *testing.T, responseCode int, response map[string]interface{}) {
+			then: func(t *testing.T, responseCode int, response map[string]interface{}) {
 				assert.Equal(t, http.StatusCreated, responseCode)
+				assert.Equal(t, "Boca Juniors", response["Name"])
 			},
 		},
 		{
-			name: "team creation failed when some of the players does not exist",
+			name: "given use case fails when some players missing then returns conflict",
 			payloadRequest: request2.NewTeamRequest{
 				Sport:     "Football",
 				Name:      "Boca Juniors",
 				Category:  1,
 				PlayerIds: []string{"1", "2"},
 			},
-			on: func(t *testing.T, playerRepository *pmocks.Repository, teamRepository *tmocks.Repository) {
-				teamRepository.On("Save", mock.Anything, mock.Anything).Return(nil)
-				playerRepository.On("Find", mock.Anything, mock.Anything).Return([]player.Entity{
-					{
-						ID: "1",
-					},
-				}, nil)
+			given: func(t *testing.T, create *amocks.UseCase[team2.Entity, team2.Entity]) {
+				create.On("Invoke", mock.Anything, mock.Anything).Return(nil, assert.AnError)
 			},
-			assertions: func(t *testing.T, responseCode int, response map[string]interface{}) {
+			then: func(t *testing.T, responseCode int, response map[string]interface{}) {
 				assert.Equal(t, http.StatusConflict, responseCode)
-				assert.Equal(t, response["code"], "use_case_execution_error")
-				assert.Equal(t, response["message"], "use case execution failed. Err: some of the team member does not exist")
+				assert.Equal(t, "use_case_execution_error", response["code"])
 			},
 		},
 		{
-			name: "create a new Boca Juniors team without players successfully",
+			name: "given use case succeeds when creating team without players then returns created",
 			payloadRequest: request2.NewTeamRequest{
 				Sport:    "Football",
 				Name:     "Boca Juniors",
 				Category: 1,
 			},
-			on: func(t *testing.T, playerRepository *pmocks.Repository, teamRepository *tmocks.Repository) {
-				teamRepository.On("Save", mock.Anything, mock.Anything).Return(nil)
-				playerRepository.On("Find", mock.Anything, mock.Anything).Return([]player.Entity{}, nil)
+			given: func(t *testing.T, create *amocks.UseCase[team2.Entity, team2.Entity]) {
+				out := team2.NewTeam("Boca Juniors", common.L1, *common.NewStats(0, 0, 0), common.Football, nil, "test-account")
+				create.On("Invoke", mock.Anything, mock.MatchedBy(func(e team2.Entity) bool {
+					return e.Name == "Boca Juniors" && len(e.Members) == 0
+				})).Return(&out, nil)
 			},
-			assertions: func(t *testing.T, responseCode int, response map[string]interface{}) {
+			then: func(t *testing.T, responseCode int, response map[string]interface{}) {
 				assert.Equal(t, http.StatusCreated, responseCode)
 			},
 		},
 		{
-			name:           "create a new River Plate team successfully",
-			payloadRequest: request2.NewTeamRequest{Sport: "Football", Name: "River Plate", Category: 2},
-			on: func(t *testing.T, playerRepository *pmocks.Repository, teamRepository *tmocks.Repository) {
-				teamRepository.On("Save", mock.Anything, mock.Anything).Return(nil)
-				playerRepository.On("Find", mock.Anything, mock.Anything).Return([]player.Entity{}, nil)
-			},
-			assertions: func(t *testing.T, responseCode int, response map[string]interface{}) {
-				assert.Equal(t, http.StatusCreated, responseCode)
-			},
-		},
-		{
-			name:           "create a new Los Delfines paddle team successfully",
-			payloadRequest: request2.NewTeamRequest{Sport: "Paddle", Name: "Los Delfines", Category: 7},
-			on: func(t *testing.T, playerRepository *pmocks.Repository, teamRepository *tmocks.Repository) {
-				teamRepository.On("Save", mock.Anything, mock.Anything).Return(nil)
-				playerRepository.On("Find", mock.Anything, mock.Anything).Return([]player.Entity{}, nil)
-			},
-			assertions: func(t *testing.T, responseCode int, response map[string]interface{}) {
-				assert.Equal(t, http.StatusCreated, responseCode)
-			},
-		},
-		{
-			name:           "fails when create a new team with invalid category",
+			name:           "given invalid category when creating then returns bad request",
 			payloadRequest: request2.NewTeamRequest{Sport: "Football", Name: "Boca Juniors", Category: 9},
-			on: func(t *testing.T, playerRepository *pmocks.Repository, teamRepository *tmocks.Repository) {
-				teamRepository.On("Save", mock.Anything, mock.Anything).Return(nil)
-				playerRepository.On("Find", mock.Anything, mock.Anything).Return([]player.Entity{}, nil)
-			},
-			assertions: func(t *testing.T, responseCode int, response map[string]interface{}) {
-				assert.Contains(t, response["message"], "Err: invalid category value: 9")
+			given:          func(t *testing.T, create *amocks.UseCase[team2.Entity, team2.Entity]) {},
+			then: func(t *testing.T, responseCode int, response map[string]interface{}) {
 				assert.Equal(t, http.StatusBadRequest, responseCode)
+				assert.Contains(t, response["message"], "invalid category value")
 			},
 		},
 		{
-			name:           "fails when create a new team with invalid sport",
+			name:           "given invalid sport when creating then returns bad request",
 			payloadRequest: request2.NewTeamRequest{Sport: "fuchibol", Name: "River Plate", Category: 2},
-			on: func(t *testing.T, playerRepository *pmocks.Repository, teamRepository *tmocks.Repository) {
-				teamRepository.On("Save", mock.Anything, mock.Anything).Return(nil)
-				playerRepository.On("Find", mock.Anything, mock.Anything).Return([]player.Entity{}, nil)
-			},
-			assertions: func(t *testing.T, responseCode int, response map[string]interface{}) {
-				assert.Contains(t, response["message"], "Error:Field validation for 'Sport' failed")
+			given:          func(t *testing.T, create *amocks.UseCase[team2.Entity, team2.Entity]) {},
+			then: func(t *testing.T, responseCode int, response map[string]interface{}) {
 				assert.Equal(t, http.StatusBadRequest, responseCode)
+				assert.Contains(t, response["message"], "Sport")
 			},
 		},
 		{
-			name:           "create a new team successfully",
+			name:           "given empty name when creating then returns bad request",
 			payloadRequest: request2.NewTeamRequest{Sport: "Football", Name: "", Category: 1},
-			on: func(t *testing.T, playerRepository *pmocks.Repository, teamRepository *tmocks.Repository) {
-				teamRepository.On("Save", mock.Anything, mock.Anything).Return(nil)
-				playerRepository.On("Find", mock.Anything, mock.Anything).Return([]player.Entity{}, nil)
-			},
-			assertions: func(t *testing.T, responseCode int, response map[string]interface{}) {
-				assert.Contains(t, response["message"], " Error:Field validation for 'Name'")
+			given:          func(t *testing.T, create *amocks.UseCase[team2.Entity, team2.Entity]) {},
+			then: func(t *testing.T, responseCode int, response map[string]interface{}) {
 				assert.Equal(t, http.StatusBadRequest, responseCode)
+				assert.Contains(t, response["message"], "Name")
 			},
 		},
 	}
@@ -159,37 +115,27 @@ func TestTeamCreationHandlerWithEmptyFields(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
-			playerRepository := new(pmocks.Repository)
-			teamRepository := new(tmocks.Repository)
-			createTeamUC := usecases.NewCreateTeamUC(playerRepository, teamRepository)
-			retrieveTeamUC := usecases.NewRetrieveTeamUC(teamRepository)
-			findTeamUC := usecases.NewFindTeamUC(teamRepository)
+			createUC := amocks.NewUseCase[team2.Entity, team2.Entity](t)
+			retrieveUC := amocks.NewUseCase[team2.ID, team2.Entity](t)
+			findUC := amocks.NewUseCase[team2.DomainQuery, []team2.Entity](t)
+			listUC := amocks.NewUseCase[team2.DomainQuery, []team2.Entity](t)
+			tc.given(t, createUC)
 
-			controller := team.NewController(createTeamUC, retrieveTeamUC, findTeamUC, findTeamUC, validator)
-
+			controller := team.NewController(createUC, retrieveUC, findUC, listUC, v)
 			gin.SetMode(gin.TestMode)
-			router := gin.Default()
-			router.Use(middleware.ErrorHandler())
-			router.POST("/account/:accountId/team", controller.CreateTeam)
+			r := gin.Default()
+			r.Use(middleware.ErrorHandler())
+			r.POST("/account/:accountId/team", controller.CreateTeam)
 
-			// given
-			tc.on(t, playerRepository, teamRepository)
 			jsonData, _ := json.Marshal(tc.payloadRequest)
-			req, _ := http.NewRequest("POST", "/account/test-account/team", bytes.NewBuffer(jsonData))
-			resp := httptest.NewRecorder()
+			req, _ := http.NewRequest(http.MethodPost, "/account/test-account/team", bytes.NewBuffer(jsonData))
+			req.Header.Set("Content-Type", "application/json")
+			rec := httptest.NewRecorder()
+			r.ServeHTTP(rec, req)
 
-			// when
-			router.ServeHTTP(resp, req)
-
-			// then
-			response := createMapResponse(resp)
-			tc.assertions(t, resp.Code, response)
+			var response map[string]interface{}
+			_ = json.Unmarshal(rec.Body.Bytes(), &response)
+			tc.then(t, rec.Code, response)
 		})
 	}
-}
-
-func createMapResponse(resp *httptest.ResponseRecorder) map[string]interface{} {
-	var response map[string]interface{}
-	json.Unmarshal(resp.Body.Bytes(), &response)
-	return response
 }

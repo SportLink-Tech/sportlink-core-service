@@ -216,6 +216,17 @@ export function Layout({ children }: LayoutProps) {
                 <GroupsIcon sx={{ mr: 2, fontSize: 24, color: 'text.secondary' }} />
                 <Typography variant="body1">Mis equipos</Typography>
               </MenuItem>
+              <MenuItem
+                onClick={() => handleNavigate('/my-announcements')}
+                sx={{
+                  py: 1.5,
+                  px: 2,
+                  '&:hover': { bgcolor: 'rgba(0, 0, 0, 0.04)' }
+                }}
+              >
+                <EventIcon sx={{ mr: 2, fontSize: 24, color: 'text.secondary' }} />
+                <Typography variant="body1">Mis anuncios</Typography>
+              </MenuItem>
             </Box>
 
             <Divider />

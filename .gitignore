@@ -1,3 +1,5 @@
+.gocache*
+.gopath*
 vendor
 backend/vendor
 backend/coverage.html

@@ -129,6 +129,7 @@ func TestCalculatePageInfo(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
 			got := usecases.CalculatePageInfo(tt.limit, tt.offset, tt.total)
 
 			assert.Equal(t, tt.wantNumber, got.Number, "page number should match")

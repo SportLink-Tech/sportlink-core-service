@@ -30,11 +30,11 @@ func TestCreateMatchAnnouncement(t *testing.T) {
 	testCases := []struct {
 		name    string
 		payload request.NewMatchAnnouncementRequest
-		on      func(t *testing.T, useCaseMock *UseCaseMock)
+		given   func(t *testing.T, useCaseMock *UseCaseMock)
 		then    func(t *testing.T, responseCode int, response map[string]interface{})
 	}{
 		{
-			name: "given_valid_match_announcement_when_creating_then_returns_created_announcement",
+			name: "given valid match announcement when creating then returns created announcement",
 			payload: request.NewMatchAnnouncementRequest{
 				TeamName: "Boca",
 				Sport:    "Paddle",
@@ -53,7 +53,7 @@ func TestCreateMatchAnnouncement(t *testing.T) {
 					MinLevel: 4,
 				},
 			},
-			on: func(t *testing.T, useCaseMock *UseCaseMock) {
+			given: func(t *testing.T, useCaseMock *UseCaseMock) {
 				expectedEntity := domain.NewMatchAnnouncement(
 					"Boca",
 					common.Paddle,
@@ -82,9 +82,9 @@ func TestCreateMatchAnnouncement(t *testing.T) {
 			},
 		},
 		{
-			name:    "given_invalid_json_when_creating_then_returns_bad_request",
+			name:    "given invalid json when creating then returns bad request",
 			payload: request.NewMatchAnnouncementRequest{},
-			on: func(t *testing.T, useCaseMock *UseCaseMock) {
+			given: func(t *testing.T, useCaseMock *UseCaseMock) {
 				// No expectations - request should fail before use case is called
 			},
 			then: func(t *testing.T, responseCode int, response map[string]interface{}) {
@@ -94,12 +94,12 @@ func TestCreateMatchAnnouncement(t *testing.T) {
 			},
 		},
 		{
-			name: "given_missing_required_fields_when_creating_then_returns_validation_error",
+			name: "given missing required fields when creating then returns validation error",
 			payload: request.NewMatchAnnouncementRequest{
 				TeamName: "",
 				Sport:    "Paddle",
 			},
-			on: func(t *testing.T, useCaseMock *UseCaseMock) {
+			given: func(t *testing.T, useCaseMock *UseCaseMock) {
 				// No expectations - validation should fail before use case is called
 			},
 			then: func(t *testing.T, responseCode int, response map[string]interface{}) {
@@ -108,7 +108,7 @@ func TestCreateMatchAnnouncement(t *testing.T) {
 			},
 		},
 		{
-			name: "given_invalid_sport_when_creating_then_returns_validation_error",
+			name: "given invalid sport when creating then returns validation error",
 			payload: request.NewMatchAnnouncementRequest{
 				TeamName: "Boca",
 				Sport:    "InvalidSport",
@@ -127,7 +127,7 @@ func TestCreateMatchAnnouncement(t *testing.T) {
 					MinLevel: 4,
 				},
 			},
-			on: func(t *testing.T, useCaseMock *UseCaseMock) {
+			given: func(t *testing.T, useCaseMock *UseCaseMock) {
 				// Invalid sport passes validation but fails in mapper or use case
 				// The mapper will convert it, but use case validation will fail
 				useCaseMock.On("Invoke", mock.Anything, mock.MatchedBy(func(entity domain.Entity) bool {
@@ -142,7 +142,7 @@ func TestCreateMatchAnnouncement(t *testing.T) {
 			},
 		},
 		{
-			name: "given_invalid_category_range_type_when_creating_then_returns_validation_error",
+			name: "given invalid category range type when creating then returns validation error",
 			payload: request.NewMatchAnnouncementRequest{
 				TeamName: "Boca",
 				Sport:    "Paddle",
@@ -160,7 +160,7 @@ func TestCreateMatchAnnouncement(t *testing.T) {
 					Type: "INVALID_TYPE",
 				},
 			},
-			on: func(t *testing.T, useCaseMock *UseCaseMock) {
+			given: func(t *testing.T, useCaseMock *UseCaseMock) {
 				// No expectations - validation should fail before use case is called
 			},
 			then: func(t *testing.T, responseCode int, response map[string]interface{}) {
@@ -169,7 +169,7 @@ func TestCreateMatchAnnouncement(t *testing.T) {
 			},
 		},
 		{
-			name: "given_use_case_returns_error_when_creating_then_returns_internal_server_error",
+			name: "given use case returns error when creating then returns internal server error",
 			payload: request.NewMatchAnnouncementRequest{
 				TeamName: "Boca",
 				Sport:    "Paddle",
@@ -188,7 +188,7 @@ func TestCreateMatchAnnouncement(t *testing.T) {
 					MinLevel: 4,
 				},
 			},
-			on: func(t *testing.T, useCaseMock *UseCaseMock) {
+			given: func(t *testing.T, useCaseMock *UseCaseMock) {
 				useCaseMock.On("Invoke", mock.Anything, mock.MatchedBy(func(entity domain.Entity) bool {
 					return entity.TeamName == "Boca" && entity.Sport == common.Paddle
 				})).Return(nil, assert.AnError)
@@ -200,7 +200,7 @@ func TestCreateMatchAnnouncement(t *testing.T) {
 			},
 		},
 		{
-			name: "given_team_does_not_exist_when_creating_then_returns_error",
+			name: "given team does not exist when creating then returns error",
 			payload: request.NewMatchAnnouncementRequest{
 				TeamName: "NonExistentTeam",
 				Sport:    "Paddle",
@@ -219,7 +219,7 @@ func TestCreateMatchAnnouncement(t *testing.T) {
 					MinLevel: 4,
 				},
 			},
-			on: func(t *testing.T, useCaseMock *UseCaseMock) {
+			given: func(t *testing.T, useCaseMock *UseCaseMock) {
 				useCaseMock.On("Invoke", mock.Anything, mock.MatchedBy(func(entity domain.Entity) bool {
 					return entity.TeamName == "NonExistentTeam" && entity.Sport == common.Paddle
 				})).Return(nil, assert.AnError)
@@ -231,7 +231,7 @@ func TestCreateMatchAnnouncement(t *testing.T) {
 			},
 		},
 		{
-			name: "given_specific_categories_when_creating_then_returns_created_announcement",
+			name: "given specific categories when creating then returns created announcement",
 			payload: request.NewMatchAnnouncementRequest{
 				TeamName: "Boca",
 				Sport:    "Paddle",
@@ -250,7 +250,7 @@ func TestCreateMatchAnnouncement(t *testing.T) {
 					Categories: []int{4, 5, 6},
 				},
 			},
-			on: func(t *testing.T, useCaseMock *UseCaseMock) {
+			given: func(t *testing.T, useCaseMock *UseCaseMock) {
 				expectedEntity := domain.NewMatchAnnouncement(
 					"Boca",
 					common.Paddle,
@@ -277,7 +277,7 @@ func TestCreateMatchAnnouncement(t *testing.T) {
 			},
 		},
 		{
-			name: "given_between_categories_when_creating_then_returns_created_announcement",
+			name: "given between categories when creating then returns created announcement",
 			payload: request.NewMatchAnnouncementRequest{
 				TeamName: "Boca",
 				Sport:    "Paddle",
@@ -297,7 +297,7 @@ func TestCreateMatchAnnouncement(t *testing.T) {
 					MaxLevel: 6,
 				},
 			},
-			on: func(t *testing.T, useCaseMock *UseCaseMock) {
+			given: func(t *testing.T, useCaseMock *UseCaseMock) {
 				categoryRange, _ := domain.NewBetweenCategories(common.L3, common.L6)
 				expectedEntity := domain.NewMatchAnnouncement(
 					"Boca",
@@ -340,7 +340,7 @@ func TestCreateMatchAnnouncement(t *testing.T) {
 			router.POST("/account/:accountId/match-announcement", controller.CreateMatchAnnouncement)
 
 			// Given
-			tc.on(t, useCaseMock)
+			tc.given(t, useCaseMock)
 			jsonData, _ := json.Marshal(tc.payload)
 			req, _ := http.NewRequest("POST", "/account/test-account-id/match-announcement", bytes.NewBuffer(jsonData))
 			req.Header.Set("Content-Type", "application/json")

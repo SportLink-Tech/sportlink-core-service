@@ -30,7 +30,7 @@ func TestFindMatchAnnouncements(t *testing.T) {
 	testCases := []struct {
 		name        string
 		queryParams map[string]string
-		on          func(t *testing.T, useCaseMock *FindUseCaseMock, parserMock *pmocks.QueryParser)
+		given       func(t *testing.T, useCaseMock *FindUseCaseMock, parserMock *pmocks.QueryParser)
 		then        func(t *testing.T, responseCode int, response interface{})
 	}{
 		{
@@ -41,7 +41,7 @@ func TestFindMatchAnnouncements(t *testing.T) {
 				"statuses":   "PENDING",
 				"fromDate":   "2025-12-01",
 			},
-			on: func(t *testing.T, useCaseMock *FindUseCaseMock, parserMock *pmocks.QueryParser) {
+			given: func(t *testing.T, useCaseMock *FindUseCaseMock, parserMock *pmocks.QueryParser) {
 				parserMock.On("Sports", "Paddle").Return([]common.Sport{common.Paddle}, nil)
 				parserMock.On("Categories", "4,5").Return([]common.Category{common.L4, common.L5}, nil)
 				parserMock.On("Statuses", "PENDING").Return([]domain.Status{domain.StatusPending}, nil)
@@ -89,7 +89,7 @@ func TestFindMatchAnnouncements(t *testing.T) {
 		{
 			name:        "given no query parameters when finding announcements then returns all announcements",
 			queryParams: map[string]string{},
-			on: func(t *testing.T, useCaseMock *FindUseCaseMock, parserMock *pmocks.QueryParser) {
+			given: func(t *testing.T, useCaseMock *FindUseCaseMock, parserMock *pmocks.QueryParser) {
 				parserMock.On("Sports", "").Return(nil, nil)
 				parserMock.On("Categories", "").Return(nil, nil)
 				parserMock.On("Statuses", "").Return(nil, nil)
@@ -130,7 +130,7 @@ func TestFindMatchAnnouncements(t *testing.T) {
 			queryParams: map[string]string{
 				"categories": "invalid",
 			},
-			on: func(t *testing.T, useCaseMock *FindUseCaseMock, parserMock *pmocks.QueryParser) {
+			given: func(t *testing.T, useCaseMock *FindUseCaseMock, parserMock *pmocks.QueryParser) {
 				parserMock.On("Sports", "").Return(nil, nil)
 				parserMock.On("Categories", "invalid").Return(nil, assert.AnError)
 			},
@@ -145,7 +145,7 @@ func TestFindMatchAnnouncements(t *testing.T) {
 			queryParams: map[string]string{
 				"fromDate": "invalid-date",
 			},
-			on: func(t *testing.T, useCaseMock *FindUseCaseMock, parserMock *pmocks.QueryParser) {
+			given: func(t *testing.T, useCaseMock *FindUseCaseMock, parserMock *pmocks.QueryParser) {
 				parserMock.On("Sports", "").Return(nil, nil)
 				parserMock.On("Categories", "").Return(nil, nil)
 				parserMock.On("Statuses", "").Return(nil, nil)
@@ -163,7 +163,7 @@ func TestFindMatchAnnouncements(t *testing.T) {
 			queryParams: map[string]string{
 				"sports": "Paddle",
 			},
-			on: func(t *testing.T, useCaseMock *FindUseCaseMock, parserMock *pmocks.QueryParser) {
+			given: func(t *testing.T, useCaseMock *FindUseCaseMock, parserMock *pmocks.QueryParser) {
 				parserMock.On("Sports", "Paddle").Return([]common.Sport{common.Paddle}, nil)
 				parserMock.On("Categories", "").Return(nil, nil)
 				parserMock.On("Statuses", "").Return(nil, nil)
@@ -188,7 +188,7 @@ func TestFindMatchAnnouncements(t *testing.T) {
 			queryParams: map[string]string{
 				"sports": "Paddle",
 			},
-			on: func(t *testing.T, useCaseMock *FindUseCaseMock, parserMock *pmocks.QueryParser) {
+			given: func(t *testing.T, useCaseMock *FindUseCaseMock, parserMock *pmocks.QueryParser) {
 				parserMock.On("Sports", "Paddle").Return([]common.Sport{common.Paddle}, nil)
 				parserMock.On("Categories", "").Return(nil, nil)
 				parserMock.On("Statuses", "").Return(nil, nil)
@@ -223,7 +223,7 @@ func TestFindMatchAnnouncements(t *testing.T) {
 				"province": "Buenos Aires",
 				"locality": "Palermo",
 			},
-			on: func(t *testing.T, useCaseMock *FindUseCaseMock, parserMock *pmocks.QueryParser) {
+			given: func(t *testing.T, useCaseMock *FindUseCaseMock, parserMock *pmocks.QueryParser) {
 				parserMock.On("Sports", "").Return(nil, nil)
 				parserMock.On("Categories", "").Return(nil, nil)
 				parserMock.On("Statuses", "").Return(nil, nil)
@@ -270,7 +270,7 @@ func TestFindMatchAnnouncements(t *testing.T) {
 				"fromDate": "2025-12-01",
 				"toDate":   "2025-12-31",
 			},
-			on: func(t *testing.T, useCaseMock *FindUseCaseMock, parserMock *pmocks.QueryParser) {
+			given: func(t *testing.T, useCaseMock *FindUseCaseMock, parserMock *pmocks.QueryParser) {
 				parserMock.On("Sports", "").Return(nil, nil)
 				parserMock.On("Categories", "").Return(nil, nil)
 				parserMock.On("Statuses", "").Return(nil, nil)
@@ -325,7 +325,7 @@ func TestFindMatchAnnouncements(t *testing.T) {
 			router.GET("/match-announcement", controller.FindMatchAnnouncements)
 
 			// Given
-			tc.on(t, useCaseMock, parserMock)
+			tc.given(t, useCaseMock, parserMock)
 			req := httptest.NewRequest("GET", "/match-announcement", nil)
 			q := req.URL.Query()
 			for key, value := range tc.queryParams {
@@ -338,6 +338,101 @@ func TestFindMatchAnnouncements(t *testing.T) {
 			router.ServeHTTP(resp, req)
 
 			// Then
+			response := createResponse(resp)
+			tc.then(t, resp.Code, response)
+		})
+	}
+}
+
+func TestFindAccountMatchAnnouncements(t *testing.T) {
+	validator := validator.New()
+
+	testCases := []struct {
+		name        string
+		accountID   string
+		queryParams map[string]string
+		given       func(t *testing.T, useCaseMock *FindUseCaseMock, parserMock *pmocks.QueryParser)
+		then        func(t *testing.T, responseCode int, response interface{})
+	}{
+		{
+			name:      "given account id and statuses when finding then returns announcement list",
+			accountID: "acc-owner",
+			queryParams: map[string]string{
+				"statuses": "PENDING",
+			},
+			given: func(t *testing.T, useCaseMock *FindUseCaseMock, parserMock *pmocks.QueryParser) {
+				parserMock.On("Statuses", "PENDING").Return([]domain.Status{domain.StatusPending}, nil)
+				ann := createTestAnnouncement("MyTeam", common.Paddle, domain.StatusPending)
+				ann.OwnerAccountID = "acc-owner"
+				res := &usecases.FindMatchAnnouncementResult{
+					Entities: []domain.Entity{ann},
+					Page:     usecases.PageInfo{Number: 1, OutOf: 1, Total: 1},
+				}
+				useCaseMock.On("Invoke", mock.Anything, mock.MatchedBy(func(q domain.DomainQuery) bool {
+					return q.OwnerAccountID == "acc-owner" && len(q.Statuses) == 1 && q.Statuses[0] == domain.StatusPending
+				})).Return(res, nil)
+			},
+			then: func(t *testing.T, responseCode int, response interface{}) {
+				assert.Equal(t, http.StatusOK, responseCode)
+				arr := response.([]interface{})
+				assert.Len(t, arr, 1)
+				first := arr[0].(map[string]interface{})
+				assert.Equal(t, "MyTeam", first["team_name"])
+			},
+		},
+		{
+			name:        "given invalid statuses query when finding then returns validation error",
+			accountID:   "acc-owner",
+			queryParams: map[string]string{"statuses": "NOT_VALID"},
+			given: func(t *testing.T, useCaseMock *FindUseCaseMock, parserMock *pmocks.QueryParser) {
+				parserMock.On("Statuses", "NOT_VALID").Return(nil, assert.AnError)
+			},
+			then: func(t *testing.T, responseCode int, response interface{}) {
+				assert.Equal(t, http.StatusBadRequest, responseCode)
+				m := response.(map[string]interface{})
+				assert.Equal(t, "request_validation_failed", m["code"])
+			},
+		},
+		{
+			name:        "given use case error when finding then returns conflict",
+			accountID:   "acc-owner",
+			queryParams: map[string]string{},
+			given: func(t *testing.T, useCaseMock *FindUseCaseMock, parserMock *pmocks.QueryParser) {
+				parserMock.On("Statuses", "").Return(nil, nil)
+				useCaseMock.On("Invoke", mock.Anything, mock.MatchedBy(func(q domain.DomainQuery) bool {
+					return q.OwnerAccountID == "acc-owner"
+				})).Return(nil, assert.AnError)
+			},
+			then: func(t *testing.T, responseCode int, response interface{}) {
+				assert.Equal(t, http.StatusConflict, responseCode)
+				m := response.(map[string]interface{})
+				assert.Equal(t, "use_case_execution_error", m["code"])
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			useCaseMock := amocks.NewUseCase[domain.DomainQuery, usecases.FindMatchAnnouncementResult](t)
+			parserMock := pmocks.NewQueryParser(t)
+			controller := matchannouncement.NewControllerWithParser(nil, useCaseMock, validator, parserMock)
+
+			gin.SetMode(gin.TestMode)
+			router := gin.Default()
+			router.Use(middleware.ErrorHandler())
+			router.GET("/account/:accountId/match-announcement", controller.FindAccountMatchAnnouncements)
+
+			tc.given(t, useCaseMock, parserMock)
+			req := httptest.NewRequest("GET", "/account/"+tc.accountID+"/match-announcement", nil)
+			q := req.URL.Query()
+			for key, value := range tc.queryParams {
+				q.Add(key, value)
+			}
+			req.URL.RawQuery = q.Encode()
+			resp := httptest.NewRecorder()
+			router.ServeHTTP(resp, req)
+
 			response := createResponse(resp)
 			tc.then(t, resp.Code, response)
 		})

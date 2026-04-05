@@ -53,9 +53,13 @@ export function CreateMatchAnnouncementPage() {
   const [teamName, setTeamName] = useState('')
   const [userTeams, setUserTeams] = useState<Team[]>([])
   const [loadingTeams, setLoadingTeams] = useState(false)
-  const [day, setDay] = useState('')
-  const [startTime, setStartTime] = useState('')
-  const [endTime, setEndTime] = useState('')
+  const today = new Date()
+  const todayStr = today.toISOString().split('T')[0]
+  const currentTimeStr = `${String(today.getHours()).padStart(2, '0')}:${String(today.getMinutes()).padStart(2, '0')}`
+
+  const [day, setDay] = useState(todayStr)
+  const [startTime, setStartTime] = useState(currentTimeStr)
+  const [endTime, setEndTime] = useState('23:59')
   const [country, setCountry] = useState('Argentina')
   const [province, setProvince] = useState('Buenos Aires')
   const [locality, setLocality] = useState('')
@@ -148,7 +152,7 @@ export function CreateMatchAnnouncementPage() {
       admittedCategories.max_level = maxLevel
     }
 
-    const result = await createMatchAnnouncementUseCase.execute({
+    const result = await createMatchAnnouncementUseCase.execute(CURRENT_ACCOUNT_ID, {
       team_name: teamName,
       sport,
       day,
@@ -172,9 +176,9 @@ export function CreateMatchAnnouncementPage() {
       setShowSuccessDialog(true)
       // Reset form
       setTeamName('')
-      setDay('')
-      setStartTime('')
-      setEndTime('')
+      setDay(new Date().toISOString().split('T')[0])
+      setStartTime(`${String(new Date().getHours()).padStart(2, '0')}:${String(new Date().getMinutes()).padStart(2, '0')}`)
+      setEndTime('23:59')
       setLocality('')
       setSelectedCategories([])
       setAttempted(false)
@@ -327,6 +331,7 @@ export function CreateMatchAnnouncementPage() {
                         fullWidth
                         required
                         InputLabelProps={{ shrink: true }}
+                        inputProps={{ step: 60 }}
                         error={attempted && !startTime}
                         helperText={attempted && !startTime ? "Campo obligatorio" : ""}
                       />
@@ -340,6 +345,7 @@ export function CreateMatchAnnouncementPage() {
                         fullWidth
                         required
                         InputLabelProps={{ shrink: true }}
+                        inputProps={{ step: 60 }}
                         error={attempted && (!endTime || !isTimeSlotValid())}
                         helperText={
                           attempted && !endTime

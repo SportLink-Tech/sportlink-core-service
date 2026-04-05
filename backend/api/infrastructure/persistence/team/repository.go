@@ -118,6 +118,7 @@ func From(entity team.Entity) (Dto, error) {
 	return Dto{
 		EntityId:       "Entity#Team",
 		Id:             entity.ID,
+		Name:           entity.Name,
 		Category:       int(entity.Category),
 		Sport:          string(entity.Sport),
 		OwnerAccountId: entity.OwnerAccountID,
@@ -126,8 +127,9 @@ func From(entity team.Entity) (Dto, error) {
 
 func (repo *RepositoryAdapter) findByOwner(ctx context.Context, ownerAccountID string) ([]team.Entity, error) {
 	keyCond := expression.KeyEqual(expression.Key("OwnerAccountId"), expression.Value(ownerAccountID))
+	filter := expression.Name("EntityId").Equal(expression.Value("Entity#Team"))
 
-	expr, err := expression.NewBuilder().WithKeyCondition(keyCond).Build()
+	expr, err := expression.NewBuilder().WithKeyCondition(keyCond).WithFilter(filter).Build()
 	if err != nil {
 		return []team.Entity{}, err
 	}
@@ -139,6 +141,7 @@ func (repo *RepositoryAdapter) findByOwner(ctx context.Context, ownerAccountID s
 		KeyConditionExpression:    expr.KeyCondition(),
 		ExpressionAttributeNames:  expr.Names(),
 		ExpressionAttributeValues: expr.Values(),
+		FilterExpression:          expr.Filter(),
 	})
 	if err != nil {
 		return []team.Entity{}, err
