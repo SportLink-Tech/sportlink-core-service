@@ -55,6 +55,7 @@ func Routes(router *gin.Engine) {
 	// Match Request Use Cases
 	createMatchRequest := umatchrequest.NewCreateMatchRequestUC(matchRequestRepository, matchAnnouncementRepository)
 	findMatchRequests := umatchrequest.NewFindMatchRequestsUC(matchRequestRepository)
+	findSentMatchRequests := umatchrequest.NewFindSentMatchRequestsUC(matchRequestRepository)
 	updateMatchRequestStatus := umatchrequest.NewUpdateMatchRequestStatusUC(matchRequestRepository)
 
 	// Controllers
@@ -70,10 +71,12 @@ func Routes(router *gin.Engine) {
 	matchAnnouncementController := cmatchannouncement.NewController(createMatchAnnouncement, findMatchAnnouncements, customValidator)
 	router.POST("/account/:accountId/match-announcement", matchAnnouncementController.CreateMatchAnnouncement)
 	router.GET("/match-announcement", matchAnnouncementController.FindMatchAnnouncements)
+	router.GET("/account/:accountId/match-announcement", matchAnnouncementController.FindAccountMatchAnnouncements)
 
-	matchRequestController := cmatchrequest.NewController(createMatchRequest, findMatchRequests, updateMatchRequestStatus, customValidator)
+	matchRequestController := cmatchrequest.NewController(createMatchRequest, findMatchRequests, findSentMatchRequests, updateMatchRequestStatus, customValidator)
 	router.POST("/account/:accountId/match-announcement/:announcementId/match-request", matchRequestController.CreateMatchRequest)
 	router.GET("/account/:accountId/match-request", matchRequestController.FindMatchRequests)
+	router.GET("/account/:accountId/sent-match-request", matchRequestController.FindSentMatchRequests)
 	router.PATCH("/account/:accountId/match-request/:requestId", matchRequestController.UpdateMatchRequestStatus)
 
 	monitoring.RegisterMetricsRoute(router)

@@ -13,6 +13,7 @@ import (
 type Controller interface {
 	CreateMatchAnnouncement(c *gin.Context)
 	FindMatchAnnouncements(c *gin.Context)
+	FindAccountMatchAnnouncements(c *gin.Context)
 }
 
 type DefaultController struct {

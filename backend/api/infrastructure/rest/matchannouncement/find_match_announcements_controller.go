@@ -43,6 +43,31 @@ func (sc *DefaultController) FindMatchAnnouncements(c *gin.Context) {
 	c.JSON(http.StatusOK, paginatedResponse)
 }
 
+// FindAccountMatchAnnouncements handles GET /account/:accountId/match-announcement
+// Returns all match announcements owned by the given account, optionally filtered by status.
+func (sc *DefaultController) FindAccountMatchAnnouncements(c *gin.Context) {
+	accountID := c.Param("accountId")
+
+	statuses, err := sc.queryParser.Statuses(c.Query("statuses"))
+	if err != nil {
+		c.Error(errors.RequestValidationFailed(err.Error()))
+		return
+	}
+
+	query := matchannouncement.DomainQuery{
+		OwnerAccountID: accountID,
+		Statuses:       statuses,
+	}
+
+	result, err := sc.findMatchAnnouncementsUC.Invoke(c.Request.Context(), query)
+	if err != nil {
+		c.Error(errors.UseCaseExecutionFailed(err.Error()))
+		return
+	}
+
+	c.JSON(http.StatusOK, restmapper.EntitiesToResponses(result.Entities))
+}
+
 // buildDomainQuery builds a DomainQuery from HTTP query parameters using the parser
 func (sc *DefaultController) buildDomainQuery(c *gin.Context) (matchannouncement.DomainQuery, error) {
 	query := matchannouncement.DomainQuery{}

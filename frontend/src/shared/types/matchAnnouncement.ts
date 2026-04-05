@@ -22,6 +22,7 @@ export interface MatchAnnouncement {
   }
   status: 'PENDING' | 'CONFIRMED' | 'CANCELLED' | 'EXPIRED'
   created_at: string
+  owner_account_id?: string
 }
 
 export interface CreateMatchAnnouncementRequest {

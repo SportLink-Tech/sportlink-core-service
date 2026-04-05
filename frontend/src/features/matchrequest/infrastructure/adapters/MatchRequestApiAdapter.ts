@@ -1,0 +1,33 @@
+import { MatchRequest, MatchRequestRepository } from '../../domain/ports/MatchRequestRepository'
+
+const API_BASE_URL = '/api'
+
+export class MatchRequestApiAdapter implements MatchRequestRepository {
+  async create(requesterAccountId: string, matchAnnouncementId: string): Promise<void> {
+    const response = await fetch(
+      `${API_BASE_URL}/account/${requesterAccountId}/match-announcement/${matchAnnouncementId}/match-request`,
+      { method: 'POST' },
+    )
+
+    if (!response.ok) {
+      const data = await response.json().catch(() => ({}))
+      throw new Error(data.message || 'Error al crear la solicitud de partido')
+    }
+  }
+
+  async findSent(requesterAccountId: string, statuses?: string[]): Promise<MatchRequest[]> {
+    const queryParams = new URLSearchParams()
+    if (statuses && statuses.length > 0) {
+      queryParams.append('statuses', statuses.join(','))
+    }
+    const qs = queryParams.toString()
+    const url = `${API_BASE_URL}/account/${requesterAccountId}/sent-match-request${qs ? `?${qs}` : ''}`
+
+    const response = await fetch(url)
+    if (!response.ok) {
+      const data = await response.json().catch(() => ({}))
+      throw new Error(data.message || 'Error al obtener solicitudes enviadas')
+    }
+    return response.json()
+  }
+}

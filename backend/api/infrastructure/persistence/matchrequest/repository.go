@@ -58,6 +58,7 @@ const ownerAccountIDIndexName = "OwnerAccountId-index"
 func (repo *RepositoryAdapter) Find(ctx context.Context, query matchrequest.DomainQuery) ([]matchrequest.Entity, error) {
 	hasOwnerCriteria := len(query.OwnerAccountIDs) > 0
 	hasIDCriteria := len(query.IDs) > 0
+	hasRequesterCriteria := len(query.RequesterAccountIDs) == 1 && !hasOwnerCriteria && !hasIDCriteria
 
 	switch {
 	case hasOwnerCriteria && len(query.OwnerAccountIDs) > 1:
@@ -68,6 +69,8 @@ func (repo *RepositoryAdapter) Find(ctx context.Context, query matchrequest.Doma
 		return repo.findByMultipleIDs(ctx, query)
 	case hasIDCriteria:
 		return repo.findByPrimaryKey(ctx, query.IDs[0], query)
+	case hasRequesterCriteria:
+		return repo.findByRequesterAccountID(ctx, query.RequesterAccountIDs[0], query)
 	default:
 		return []matchrequest.Entity{}, nil
 	}
@@ -174,6 +177,66 @@ func (repo *RepositoryAdapter) findByMultipleIDs(ctx context.Context, query matc
 		return []matchrequest.Entity{}, nil
 	}
 	return all, nil
+}
+
+// findByRequesterAccountID queries all match requests (EntityId partition) and filters by RequesterAccountId.
+// This avoids a Scan by querying the main table partition key directly.
+func (repo *RepositoryAdapter) findByRequesterAccountID(ctx context.Context, requesterAccountID string, query matchrequest.DomainQuery) ([]matchrequest.Entity, error) {
+	keyCond := expression.KeyEqual(expression.Key("EntityId"), expression.Value("Entity#MatchRequest"))
+
+	requesterFilter := expression.Equal(expression.Name("RequesterAccountId"), expression.Value(requesterAccountID))
+	filters := []expression.ConditionBuilder{requesterFilter}
+
+	if len(query.Statuses) > 0 {
+		var vals []expression.OperandBuilder
+		for _, s := range query.Statuses {
+			vals = append(vals, expression.Value(s.String()))
+		}
+		filters = append(filters, expression.Name("Status").In(vals[0], vals[1:]...))
+	}
+
+	combined := filters[0]
+	for i := 1; i < len(filters); i++ {
+		combined = expression.And(combined, filters[i])
+	}
+
+	expr, err := expression.NewBuilder().WithKeyCondition(keyCond).WithFilter(combined).Build()
+	if err != nil {
+		return nil, err
+	}
+
+	var entities []matchrequest.Entity
+	var lastKey map[string]types.AttributeValue
+	for {
+		input := &dynamodb.QueryInput{
+			TableName:                 aws.String(repo.tableName),
+			KeyConditionExpression:    expr.KeyCondition(),
+			FilterExpression:          expr.Filter(),
+			ExpressionAttributeNames:  expr.Names(),
+			ExpressionAttributeValues: expr.Values(),
+		}
+		if lastKey != nil {
+			input.ExclusiveStartKey = lastKey
+		}
+		resp, err := repo.dbClient.Query(ctx, input)
+		if err != nil {
+			return nil, err
+		}
+		items, err := unmarshalItems(resp.Items)
+		if err != nil {
+			return nil, err
+		}
+		entities = append(entities, items...)
+		if resp.LastEvaluatedKey == nil {
+			break
+		}
+		lastKey = resp.LastEvaluatedKey
+	}
+
+	if entities == nil {
+		return []matchrequest.Entity{}, nil
+	}
+	return entities, nil
 }
 
 func (repo *RepositoryAdapter) UpdateStatus(ctx context.Context, id string, ownerAccountID string, newStatus matchrequest.Status) error {

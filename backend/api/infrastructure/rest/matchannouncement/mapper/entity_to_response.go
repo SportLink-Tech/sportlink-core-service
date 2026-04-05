@@ -29,10 +29,11 @@ func EntityToResponse(entity matchannouncement.Entity) response.MatchAnnouncemen
 			StartTime: entity.TimeSlot.StartTime,
 			EndTime:   entity.TimeSlot.EndTime,
 		},
-		Location: locationToResponse(entity.Location),
+		Location:           locationToResponse(entity.Location),
 		AdmittedCategories: categoryRangeToResponse(entity.AdmittedCategories),
 		Status:             entity.Status.String(),
 		CreatedAt:          entity.CreatedAt,
+		OwnerAccountID:     entity.OwnerAccountID,
 	}
 }
 

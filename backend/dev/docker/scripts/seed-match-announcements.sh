@@ -327,4 +327,8 @@ insert_match_announcement "Tennis Buenos Aires" "Tennis" 5 16 2 "Argentina" "Bue
 # Un anuncio confirmado en Cardales
 insert_match_announcement "Los Leones FC" "Football" 7 18 2 "Argentina" "Buenos Aires" "Los Cardales" "GREATER_THAN" "null" "5" "null" "CONFIRMED" "-34.3213" "-59.0051" "seed-account-02"
 
+# Anuncios propios del usuario actual (cabrerajjorge) - no deben mostrar el botón "Unirme"
+insert_match_announcement "Mi Equipo FC" "Football" 1 20 2 "Argentina" "Buenos Aires" "Los Cardales" "BETWEEN" "null" "4" "6" "PENDING" "-34.3213" "-59.0051" "cabrerajjorge"
+insert_match_announcement "Cabrerajjorge Pádel" "Paddle" 2 19 2 "Argentina" "Buenos Aires" "Pilar" "GREATER_THAN" "null" "5" "null" "PENDING" "-34.4584" "-58.9142" "cabrerajjorge"
+
 print_banner "Anuncios de partidos insertados correctamente"

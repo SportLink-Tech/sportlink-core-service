@@ -6,6 +6,7 @@ import { CreateMatchAnnouncementPage } from './features/matchannouncement/ui/pag
 import { TeamModule } from './features/team/TeamModule'
 import { CreateTeamPage } from './features/team/ui/pages/CreateTeamPage'
 import { MyTeamsPage } from './features/team/ui/pages/MyTeamsPage'
+import { MatchRequestModule } from './features/matchrequest/MatchRequestModule'
 
 /**
  * App Component
@@ -15,16 +16,18 @@ import { MyTeamsPage } from './features/team/ui/pages/MyTeamsPage'
 function App() {
   return (
     <MatchAnnouncementModule>
-      <TeamModule>
-        <Layout>
-          <Routes>
-            <Route path="/" element={<ListMatchAnnouncementsPage />} />
-            <Route path="/create" element={<CreateMatchAnnouncementPage />} />
-            <Route path="/create-team" element={<CreateTeamPage />} />
-            <Route path="/my-teams" element={<MyTeamsPage />} />
-          </Routes>
-        </Layout>
-      </TeamModule>
+      <MatchRequestModule>
+        <TeamModule>
+          <Layout>
+            <Routes>
+              <Route path="/" element={<ListMatchAnnouncementsPage />} />
+              <Route path="/create" element={<CreateMatchAnnouncementPage />} />
+              <Route path="/create-team" element={<CreateTeamPage />} />
+              <Route path="/my-teams" element={<MyTeamsPage />} />
+            </Routes>
+          </Layout>
+        </TeamModule>
+      </MatchRequestModule>
     </MatchAnnouncementModule>
   )
 }

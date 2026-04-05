@@ -6,12 +6,14 @@ import {
   Paper,
   Card,
   CardContent,
+  CardActions,
   Chip,
   CircularProgress,
   Alert,
   Grid,
   Divider,
   Button,
+  Snackbar,
 } from '@mui/material'
 import EventIcon from '@mui/icons-material/Event'
 import LocationOnIcon from '@mui/icons-material/LocationOn'
@@ -19,19 +21,30 @@ import SportsIcon from '@mui/icons-material/Sports'
 import GroupsIcon from '@mui/icons-material/Groups'
 import AccessTimeIcon from '@mui/icons-material/AccessTime'
 import { useMatchAnnouncementContext } from '../../context/MatchAnnouncementContext'
+import { useMatchRequestContext } from '../../../matchrequest/context/MatchRequestContext'
 import { MatchAnnouncement, GeoFilter } from '../../../../shared/types/matchAnnouncement'
 import { MatchAnnouncementFilters } from '../components/MatchAnnouncementFilters'
+import { CURRENT_ACCOUNT_ID } from '../../../../shared/constants/session'
 
 const ITEMS_PER_PAGE = 9 // 3 filas x 3 columnas
 
 export function ListMatchAnnouncementsPage() {
-  const { findMatchAnnouncementsUseCase } = useMatchAnnouncementContext()
+  const { findMatchAnnouncementsUseCase, findAccountMatchAnnouncementsUseCase } = useMatchAnnouncementContext()
+  const { createMatchRequestUseCase, findSentMatchRequestsUseCase } = useMatchRequestContext()
 
   const [announcements, setAnnouncements] = useState<MatchAnnouncement[]>([])
+  const [ownPendingIds, setOwnPendingIds] = useState<Set<string>>(new Set())
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [currentPage, setCurrentPage] = useState(1)
   const [totalPages, setTotalPages] = useState(0)
+  const [joiningId, setJoiningId] = useState<string | null>(null)
+  const [joinedIds, setJoinedIds] = useState<Set<string>>(new Set())
+  const [snackbar, setSnackbar] = useState<{ open: boolean; message: string; severity: 'success' | 'error' }>({
+    open: false,
+    message: '',
+    severity: 'success',
+  })
 
   // Filter state
   const [selectedSports, setSelectedSports] = useState<string[]>([])
@@ -86,6 +99,24 @@ export function ListMatchAnnouncementsPage() {
   useEffect(() => {
     loadAnnouncements()
   }, [loadAnnouncements])
+
+  // Load the current user's PENDING announcements once on mount to exclude them from results
+  useEffect(() => {
+    findAccountMatchAnnouncementsUseCase
+      .execute(CURRENT_ACCOUNT_ID, ['PENDING'])
+      .then((result) => {
+        if (result.success) {
+          setOwnPendingIds(result.announcementIds)
+        }
+      })
+  }, [findAccountMatchAnnouncementsUseCase])
+
+  // Load announcement IDs for which the current user already sent a PENDING request
+  useEffect(() => {
+    findSentMatchRequestsUseCase
+      .execute(CURRENT_ACCOUNT_ID, ['PENDING'])
+      .then((ids) => setJoinedIds(ids))
+  }, [findSentMatchRequestsUseCase])
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString)
@@ -204,6 +235,19 @@ export function ListMatchAnnouncementsPage() {
 
   const shouldShowPagination = totalPages > 1
 
+  const handleJoin = async (announcement: MatchAnnouncement) => {
+    if (!announcement.id) return
+    setJoiningId(announcement.id)
+    const result = await createMatchRequestUseCase.execute(CURRENT_ACCOUNT_ID, announcement.id)
+    setJoiningId(null)
+    if (result.success) {
+      setJoinedIds((prev) => new Set(prev).add(announcement.id!))
+      setSnackbar({ open: true, message: '¡Solicitud enviada correctamente!', severity: 'success' })
+    } else {
+      setSnackbar({ open: true, message: result.error || 'Error al enviar la solicitud', severity: 'error' })
+    }
+  }
+
   return (
     <Box>
       <Stack spacing={4}>
@@ -267,7 +311,7 @@ export function ListMatchAnnouncementsPage() {
         {!loading && !error && announcements.length > 0 && (
           <Stack spacing={3}>
             <Grid container spacing={3}>
-              {announcements.map((announcement) => (
+              {announcements.filter((a) => !ownPendingIds.has(a.id ?? '')).map((announcement) => (
                 <Grid item xs={12} sm={6} md={4} lg={4} key={announcement.id}>
                   <Card elevation={2} sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
                     <CardContent sx={{ flexGrow: 1 }}>
@@ -332,6 +376,25 @@ export function ListMatchAnnouncementsPage() {
                         </Box>
                       </Stack>
                     </CardContent>
+
+                    {/* Join button - only for PENDING announcements not owned by current user */}
+                    {announcement.status === 'PENDING' &&
+                      announcement.owner_account_id !== CURRENT_ACCOUNT_ID && (
+                        <CardActions sx={{ px: 2, pb: 2 }}>
+                          <Button
+                            variant="contained"
+                            fullWidth
+                            disabled={joiningId === announcement.id || joinedIds.has(announcement.id!)}
+                            onClick={() => handleJoin(announcement)}
+                            sx={{
+                              backgroundColor: '#43A047',
+                              '&:hover': { backgroundColor: '#2E7D32' },
+                            }}
+                          >
+                            {joiningId === announcement.id ? 'Enviando...' : joinedIds.has(announcement.id!) ? 'Solicitud enviada' : 'Unirme'}
+                          </Button>
+                        </CardActions>
+                      )}
                   </Card>
                 </Grid>
               ))}
@@ -382,6 +445,21 @@ export function ListMatchAnnouncementsPage() {
           </Stack>
         )}
       </Stack>
+
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={4000}
+        onClose={() => setSnackbar((s) => ({ ...s, open: false }))}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+      >
+        <Alert
+          severity={snackbar.severity}
+          onClose={() => setSnackbar((s) => ({ ...s, open: false }))}
+          sx={{ width: '100%' }}
+        >
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
     </Box>
   )
 }

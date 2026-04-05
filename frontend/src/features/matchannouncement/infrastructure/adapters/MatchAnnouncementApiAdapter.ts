@@ -107,5 +107,28 @@ export class MatchAnnouncementApiAdapter implements MatchAnnouncementRepository 
       status: response.status,
     }
   }
+
+  async findByAccount(accountId: string, statuses?: string[]): Promise<{ data: MatchAnnouncement[]; status: number }> {
+    const queryParams = new URLSearchParams()
+    if (statuses && statuses.length > 0) {
+      queryParams.append('statuses', statuses.join(','))
+    }
+    const queryString = queryParams.toString()
+    const url = `${API_BASE_URL}/account/${accountId}/match-announcement${queryString ? `?${queryString}` : ''}`
+
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: { 'Content-Type': 'application/json' },
+    })
+
+    const data = await response.json()
+
+    if (!response.ok) {
+      const error: ApiError = data
+      throw new Error(error.message || 'Error finding account match announcements')
+    }
+
+    return { data, status: response.status }
+  }
 }
 

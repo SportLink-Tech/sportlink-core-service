@@ -13,6 +13,7 @@ type MatchAnnouncementResponse struct {
 	AdmittedCategories CategoryRangeResponse `json:"admitted_categories"`
 	Status             string                `json:"status"`
 	CreatedAt          time.Time             `json:"created_at"`
+	OwnerAccountID     string                `json:"owner_account_id,omitempty"`
 }
 
 type TimeSlotResponse struct {

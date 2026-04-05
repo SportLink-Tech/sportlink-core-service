@@ -27,16 +27,17 @@ type GeoFilter struct {
 
 // DomainQuery represents the search criteria for match announcements
 type DomainQuery struct {
-	IDs        []string          // Search by specific IDs
-	Sports     []common.Sport    // Search by multiple sports
-	Categories []common.Category // Search by multiple admitted categories
-	Statuses   []Status          // Search by multiple statuses
-	FromDate   time.Time         // Announcements from this date
-	ToDate     time.Time         // Announcements until this date
-	Location   *Location         // Search by exact location text (optional)
-	GeoFilter  *GeoFilter        // Search by proximity (optional, uses GSI)
-	Limit      int               // Maximum number of results to return (0 = no limit)
-	Offset     int               // Number of results to skip (0 = no offset)
+	IDs            []string          // Search by specific IDs
+	Sports         []common.Sport    // Search by multiple sports
+	Categories     []common.Category // Search by multiple admitted categories
+	Statuses       []Status          // Search by multiple statuses
+	FromDate       time.Time         // Announcements from this date
+	ToDate         time.Time         // Announcements until this date
+	Location       *Location         // Search by exact location text (optional)
+	GeoFilter      *GeoFilter        // Search by proximity (optional, uses GSI)
+	OwnerAccountID string            // Filter by owner account ID (optional)
+	Limit          int               // Maximum number of results to return (0 = no limit)
+	Offset         int               // Number of results to skip (0 = no offset)
 }
 
 func NewDomainQuery(

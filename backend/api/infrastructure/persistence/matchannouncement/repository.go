@@ -535,6 +535,11 @@ func includeFilters(query matchannouncement.DomainQuery, builder *expression.Bui
 		filters = append(filters, expression.Name("Day").LessThanEqual(expression.Value(query.ToDate.Unix())))
 	}
 
+	// Filter by owner account ID
+	if query.OwnerAccountID != "" {
+		filters = append(filters, expression.Name("OwnerAccountId").Equal(expression.Value(query.OwnerAccountID)))
+	}
+
 	// Filter by location
 	if query.Location != nil {
 		if query.Location.Country != "" {

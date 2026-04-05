@@ -1,6 +1,7 @@
 import { createContext, useContext, ReactNode } from 'react'
 import { CreateMatchAnnouncementUseCase } from '../domain/usecases/CreateMatchAnnouncementUseCase'
 import { FindMatchAnnouncementsUseCase } from '../domain/usecases/FindMatchAnnouncementsUseCase'
+import { FindAccountMatchAnnouncementsUseCase } from '../domain/usecases/FindAccountMatchAnnouncementsUseCase'
 import { MatchAnnouncementApiAdapter } from '../infrastructure/adapters/MatchAnnouncementApiAdapter'
 
 /**
@@ -10,6 +11,7 @@ import { MatchAnnouncementApiAdapter } from '../infrastructure/adapters/MatchAnn
 interface MatchAnnouncementContextType {
   createMatchAnnouncementUseCase: CreateMatchAnnouncementUseCase
   findMatchAnnouncementsUseCase: FindMatchAnnouncementsUseCase
+  findAccountMatchAnnouncementsUseCase: FindAccountMatchAnnouncementsUseCase
 }
 
 const MatchAnnouncementContext = createContext<MatchAnnouncementContextType | undefined>(undefined)
@@ -30,10 +32,12 @@ export function MatchAnnouncementProvider({ children }: { children: ReactNode })
   // This applies the Dependency Inversion Principle
   const createMatchAnnouncementUseCase = new CreateMatchAnnouncementUseCase(matchAnnouncementApiAdapter)
   const findMatchAnnouncementsUseCase = new FindMatchAnnouncementsUseCase(matchAnnouncementApiAdapter)
+  const findAccountMatchAnnouncementsUseCase = new FindAccountMatchAnnouncementsUseCase(matchAnnouncementApiAdapter)
 
   const value: MatchAnnouncementContextType = {
     createMatchAnnouncementUseCase,
     findMatchAnnouncementsUseCase,
+    findAccountMatchAnnouncementsUseCase,
   }
 
   return <MatchAnnouncementContext.Provider value={value}>{children}</MatchAnnouncementContext.Provider>
