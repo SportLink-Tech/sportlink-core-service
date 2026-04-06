@@ -47,6 +47,7 @@ func Routes(router *gin.Engine) {
 	createTeam := uteam.NewCreateTeamUC(playerRepository, teamRepository)
 	retrieveTeam := uteam.NewRetrieveTeamUC(teamRepository)
 	findTeam := uteam.NewFindTeamUC(teamRepository)
+	updateTeam := uteam.NewUpdateTeamUC(teamRepository)
 
 	// Match Offer Use Cases
 	createMatchOffer := umatchoffer.NewCreateMatchOfferUC(matchOfferRepository, teamRepository)
@@ -63,11 +64,12 @@ func Routes(router *gin.Engine) {
 	playerController := cplayer.NewController(&createPlayer, customValidator)
 	router.POST("/player", playerController.CreatePlayer)
 
-	teamController := cteam.NewController(createTeam, retrieveTeam, findTeam, findTeam, customValidator)
+	teamController := cteam.NewController(createTeam, retrieveTeam, findTeam, findTeam, updateTeam, customValidator)
 	router.POST("/account/:accountId/team", teamController.CreateTeam)
 	router.GET("/account/:accountId/team", teamController.ListAccountTeams)
 	router.GET("/sport/:sport/team/:team", teamController.RetrieveTeam)
 	router.GET("/sport/:sport/team", teamController.FindTeam)
+	router.PATCH("/sport/:sport/team/:team", teamController.UpdateTeam)
 
 	matchOfferController := cmatchoffer.NewController(createMatchOffer, findMatchOffers, deleteMatchOffer, customValidator)
 	router.POST("/account/:accountId/match-offer", matchOfferController.CreateMatchOffer)
@@ -78,7 +80,6 @@ func Routes(router *gin.Engine) {
 	matchRequestController := cmatchrequest.NewController(createMatchRequest, findMatchRequests, findSentMatchRequests, updateMatchRequestStatus, customValidator)
 	router.POST("/account/:accountId/match-offer/:announcementId/match-request", matchRequestController.CreateMatchRequest)
 	router.GET("/account/:accountId/match-request", matchRequestController.FindMatchRequests)
-	router.GET("/account/:accountId/sent-match-request", matchRequestController.FindSentMatchRequests)
 	router.PATCH("/account/:accountId/match-request/:requestId", matchRequestController.UpdateMatchRequestStatus)
 
 	monitoring.RegisterMetricsRoute(router)

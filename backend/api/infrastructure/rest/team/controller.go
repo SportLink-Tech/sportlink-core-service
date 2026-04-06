@@ -13,14 +13,16 @@ type Controller interface {
 	RetrieveTeam(c *gin.Context)
 	FindTeam(c *gin.Context)
 	ListAccountTeams(c *gin.Context)
+	UpdateTeam(c *gin.Context)
 }
 
 type DefaultController struct {
-	createTeamUC        application.UseCase[team.Entity, team.Entity]
-	retrieveTeamUC      application.UseCase[team.ID, team.Entity]
-	findTeamUC          application.UseCase[team.DomainQuery, []team.Entity]
-	listAccountTeamsUC  application.UseCase[team.DomainQuery, []team.Entity]
-	validator           *validator.Validate
+	createTeamUC       application.UseCase[team.Entity, team.Entity]
+	retrieveTeamUC     application.UseCase[team.ID, team.Entity]
+	findTeamUC         application.UseCase[team.DomainQuery, []team.Entity]
+	listAccountTeamsUC application.UseCase[team.DomainQuery, []team.Entity]
+	updateTeamUC       application.UseCase[team.PatchInput, team.Entity]
+	validator          *validator.Validate
 }
 
 func NewController(
@@ -28,6 +30,7 @@ func NewController(
 	retrieveTeamUC application.UseCase[team.ID, team.Entity],
 	findTeamUC application.UseCase[team.DomainQuery, []team.Entity],
 	listAccountTeamsUC application.UseCase[team.DomainQuery, []team.Entity],
+	updateTeamUC application.UseCase[team.PatchInput, team.Entity],
 	validator *validator.Validate,
 ) Controller {
 	return &DefaultController{
@@ -35,6 +38,7 @@ func NewController(
 		retrieveTeamUC:     retrieveTeamUC,
 		findTeamUC:         findTeamUC,
 		listAccountTeamsUC: listAccountTeamsUC,
+		updateTeamUC:       updateTeamUC,
 		validator:          validator,
 	}
 }

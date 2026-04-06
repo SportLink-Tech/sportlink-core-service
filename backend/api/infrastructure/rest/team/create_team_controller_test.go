@@ -165,7 +165,8 @@ func TestTeamCreationHandlerWithEmptyFields(t *testing.T) {
 			retrieveTeamUC := usecases.NewRetrieveTeamUC(teamRepository)
 			findTeamUC := usecases.NewFindTeamUC(teamRepository)
 
-			controller := team.NewController(createTeamUC, retrieveTeamUC, findTeamUC, findTeamUC, validator)
+			updateTeamUC := usecases.NewUpdateTeamUC(teamRepository)
+			controller := team.NewController(createTeamUC, retrieveTeamUC, findTeamUC, findTeamUC, updateTeamUC, validator)
 
 			gin.SetMode(gin.TestMode)
 			router := gin.Default()

@@ -1,4 +1,4 @@
-import { Team, CreateTeamRequest } from '../../../../shared/types/team'
+import { Team, CreateTeamRequest, UpdateTeamRequest } from '../../../../shared/types/team'
 
 /**
  * Port (Interface) for Team Repository
@@ -9,5 +9,6 @@ export interface TeamRepository {
   createTeam(accountId: string, request: CreateTeamRequest): Promise<{ data: Team; status: number }>
   findTeam(sport: string, teamName?: string, categories?: number[]): Promise<{ data: Team[]; status: number }>
   listAccountTeams(accountId: string): Promise<{ data: Team[]; status: number }>
+  updateTeam(sport: string, currentName: string, request: UpdateTeamRequest): Promise<{ data: Team; status: number }>
 }
 

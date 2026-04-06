@@ -8,17 +8,27 @@ import {
   CircularProgress,
   Paper,
   Chip,
+  IconButton,
+  TextField,
+  Tooltip,
 } from '@mui/material'
 import GroupsIcon from '@mui/icons-material/Groups'
+import EditIcon from '@mui/icons-material/Edit'
+import CheckIcon from '@mui/icons-material/Check'
+import CloseIcon from '@mui/icons-material/Close'
 import { useTeamContext } from '../../context/TeamContext'
 import { Team } from '../../../../shared/types/team'
 import { CURRENT_ACCOUNT_ID } from '../../../../shared/constants/session'
 
 export function MyTeamsPage() {
-  const { listAccountTeamsUseCase } = useTeamContext()
+  const { listAccountTeamsUseCase, updateTeamUseCase } = useTeamContext()
   const [teams, setTeams] = useState<Team[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [editingKey, setEditingKey] = useState<string | null>(null)
+  const [editName, setEditName] = useState('')
+  const [saveError, setSaveError] = useState<string | null>(null)
+  const [saving, setSaving] = useState(false)
 
   useEffect(() => {
     listAccountTeamsUseCase.execute(CURRENT_ACCOUNT_ID).then((result) => {
@@ -30,6 +40,43 @@ export function MyTeamsPage() {
       setLoading(false)
     })
   }, [])
+
+  const teamKey = (team: Team) => `${team.Sport}#${team.Name}`
+
+  const startEditing = (team: Team) => {
+    setEditingKey(teamKey(team))
+    setEditName(team.Name)
+    setSaveError(null)
+  }
+
+  const cancelEditing = () => {
+    setEditingKey(null)
+    setEditName('')
+    setSaveError(null)
+  }
+
+  const saveTeam = async (team: Team) => {
+    if (!editName.trim()) {
+      setSaveError('El nombre no puede estar vacío')
+      return
+    }
+
+    setSaving(true)
+    setSaveError(null)
+
+    const result = await updateTeamUseCase.execute(team.Sport, team.Name, { name: editName.trim() })
+
+    setSaving(false)
+
+    if (result.success && result.team) {
+      setTeams((prev) =>
+        prev.map((t) => (teamKey(t) === teamKey(team) ? result.team! : t))
+      )
+      setEditingKey(null)
+    } else {
+      setSaveError(result.error ?? 'Error actualizando el equipo')
+    }
+  }
 
   return (
     <Box>
@@ -72,19 +119,77 @@ export function MyTeamsPage() {
 
         {!loading && !error && teams.length > 0 && (
           <Stack spacing={2}>
-            {teams.map((team) => (
-              <Card key={team.Name + team.Sport}>
-                <CardContent>
-                  <Stack direction="row" alignItems="center" justifyContent="space-between">
-                    <Box>
-                      <Typography variant="h6" fontWeight={600}>{team.Name}</Typography>
-                      <Typography variant="body2" color="text.secondary">{team.Sport}</Typography>
-                    </Box>
-                    <Chip label={`Categoría ${team.Category}`} color="primary" variant="outlined" />
-                  </Stack>
-                </CardContent>
-              </Card>
-            ))}
+            {teams.map((team) => {
+              const key = teamKey(team)
+              const isEditing = editingKey === key
+
+              return (
+                <Card key={key}>
+                  <CardContent>
+                    <Stack direction="row" alignItems="center" justifyContent="space-between" spacing={2}>
+                      <Box flex={1}>
+                        {isEditing ? (
+                          <Stack spacing={1}>
+                            <TextField
+                              size="small"
+                              value={editName}
+                              onChange={(e) => setEditName(e.target.value)}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter') saveTeam(team)
+                                if (e.key === 'Escape') cancelEditing()
+                              }}
+                              error={!!saveError}
+                              helperText={saveError ?? undefined}
+                              autoFocus
+                              fullWidth
+                            />
+                          </Stack>
+                        ) : (
+                          <>
+                            <Typography variant="h6" fontWeight={600}>{team.Name}</Typography>
+                            <Typography variant="body2" color="text.secondary">{team.Sport}</Typography>
+                          </>
+                        )}
+                      </Box>
+
+                      <Stack direction="row" alignItems="center" spacing={1}>
+                        {!isEditing && (
+                          <Chip label={`Categoría ${team.Category}`} color="primary" variant="outlined" />
+                        )}
+
+                        {isEditing ? (
+                          <>
+                            <Tooltip title="Guardar">
+                              <span>
+                                <IconButton
+                                  color="primary"
+                                  onClick={() => saveTeam(team)}
+                                  disabled={saving}
+                                  size="small"
+                                >
+                                  <CheckIcon />
+                                </IconButton>
+                              </span>
+                            </Tooltip>
+                            <Tooltip title="Cancelar">
+                              <IconButton onClick={cancelEditing} size="small">
+                                <CloseIcon />
+                              </IconButton>
+                            </Tooltip>
+                          </>
+                        ) : (
+                          <Tooltip title="Editar nombre">
+                            <IconButton onClick={() => startEditing(team)} size="small">
+                              <EditIcon />
+                            </IconButton>
+                          </Tooltip>
+                        )}
+                      </Stack>
+                    </Stack>
+                  </CardContent>
+                </Card>
+              )
+            })}
           </Stack>
         )}
       </Stack>

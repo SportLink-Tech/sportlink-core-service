@@ -62,6 +62,24 @@ func (_m *Repository) Save(ctx context.Context, entity team.Entity) error {
 	return r0
 }
 
+// Update provides a mock function with given fields: ctx, oldID, entity
+func (_m *Repository) Update(ctx context.Context, oldID string, entity team.Entity) error {
+	ret := _m.Called(ctx, oldID, entity)
+
+	if len(ret) == 0 {
+		panic("no return value specified for Update")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, string, team.Entity) error); ok {
+		r0 = rf(ctx, oldID, entity)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
 // NewRepository creates a new instance of Repository. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.
 // The first argument is typically a *testing.T value.
 func NewRepository(t interface {

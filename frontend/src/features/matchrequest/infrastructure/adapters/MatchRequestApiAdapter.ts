@@ -26,12 +26,11 @@ export class MatchRequestApiAdapter implements MatchRequestRepository {
   }
 
   async findSent(requesterAccountId: string, statuses?: string[]): Promise<MatchRequest[]> {
-    const queryParams = new URLSearchParams()
+    const queryParams = new URLSearchParams({ sent: 'true' })
     if (statuses && statuses.length > 0) {
       queryParams.append('statuses', statuses.join(','))
     }
-    const qs = queryParams.toString()
-    const url = `${API_BASE_URL}/account/${requesterAccountId}/sent-match-request${qs ? `?${qs}` : ''}`
+    const url = `${API_BASE_URL}/account/${requesterAccountId}/match-request?${queryParams.toString()}`
 
     const response = await fetch(url)
     if (!response.ok) {

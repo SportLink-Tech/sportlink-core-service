@@ -29,6 +29,10 @@ export interface CreateTeamRequest {
   owner_account_id?: string
 }
 
+export interface UpdateTeamRequest {
+  name?: string
+}
+
 export interface ApiError {
     code: string
     message: string

@@ -42,6 +42,29 @@ func (repo *RepositoryAdapter) Save(ctx context.Context, entity team.Entity) err
 	return err
 }
 
+func (repo *RepositoryAdapter) Update(ctx context.Context, oldID string, entity team.Entity) error {
+	if err := repo.Save(ctx, entity); err != nil {
+		return err
+	}
+
+	if oldID != entity.ID {
+		key, err := attributevalue.MarshalMap(map[string]interface{}{
+			"EntityId": "Entity#Team",
+			"Id":       oldID,
+		})
+		if err != nil {
+			return err
+		}
+		_, err = repo.dbClient.DeleteItem(ctx, &dynamodb.DeleteItemInput{
+			TableName: aws.String(repo.tableName),
+			Key:       key,
+		})
+		return err
+	}
+
+	return nil
+}
+
 func (repo *RepositoryAdapter) Find(ctx context.Context, query team.DomainQuery) ([]team.Entity, error) {
 	if query.OwnerAccountID != "" {
 		return repo.findByOwner(ctx, query.OwnerAccountID)

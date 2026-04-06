@@ -35,6 +35,13 @@ func NewTeam(
 	}
 }
 
+// WithName returns a new Entity with the updated name and regenerated ID.
+func (e Entity) WithName(name string) Entity {
+	e.Name = name
+	e.ID = generateTeamID(e.Sport, name)
+	return e
+}
+
 // generateTeamID creates a team ID in the format: SPORT#<sport>#NAME#<name>
 func generateTeamID(sport common.Sport, name string) string {
 	return fmt.Sprintf("SPORT#%s#NAME#%s", sport, name)

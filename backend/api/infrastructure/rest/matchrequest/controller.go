@@ -10,7 +10,6 @@ import (
 type Controller interface {
 	CreateMatchRequest(c *gin.Context)
 	FindMatchRequests(c *gin.Context)
-	FindSentMatchRequests(c *gin.Context)
 	UpdateMatchRequestStatus(c *gin.Context)
 }
 

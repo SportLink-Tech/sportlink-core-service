@@ -8,6 +8,12 @@ import (
 type Repository interface {
 	Save(ctx context.Context, entity Entity) error
 	Find(ctx context.Context, query DomainQuery) ([]Entity, error)
+	Update(ctx context.Context, oldID string, entity Entity) error
+}
+
+type PatchInput struct {
+	ID   ID
+	Name *string
 }
 
 type ID struct {

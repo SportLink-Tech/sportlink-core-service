@@ -1,4 +1,4 @@
-import { Team, CreateTeamRequest, ApiError } from '../../../../shared/types/team'
+import { Team, CreateTeamRequest, UpdateTeamRequest, ApiError } from '../../../../shared/types/team'
 import { TeamRepository } from '../../domain/ports/TeamRepository'
 
 const API_BASE_URL = '/api'
@@ -51,6 +51,23 @@ export class TeamApiAdapter implements TeamRepository {
       data,
       status: response.status
     }
+  }
+
+  async updateTeam(sport: string, currentName: string, request: UpdateTeamRequest): Promise<{ data: Team; status: number }> {
+    const response = await fetch(`${API_BASE_URL}/sport/${sport}/team/${encodeURIComponent(currentName)}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(request),
+    })
+
+    const data = await response.json()
+
+    if (!response.ok) {
+      const error: ApiError = data
+      throw new Error(error.message || 'Error updating team')
+    }
+
+    return { data, status: response.status }
   }
 
   async findTeam(sport: string, teamName?: string, categories?: number[]): Promise<{ data: Team[]; status: number }> {
