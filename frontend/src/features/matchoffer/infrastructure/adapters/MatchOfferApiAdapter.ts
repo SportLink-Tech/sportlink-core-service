@@ -17,7 +17,7 @@ const API_BASE_URL = '/api'
  */
 export class MatchOfferApiAdapter implements MatchOfferRepository {
   async create(accountId: string, request: CreateMatchOfferRequest): Promise<{ data: MatchOffer; status: number }> {
-    const response = await fetch(`${API_BASE_URL}/account/${accountId}/match-offer`, {
+    const response = await fetch(`${API_BASE_URL}/account/${encodeURIComponent(accountId)}/match-offer`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -114,7 +114,7 @@ export class MatchOfferApiAdapter implements MatchOfferRepository {
       queryParams.append('statuses', statuses.join(','))
     }
     const queryString = queryParams.toString()
-    const url = `${API_BASE_URL}/account/${accountId}/match-offer${queryString ? `?${queryString}` : ''}`
+    const url = `${API_BASE_URL}/account/${encodeURIComponent(accountId)}/match-offer${queryString ? `?${queryString}` : ''}`
 
     const response = await fetch(url, {
       method: 'GET',
@@ -132,7 +132,7 @@ export class MatchOfferApiAdapter implements MatchOfferRepository {
   }
 
   async delete(accountId: string, offerId: string): Promise<void> {
-    const response = await fetch(`${API_BASE_URL}/account/${accountId}/match-offer/${offerId}`, {
+    const response = await fetch(`${API_BASE_URL}/account/${encodeURIComponent(accountId)}/match-offer/${offerId}`, {
       method: 'DELETE',
     })
 

@@ -8,7 +8,7 @@ services:
     environment:
       - GIN_MODE=release
       - DYNAMODB_URL=http://localstack:4566
-      - AWS_REGION=us-west-2
+      - AWS_REGION=us-east-1
       - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
       - JWT_SECRET=${JWT_SECRET}
     volumes:
@@ -24,7 +24,7 @@ services:
       - DOCKER_HOST=unix:///var/run/docker.sock
       # Make sure that all the services that you use in init-config.sh script are present here. Otherwise, the container could not start well.
       - SERVICES=sqs,dynamodb,ssm,cloudformation
-      - AWS_DEFAULT_REGION=us-west-2
+      - AWS_DEFAULT_REGION=us-east-1
     volumes:
       - ./backend/dev/localstack/cloudformation/core-dynamo-table.yml:/opt/code/localstack/core-dynamo-table.yml
       - ./backend/dev/localstack/cloudformation/sqs-queue.yml:/opt/code/localstack/sqs-queue.yml

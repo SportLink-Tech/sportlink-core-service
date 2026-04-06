@@ -18,10 +18,11 @@ import CheckIcon from '@mui/icons-material/Check'
 import CloseIcon from '@mui/icons-material/Close'
 import { useTeamContext } from '../../context/TeamContext'
 import { Team } from '../../../../shared/types/team'
-import { CURRENT_ACCOUNT_ID } from '../../../../shared/constants/session'
+import { useAuth } from '../../../auth/context/AuthContext'
 
 export function MyTeamsPage() {
   const { listAccountTeamsUseCase, updateTeamUseCase } = useTeamContext()
+  const { accountId } = useAuth()
   const [teams, setTeams] = useState<Team[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -31,7 +32,7 @@ export function MyTeamsPage() {
   const [saving, setSaving] = useState(false)
 
   useEffect(() => {
-    listAccountTeamsUseCase.execute(CURRENT_ACCOUNT_ID).then((result) => {
+    listAccountTeamsUseCase.execute(accountId ?? '').then((result) => {
       if (result.success) {
         setTeams(result.teams)
       } else {

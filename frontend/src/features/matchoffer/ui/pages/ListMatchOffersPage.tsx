@@ -24,13 +24,14 @@ import { useMatchOfferContext } from '../../context/MatchOfferContext'
 import { useMatchRequestContext } from '../../../matchrequest/context/MatchRequestContext'
 import { MatchOffer, GeoFilter } from '../../../../shared/types/matchOffer'
 import { MatchOfferFilters } from '../components/MatchOfferFilters'
-import { CURRENT_ACCOUNT_ID } from '../../../../shared/constants/session'
+import { useAuth } from '../../../auth/context/AuthContext'
 
 const ITEMS_PER_PAGE = 9 // 3 filas x 3 columnas
 
 export function ListMatchOffersPage() {
   const { findMatchOffersUseCase, findAccountMatchOffersUseCase } = useMatchOfferContext()
   const { createMatchRequestUseCase, findSentMatchRequestsUseCase } = useMatchRequestContext()
+  const { accountId } = useAuth()
 
   const [announcements, setAnnouncements] = useState<MatchOffer[]>([])
   const [ownPendingIds, setOwnPendingIds] = useState<Set<string>>(new Set())
@@ -103,7 +104,7 @@ export function ListMatchOffersPage() {
   // Load the current user's PENDING announcements once on mount to exclude them from results
   useEffect(() => {
     findAccountMatchOffersUseCase
-      .execute(CURRENT_ACCOUNT_ID, ['PENDING'])
+      .execute(accountId ?? '', ['PENDING'])
       .then((result) => {
         if (result.success) {
           setOwnPendingIds(result.offerIds)
@@ -114,7 +115,7 @@ export function ListMatchOffersPage() {
   // Load announcement IDs for which the current user already sent a PENDING request
   useEffect(() => {
     findSentMatchRequestsUseCase
-      .execute(CURRENT_ACCOUNT_ID, ['PENDING'])
+      .execute(accountId ?? '', ['PENDING'])
       .then((ids) => setJoinedIds(ids))
   }, [findSentMatchRequestsUseCase])
 
@@ -238,7 +239,7 @@ export function ListMatchOffersPage() {
   const handleJoin = async (announcement: MatchOffer) => {
     if (!announcement.id) return
     setJoiningId(announcement.id)
-    const result = await createMatchRequestUseCase.execute(CURRENT_ACCOUNT_ID, announcement.id)
+    const result = await createMatchRequestUseCase.execute(accountId ?? '', announcement.id)
     setJoiningId(null)
     if (result.success) {
       setJoinedIds((prev) => new Set(prev).add(announcement.id!))
@@ -379,7 +380,7 @@ export function ListMatchOffersPage() {
 
                     {/* Join button - only for PENDING announcements not owned by current user */}
                     {announcement.status === 'PENDING' &&
-                      announcement.owner_account_id !== CURRENT_ACCOUNT_ID && (
+                      announcement.owner_account_id !== (accountId ?? '') && (
                         <CardActions sx={{ px: 2, pb: 2 }}>
                           <Button
                             variant="contained"

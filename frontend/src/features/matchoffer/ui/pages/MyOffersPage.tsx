@@ -33,11 +33,12 @@ import { useMatchOfferContext } from '../../context/MatchOfferContext'
 import { useMatchRequestContext } from '../../../matchrequest/context/MatchRequestContext'
 import { MatchOffer } from '../../../../shared/types/matchOffer'
 import { MatchRequest } from '../../../matchrequest/domain/ports/MatchRequestRepository'
-import { CURRENT_ACCOUNT_ID } from '../../../../shared/constants/session'
+import { useAuth } from '../../../auth/context/AuthContext'
 
 export function MyOffersPage() {
   const { findAccountMatchOffersUseCase, deleteMatchOfferUseCase } = useMatchOfferContext()
   const { findReceivedMatchRequestsUseCase } = useMatchRequestContext()
+  const { accountId } = useAuth()
 
   const [offers, setOffers] = useState<MatchOffer[]>([])
   const [loading, setLoading] = useState(true)
@@ -50,20 +51,20 @@ export function MyOffersPage() {
   const [requestsDialogOpen, setRequestsDialogOpen] = useState(false)
 
   useEffect(() => {
-    findAccountMatchOffersUseCase.execute(CURRENT_ACCOUNT_ID).then((result) => {
+    findAccountMatchOffersUseCase.execute(accountId ?? '').then((result) => {
       if (result.success) setOffers(result.offers)
       else setError(result.error ?? 'Error al cargar las ofertas')
       setLoading(false)
     })
 
-    findReceivedMatchRequestsUseCase.execute(CURRENT_ACCOUNT_ID).then((result) => {
+    findReceivedMatchRequestsUseCase.execute(accountId ?? '').then((result) => {
       if (result.success) setAllRequests(result.requests)
     })
   }, [])
 
   const handleDelete = async (id: string) => {
     setDeletingId(id)
-    const result = await deleteMatchOfferUseCase.execute(CURRENT_ACCOUNT_ID, id)
+    const result = await deleteMatchOfferUseCase.execute(accountId ?? '', id)
     setDeletingId(null)
     if (result.success) {
       setOffers((prev) => prev.filter((o) => o.id !== id))

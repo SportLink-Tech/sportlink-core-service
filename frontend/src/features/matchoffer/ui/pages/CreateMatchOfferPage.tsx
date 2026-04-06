@@ -39,13 +39,14 @@ import { useMatchOfferContext } from '../../context/MatchOfferContext'
 import { MatchOffer } from '../../../../shared/types/matchOffer'
 import { useGeolocation } from '../../../../shared/hooks/useGeolocation'
 import { useTeamContext } from '../../../team/context/TeamContext'
-import { CURRENT_ACCOUNT_ID } from '../../../../shared/constants/session'
+import { useAuth } from '../../../auth/context/AuthContext'
 
 const SPORTS: Sport[] = ['Football', 'Paddle', 'Tennis']
 
 export function CreateMatchOfferPage() {
   const { createMatchOfferUseCase } = useMatchOfferContext()
   const { listAccountTeamsUseCase } = useTeamContext()
+  const { accountId } = useAuth()
   const navigate = useNavigate()
 
   const [sport, setSport] = useState<Sport>('Paddle')
@@ -104,7 +105,7 @@ export function CreateMatchOfferPage() {
   useEffect(() => {
     const fetchTeams = async () => {
       setLoadingTeams(true)
-      const result = await listAccountTeamsUseCase.execute(CURRENT_ACCOUNT_ID)
+      const result = await listAccountTeamsUseCase.execute(accountId ?? '')
       setUserTeams(result.teams)
       setLoadingTeams(false)
     }
@@ -153,7 +154,7 @@ export function CreateMatchOfferPage() {
       admittedCategories.max_level = maxLevel
     }
 
-    const result = await createMatchOfferUseCase.execute(CURRENT_ACCOUNT_ID, {
+    const result = await createMatchOfferUseCase.execute(accountId ?? '', {
       team_name: teamName,
       sport,
       day,

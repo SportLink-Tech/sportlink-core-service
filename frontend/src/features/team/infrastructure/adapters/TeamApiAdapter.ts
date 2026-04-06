@@ -11,7 +11,7 @@ const API_BASE_URL = '/api'
  */
 export class TeamApiAdapter implements TeamRepository {
   async createTeam(accountId: string, request: CreateTeamRequest): Promise<{ data: Team; status: number }> {
-    const response = await fetch(`${API_BASE_URL}/account/${accountId}/team`, {
+    const response = await fetch(`${API_BASE_URL}/account/${encodeURIComponent(accountId)}/team`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -33,7 +33,7 @@ export class TeamApiAdapter implements TeamRepository {
   }
 
   async listAccountTeams(accountId: string): Promise<{ data: Team[]; status: number }> {
-    const response = await fetch(`${API_BASE_URL}/account/${accountId}/team`, {
+    const response = await fetch(`${API_BASE_URL}/account/${encodeURIComponent(accountId)}/team`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',

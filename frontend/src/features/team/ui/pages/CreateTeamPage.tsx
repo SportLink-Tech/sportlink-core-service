@@ -20,7 +20,7 @@ import { SportSelect } from '../../../../shared/components/atoms/SportSelect'
 import { CategorySelect } from '../../../../shared/components/atoms/CategorySelect'
 import { Sport } from '../../../../shared/types/team'
 import { useTeamContext } from '../../context/TeamContext'
-import { CURRENT_ACCOUNT_ID } from '../../../../shared/constants/session'
+import { useAuth } from '../../../auth/context/AuthContext'
 
 const SPORTS: Sport[] = ['Football', 'Paddle']
 
@@ -31,6 +31,7 @@ const SPORTS: Sport[] = ['Football', 'Paddle']
  */
 export function CreateTeamPage() {
   const { createTeamUseCase } = useTeamContext()
+  const { accountId } = useAuth()
 
   const [sport, setSport] = useState<Sport>('Paddle')
   const [name, setName] = useState('')
@@ -58,12 +59,12 @@ export function CreateTeamPage() {
     setLoading(true)
 
     // Execute use case
-    const result = await createTeamUseCase.execute(CURRENT_ACCOUNT_ID, {
+    const result = await createTeamUseCase.execute(accountId ?? '', {
       sport,
       name,
       category,
       players: playerIds.length > 0 ? playerIds : undefined,
-      owner_account_id: CURRENT_ACCOUNT_ID,
+      owner_account_id: accountId ?? '',
     })
 
     if (result.success && result.team) {
