@@ -133,7 +133,7 @@ func (p *DefaultQueryParser) Location(country, province, locality string) *match
 	}
 }
 
-// GeoFilter parses latitude, longitude and radiusKm strings into a GeoFilter.
+// GeoFilter parses lat, lng and radius_km query strings into a GeoFilter.
 // Returns nil when all three are empty (geo filter not requested).
 func (p *DefaultQueryParser) GeoFilter(lat, lng, radiusKm string) (*matchoffer.GeoFilter, error) {
 	if lat == "" && lng == "" && radiusKm == "" {
@@ -142,22 +142,22 @@ func (p *DefaultQueryParser) GeoFilter(lat, lng, radiusKm string) (*matchoffer.G
 
 	latVal, err := strconv.ParseFloat(lat, 64)
 	if err != nil {
-		return nil, fmt.Errorf("invalid latitude format: %s", lat)
+		return nil, fmt.Errorf("invalid lat format: %s", lat)
 	}
 
 	lngVal, err := strconv.ParseFloat(lng, 64)
 	if err != nil {
-		return nil, fmt.Errorf("invalid longitude format: %s", lng)
+		return nil, fmt.Errorf("invalid lng format: %s", lng)
 	}
 
 	radius := 100.0 // default radius in km
 	if radiusKm != "" {
 		radius, err = strconv.ParseFloat(radiusKm, 64)
 		if err != nil {
-			return nil, fmt.Errorf("invalid radiusKm format: %s", radiusKm)
+			return nil, fmt.Errorf("invalid radius_km format: %s", radiusKm)
 		}
 		if radius <= 0 {
-			return nil, fmt.Errorf("radiusKm must be positive, got: %f", radius)
+			return nil, fmt.Errorf("radius_km must be positive, got: %f", radius)
 		}
 	}
 

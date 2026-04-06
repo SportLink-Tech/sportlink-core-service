@@ -43,7 +43,7 @@ func (uc *GoogleAuthUC) Invoke(ctx context.Context, idToken string) (*GoogleAuth
 
 	var accountID string
 	if len(accounts) == 0 {
-		newAccount := account.NewGoogleAccount(tokenInfo.Email, tokenInfo.Name, tokenInfo.Picture)
+		newAccount := account.NewGoogleAccount(tokenInfo.Email, tokenInfo.GivenName, tokenInfo.FamilyName, tokenInfo.Picture)
 		if err := uc.accountRepo.Save(ctx, newAccount); err != nil {
 			return nil, fmt.Errorf("error creating account: %w", err)
 		}

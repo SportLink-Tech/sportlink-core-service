@@ -16,10 +16,8 @@ func NewFindMatchRequestsUC(matchRequestRepository matchrequest.Repository) *Fin
 	}
 }
 
-func (uc *FindMatchRequestsUC) Invoke(ctx context.Context, ownerAccountID string) ([]matchrequest.Entity, error) {
-	entities, err := uc.matchRequestRepository.Find(ctx, matchrequest.DomainQuery{
-		OwnerAccountIDs: []string{ownerAccountID},
-	})
+func (uc *FindMatchRequestsUC) Invoke(ctx context.Context, query matchrequest.DomainQuery) ([]matchrequest.Entity, error) {
+	entities, err := uc.matchRequestRepository.Find(ctx, query)
 	if err != nil {
 		return nil, fmt.Errorf("error while finding match requests: %w", err)
 	}

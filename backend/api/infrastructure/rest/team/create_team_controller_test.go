@@ -171,7 +171,7 @@ func TestTeamCreationHandlerWithEmptyFields(t *testing.T) {
 			gin.SetMode(gin.TestMode)
 			router := gin.Default()
 			router.Use(middleware.ErrorHandler())
-			router.POST("/account/:accountId/team", controller.CreateTeam)
+			router.POST("/account/:account_id/team", controller.CreateTeam)
 
 			// given
 			tc.on(t, playerRepository, teamRepository)

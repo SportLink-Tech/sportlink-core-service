@@ -4,10 +4,12 @@ import "fmt"
 
 // Entity represents an account in the domain
 type Entity struct {
-	ID       string
-	Email    string
-	Nickname string
-	Picture  string
+	ID        string
+	Email     string
+	Nickname  string
+	FirstName string
+	LastName  string
+	Picture   string
 }
 
 // NewAccount creates a new account entity with an ID generated from the email
@@ -20,12 +22,14 @@ func NewAccount(email, nickname string) Entity {
 }
 
 // NewGoogleAccount creates an account from Google OAuth data
-func NewGoogleAccount(email, name, picture string) Entity {
+func NewGoogleAccount(email, givenName, familyName, picture string) Entity {
 	return Entity{
-		ID:       GenerateAccountID(email),
-		Email:    email,
-		Nickname: name,
-		Picture:  picture,
+		ID:        GenerateAccountID(email),
+		Email:     email,
+		Nickname:  "",
+		FirstName: givenName,
+		LastName:  familyName,
+		Picture:   picture,
 	}
 }
 

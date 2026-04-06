@@ -7,16 +7,16 @@ import (
 	"sportlink/api/domain/team"
 )
 
-// ListAccountTeams handles GET /account/:accountId/team
+// ListAccountTeams handles GET /account/:account_id/team
 func (sc *DefaultController) ListAccountTeams(c *gin.Context) {
-	accountId := c.Param("accountId")
-	if accountId == "" {
+	accountID := c.Param("account_id")
+	if accountID == "" {
 		c.Error(errors.InvalidRequestFormat())
 		return
 	}
 
 	query := team.DomainQuery{
-		OwnerAccountID: accountId,
+		OwnerAccountID: accountID,
 	}
 
 	result, err := sc.listAccountTeamsUC.Invoke(c.Request.Context(), query)

@@ -9,6 +9,7 @@ import { MyTeamsPage } from './features/team/ui/pages/MyTeamsPage'
 import { MyOffersPage } from './features/matchoffer/ui/pages/MyOffersPage'
 import { MatchRequestModule } from './features/matchrequest/MatchRequestModule'
 import { LoginPage } from './features/auth/ui/pages/LoginPage'
+import { ProfilePage } from './features/auth/ui/pages/ProfilePage'
 import { useAuth } from './features/auth/context/AuthContext'
 
 function PrivateRoute({ children }: { children: React.ReactNode }) {
@@ -35,6 +36,7 @@ function App() {
                       <Route path="/create-team" element={<CreateTeamPage />} />
                       <Route path="/my-teams" element={<MyTeamsPage />} />
                       <Route path="/my-offers" element={<MyOffersPage />} />
+                      <Route path="/profile" element={<ProfilePage />} />
                     </Routes>
                   </Layout>
                 </TeamModule>

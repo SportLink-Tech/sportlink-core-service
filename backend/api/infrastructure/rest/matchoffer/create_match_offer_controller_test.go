@@ -337,7 +337,7 @@ func TestCreateMatchOffer(t *testing.T) {
 			gin.SetMode(gin.TestMode)
 			router := gin.Default()
 			router.Use(middleware.ErrorHandler())
-			router.POST("/account/:accountId/match-offer", controller.CreateMatchOffer)
+			router.POST("/account/:account_id/match-offer", controller.CreateMatchOffer)
 
 			// Given
 			tc.on(t, useCaseMock)

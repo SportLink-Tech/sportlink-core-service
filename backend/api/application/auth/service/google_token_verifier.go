@@ -12,6 +12,8 @@ type GoogleTokenInfo struct {
 	Email            string `json:"email"`
 	EmailVerified    string `json:"email_verified"`
 	Name             string `json:"name"`
+	GivenName        string `json:"given_name"`
+	FamilyName       string `json:"family_name"`
 	Picture          string `json:"picture"`
 	Aud              string `json:"aud"`
 	ErrorDescription string `json:"error_description,omitempty"`

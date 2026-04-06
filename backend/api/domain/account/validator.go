@@ -54,7 +54,7 @@ func (v *validator) validateEmail(email string) error {
 
 func (v *validator) validateNickname(nickname string) error {
 	if nickname == "" {
-		return errors.New("nickname is required")
+		return nil
 	}
 
 	if len(nickname) < 3 {

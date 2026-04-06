@@ -23,7 +23,7 @@ func (sc *DefaultController) CreateMatchOffer(c *gin.Context) {
 		return
 	}
 
-	accountID := c.Param("accountId")
+	accountID := c.Param("account_id")
 	input, err := mapper.CreationRequestToEntity(newMatchOfferRequest, accountID)
 	if err != nil {
 		c.Error(errors.RequestValidationFailed(err.Error()))

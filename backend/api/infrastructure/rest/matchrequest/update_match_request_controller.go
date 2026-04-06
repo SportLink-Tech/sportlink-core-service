@@ -10,7 +10,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// UpdateMatchRequestStatus handles PATCH /account/:accountId/match-request/:requestId
+// UpdateMatchRequestStatus handles PATCH /account/:account_id/match-request/:request_id
 func (sc *DefaultController) UpdateMatchRequestStatus(c *gin.Context) {
 	var req apprequest.UpdateMatchRequestRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -29,8 +29,8 @@ func (sc *DefaultController) UpdateMatchRequestStatus(c *gin.Context) {
 		return
 	}
 
-	ownerAccountID := c.Param("accountId")
-	requestID := c.Param("requestId")
+	ownerAccountID := c.Param("account_id")
+	requestID := c.Param("request_id")
 
 	err = sc.updateMatchRequestStatusUC.Invoke(c.Request.Context(), usecases.UpdateMatchRequestStatusInput{
 		ID:             requestID,

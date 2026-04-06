@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
+import { useAuth } from '../features/auth/context/AuthContext'
 import {
   AppBar,
   Toolbar,
@@ -31,13 +32,13 @@ export function Layout({ children }: LayoutProps) {
   const navigate = useNavigate()
   const location = useLocation()
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null)
+  const { account, logout } = useAuth()
 
-  // Usuario hardcoded
-  const user = {
-    name: 'Jorge',
-    email: 'jorge@sportlink.com',
-    avatar: 'https://i.pravatar.cc/150?img=12', // Avatar aleatorio
-  }
+  const displayName = account
+    ? `${account.FirstName} ${account.LastName}`.trim()
+    : ''
+  const displayEmail = account?.Email ?? ''
+  const displayAvatar = account?.Picture ?? ''
 
   const handleMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorEl(event.currentTarget)
@@ -121,8 +122,8 @@ export function Layout({ children }: LayoutProps) {
             }}
           >
             <Avatar
-              alt={user.name}
-              src={user.avatar}
+              alt={displayName}
+              src={displayAvatar}
               sx={{ 
                 width: 40, 
                 height: 40,
@@ -169,13 +170,13 @@ export function Layout({ children }: LayoutProps) {
               }}
             >
               <Stack direction="row" spacing={2} alignItems="center">
-                <Avatar src={user.avatar} sx={{ width: 56, height: 56 }} />
+                <Avatar src={displayAvatar} sx={{ width: 56, height: 56 }} />
                 <Box sx={{ flex: 1 }}>
                   <Typography variant="subtitle1" fontWeight={600} fontSize="1.05rem">
-                    {user.name}
+                    {displayName}
                   </Typography>
                   <Typography variant="body2" color="text.secondary" fontSize="0.875rem">
-                    {user.email}
+                    {displayEmail}
                   </Typography>
                 </Box>
               </Stack>
@@ -233,9 +234,9 @@ export function Layout({ children }: LayoutProps) {
 
             {/* Settings & Logout */}
             <Box sx={{ py: 0.5 }}>
-              <MenuItem 
-                onClick={handleMenuClose}
-                sx={{ 
+              <MenuItem
+                onClick={() => handleNavigate('/profile')}
+                sx={{
                   py: 1.5,
                   px: 2,
                   '&:hover': { bgcolor: 'rgba(0, 0, 0, 0.04)' }
@@ -244,9 +245,9 @@ export function Layout({ children }: LayoutProps) {
                 <PersonIcon sx={{ mr: 2, fontSize: 24, color: 'text.secondary' }} />
                 <Typography variant="body1">Mi Perfil</Typography>
               </MenuItem>
-              <MenuItem 
-                onClick={handleMenuClose}
-                sx={{ 
+              <MenuItem
+                onClick={() => { logout(); navigate('/login') }}
+                sx={{
                   py: 1.5,
                   px: 2,
                   '&:hover': { bgcolor: 'rgba(0, 0, 0, 0.04)' }

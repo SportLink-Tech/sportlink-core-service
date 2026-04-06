@@ -6,11 +6,13 @@ import (
 )
 
 type Dto struct {
-	EntityId string `dynamodbav:"EntityId"`
-	Id       string `dynamodbav:"Id"`
-	Email    string `dynamodbav:"Email"`
-	Nickname string `dynamodbav:"Nickname"`
-	Picture  string `dynamodbav:"Picture,omitempty"`
+	EntityId  string `dynamodbav:"EntityId"`
+	Id        string `dynamodbav:"Id"`
+	Email     string `dynamodbav:"Email"`
+	Nickname  string `dynamodbav:"Nickname,omitempty"`
+	FirstName string `dynamodbav:"FirstName,omitempty"`
+	LastName  string `dynamodbav:"LastName,omitempty"`
+	Picture   string `dynamodbav:"Picture,omitempty"`
 }
 
 func From(entity account.Entity) (Dto, error) {
@@ -19,19 +21,23 @@ func From(entity account.Entity) (Dto, error) {
 	}
 
 	return Dto{
-		EntityId: "Entity#Account",
-		Id:       account.GenerateAccountID(entity.Email),
-		Email:    entity.Email,
-		Nickname: entity.Nickname,
-		Picture:  entity.Picture,
+		EntityId:  "Entity#Account",
+		Id:        account.GenerateAccountID(entity.Email),
+		Email:     entity.Email,
+		Nickname:  entity.Nickname,
+		FirstName: entity.FirstName,
+		LastName:  entity.LastName,
+		Picture:   entity.Picture,
 	}, nil
 }
 
 func (d *Dto) ToDomain() account.Entity {
 	return account.Entity{
-		ID:       d.Id,
-		Email:    d.Email,
-		Nickname: d.Nickname,
-		Picture:  d.Picture,
+		ID:        d.Id,
+		Email:     d.Email,
+		Nickname:  d.Nickname,
+		FirstName: d.FirstName,
+		LastName:  d.LastName,
+		Picture:   d.Picture,
 	}
 }

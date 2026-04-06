@@ -42,10 +42,10 @@ func (sc *DefaultController) FindMatchOffers(c *gin.Context) {
 	c.JSON(http.StatusOK, paginatedResponse)
 }
 
-// FindAccountMatchOffers handles GET /account/:accountId/match-offer
+// FindAccountMatchOffers handles GET /account/:account_id/match-offer
 // Returns all match offers owned by the given account, optionally filtered by status.
 func (sc *DefaultController) FindAccountMatchOffers(c *gin.Context) {
-	accountID := c.Param("accountId")
+	accountID := c.Param("account_id")
 
 	statuses, err := sc.queryParser.Statuses(c.Query("statuses"))
 	if err != nil {
@@ -92,8 +92,8 @@ func (sc *DefaultController) buildDomainQuery(c *gin.Context) (matchoffer.Domain
 	}
 	query.Statuses = statuses
 
-	// Parse fromDate
-	fromDate, err := sc.queryParser.Date(c.Query("fromDate"))
+	// Parse from_date
+	fromDate, err := sc.queryParser.Date(c.Query("from_date"))
 	if err != nil {
 		return query, err
 	}
@@ -101,8 +101,8 @@ func (sc *DefaultController) buildDomainQuery(c *gin.Context) (matchoffer.Domain
 		query.FromDate = fromDate
 	}
 
-	// Parse toDate
-	toDate, err := sc.queryParser.Date(c.Query("toDate"))
+	// Parse to_date
+	toDate, err := sc.queryParser.Date(c.Query("to_date"))
 	if err != nil {
 		return query, err
 	}
@@ -121,7 +121,7 @@ func (sc *DefaultController) buildDomainQuery(c *gin.Context) (matchoffer.Domain
 	geoFilter, err := sc.queryParser.GeoFilter(
 		c.Query("lat"),
 		c.Query("lng"),
-		c.Query("radiusKm"),
+		c.Query("radius_km"),
 	)
 	if err != nil {
 		return query, err

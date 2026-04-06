@@ -9,13 +9,13 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// CreateMatchRequest handles POST /account/:accountId/match-offer/:announcementId/match-request
+// CreateMatchRequest handles POST /account/:account_id/match-offer/:offer_id/match-request
 func (sc *DefaultController) CreateMatchRequest(c *gin.Context) {
-	requesterAccountID := c.Param("accountId")
-	announcementID := c.Param("announcementId")
+	requesterAccountID := c.Param("account_id")
+	matchOfferID := c.Param("offer_id")
 
 	result, err := sc.createMatchRequestUC.Invoke(c.Request.Context(), usecases.CreateMatchRequestInput{
-		MatchOfferID: announcementID,
+		MatchOfferID: matchOfferID,
 		RequesterAccountID:  requesterAccountID,
 	})
 	if err != nil {

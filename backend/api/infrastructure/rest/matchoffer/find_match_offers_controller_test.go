@@ -39,7 +39,7 @@ func TestFindMatchOffers(t *testing.T) {
 				"sports":     "Paddle",
 				"categories": "4,5",
 				"statuses":   "PENDING",
-				"fromDate":   "2025-12-01",
+				"from_date":  "2025-12-01",
 			},
 			on: func(t *testing.T, useCaseMock *FindUseCaseMock, parserMock *pmocks.QueryParser) {
 				parserMock.On("Sports", "Paddle").Return([]common.Sport{common.Paddle}, nil)
@@ -143,7 +143,7 @@ func TestFindMatchOffers(t *testing.T) {
 		{
 			name: "given invalid date format when finding offers then returns validation error",
 			queryParams: map[string]string{
-				"fromDate": "invalid-date",
+				"from_date": "invalid-date",
 			},
 			on: func(t *testing.T, useCaseMock *FindUseCaseMock, parserMock *pmocks.QueryParser) {
 				parserMock.On("Sports", "").Return(nil, nil)
@@ -267,8 +267,8 @@ func TestFindMatchOffers(t *testing.T) {
 		{
 			name: "given date range when finding offers then returns offers in range",
 			queryParams: map[string]string{
-				"fromDate": "2025-12-01",
-				"toDate":   "2025-12-31",
+				"from_date": "2025-12-01",
+				"to_date":   "2025-12-31",
 			},
 			on: func(t *testing.T, useCaseMock *FindUseCaseMock, parserMock *pmocks.QueryParser) {
 				parserMock.On("Sports", "").Return(nil, nil)

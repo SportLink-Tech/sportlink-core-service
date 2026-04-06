@@ -16,7 +16,6 @@ type Controller interface {
 type DefaultController struct {
 	createMatchRequestUC       *usecases.CreateMatchRequestUC
 	findMatchRequestsUC        *usecases.FindMatchRequestsUC
-	findSentMatchRequestsUC    *usecases.FindSentMatchRequestsUC
 	updateMatchRequestStatusUC *usecases.UpdateMatchRequestStatusUC
 	validator                  *validator.Validate
 }
@@ -24,14 +23,12 @@ type DefaultController struct {
 func NewController(
 	createMatchRequestUC *usecases.CreateMatchRequestUC,
 	findMatchRequestsUC *usecases.FindMatchRequestsUC,
-	findSentMatchRequestsUC *usecases.FindSentMatchRequestsUC,
 	updateMatchRequestStatusUC *usecases.UpdateMatchRequestStatusUC,
 	validator *validator.Validate,
 ) Controller {
 	return &DefaultController{
 		createMatchRequestUC:       createMatchRequestUC,
 		findMatchRequestsUC:        findMatchRequestsUC,
-		findSentMatchRequestsUC:    findSentMatchRequestsUC,
 		updateMatchRequestStatusUC: updateMatchRequestStatusUC,
 		validator:                  validator,
 	}

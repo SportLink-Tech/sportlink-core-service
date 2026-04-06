@@ -54,17 +54,17 @@ export class MatchOfferApiAdapter implements MatchOfferRepository {
     }
 
     if (query.fromDate) {
-      queryParams.append('fromDate', query.fromDate)
+      queryParams.append('from_date', query.fromDate)
     }
 
     if (query.toDate) {
-      queryParams.append('toDate', query.toDate)
+      queryParams.append('to_date', query.toDate)
     }
 
     if (query.geoFilter) {
       queryParams.append('lat', query.geoFilter.latitude.toString())
       queryParams.append('lng', query.geoFilter.longitude.toString())
-      queryParams.append('radiusKm', query.geoFilter.radiusKm.toString())
+      queryParams.append('radius_km', query.geoFilter.radiusKm.toString())
     } else if (query.location) {
       if (query.location.country) {
         queryParams.append('country', query.location.country)

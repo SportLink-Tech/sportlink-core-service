@@ -21,8 +21,8 @@ func (sc *DefaultController) CreateTeam(c *gin.Context) {
 		return
 	}
 
-	accountId := c.Param("accountId")
-	input, err := mapper.CreationRequestToEntity(newTeamRequest, accountId)
+	accountID := c.Param("account_id")
+	input, err := mapper.CreationRequestToEntity(newTeamRequest, accountID)
 	if err != nil {
 		c.Error(errors.RequestValidationFailed(err.Error()))
 		return
