@@ -9,6 +9,8 @@ services:
       - GIN_MODE=release
       - DYNAMODB_URL=http://localstack:4566
       - AWS_REGION=us-west-2
+      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
+      - JWT_SECRET=${JWT_SECRET}
     volumes:
       - ./backend:/app
     restart: unless-stopped

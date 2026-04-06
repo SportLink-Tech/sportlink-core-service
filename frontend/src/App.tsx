@@ -1,4 +1,4 @@
-import { Routes, Route } from 'react-router-dom'
+import { Routes, Route, Navigate } from 'react-router-dom'
 import { Layout } from './components/Layout'
 import { MatchOfferModule } from './features/matchoffer/MatchOfferModule'
 import { ListMatchOffersPage } from './features/matchoffer/ui/pages/ListMatchOffersPage'
@@ -8,31 +8,43 @@ import { CreateTeamPage } from './features/team/ui/pages/CreateTeamPage'
 import { MyTeamsPage } from './features/team/ui/pages/MyTeamsPage'
 import { MyOffersPage } from './features/matchoffer/ui/pages/MyOffersPage'
 import { MatchRequestModule } from './features/matchrequest/MatchRequestModule'
+import { LoginPage } from './features/auth/ui/pages/LoginPage'
+import { useAuth } from './features/auth/context/AuthContext'
 
-/**
- * App Component
- * Wraps the application with MatchOfferModule for Dependency Injection
- * Following Atomic Hexagonal Architecture
- */
+function PrivateRoute({ children }: { children: React.ReactNode }) {
+  const { accountId } = useAuth()
+  if (!accountId) return <Navigate to="/login" replace />
+  return <>{children}</>
+}
+
 function App() {
   return (
-    <MatchOfferModule>
-      <MatchRequestModule>
-        <TeamModule>
-          <Layout>
-            <Routes>
-              <Route path="/" element={<ListMatchOffersPage />} />
-              <Route path="/create" element={<CreateMatchOfferPage />} />
-              <Route path="/create-team" element={<CreateTeamPage />} />
-              <Route path="/my-teams" element={<MyTeamsPage />} />
-              <Route path="/my-offers" element={<MyOffersPage />} />
-            </Routes>
-          </Layout>
-        </TeamModule>
-      </MatchRequestModule>
-    </MatchOfferModule>
+    <Routes>
+      <Route path="/login" element={<LoginPage />} />
+      <Route
+        path="/*"
+        element={
+          <PrivateRoute>
+            <MatchOfferModule>
+              <MatchRequestModule>
+                <TeamModule>
+                  <Layout>
+                    <Routes>
+                      <Route path="/" element={<ListMatchOffersPage />} />
+                      <Route path="/create" element={<CreateMatchOfferPage />} />
+                      <Route path="/create-team" element={<CreateTeamPage />} />
+                      <Route path="/my-teams" element={<MyTeamsPage />} />
+                      <Route path="/my-offers" element={<MyOffersPage />} />
+                    </Routes>
+                  </Layout>
+                </TeamModule>
+              </MatchRequestModule>
+            </MatchOfferModule>
+          </PrivateRoute>
+        }
+      />
+    </Routes>
   )
 }
 
 export default App
-

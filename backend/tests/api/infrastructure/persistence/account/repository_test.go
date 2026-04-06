@@ -27,7 +27,6 @@ func Test_Save(t *testing.T) {
 			entity: daccount.Entity{
 				Email:    "test@example.com",
 				Nickname: "testuser",
-				Password: "ValidP@ssw0rd123",
 			},
 			assertions: func(t *testing.T, err error) {
 				assert.Nil(t, err)
@@ -38,7 +37,6 @@ func Test_Save(t *testing.T) {
 			entity: daccount.Entity{
 				Email:    "test.user+tag@example.co.uk",
 				Nickname: "testuser2",
-				Password: "AnotherP@ssw0rd123",
 			},
 			assertions: func(t *testing.T, err error) {
 				assert.Nil(t, err)
@@ -49,7 +47,6 @@ func Test_Save(t *testing.T) {
 			entity: daccount.Entity{
 				Email:    "user@example.com",
 				Nickname: "test user",
-				Password: "ValidP@ssw0rd123",
 			},
 			assertions: func(t *testing.T, err error) {
 				assert.Nil(t, err)
@@ -90,7 +87,6 @@ func Test_Find(t *testing.T) {
 				err := repository.Save(ctx, daccount.Entity{
 					Email:    "test@example.com",
 					Nickname: "testuser",
-					Password: "ValidP@ssw0rd123",
 				})
 				if err != nil {
 					t.Fatal(err)
@@ -101,9 +97,6 @@ func Test_Find(t *testing.T) {
 				assert.Len(t, entities, 1)
 				assert.Equal(t, "test@example.com", entities[0].Email)
 				assert.Equal(t, "testuser", entities[0].Nickname)
-				// Password should be hashed
-				assert.NotEqual(t, "ValidP@ssw0rd123", entities[0].Password)
-				assert.NotEmpty(t, entities[0].Password)
 			},
 		},
 		{
@@ -115,7 +108,6 @@ func Test_Find(t *testing.T) {
 				err := repository.Save(ctx, daccount.Entity{
 					Email:    "user1@example.com",
 					Nickname: "user1",
-					Password: "ValidP@ssw0rd123",
 				})
 				if err != nil {
 					t.Fatal(err)
@@ -123,7 +115,6 @@ func Test_Find(t *testing.T) {
 				err = repository.Save(ctx, daccount.Entity{
 					Email:    "user2@example.com",
 					Nickname: "user2",
-					Password: "ValidP@ssw0rd123",
 				})
 				if err != nil {
 					t.Fatal(err)
@@ -132,7 +123,6 @@ func Test_Find(t *testing.T) {
 				err = repository.Save(ctx, daccount.Entity{
 					Email:    "user3@example.com",
 					Nickname: "user3",
-					Password: "ValidP@ssw0rd123",
 				})
 				if err != nil {
 					t.Fatal(err)
@@ -156,7 +146,6 @@ func Test_Find(t *testing.T) {
 				err := repository.Save(ctx, daccount.Entity{
 					Email:    "test@example.com",
 					Nickname: "testuser",
-					Password: "ValidP@ssw0rd123",
 				})
 				if err != nil {
 					t.Fatal(err)
@@ -178,7 +167,6 @@ func Test_Find(t *testing.T) {
 				err := repository.Save(ctx, daccount.Entity{
 					Email:    "user1@example.com",
 					Nickname: "user1",
-					Password: "ValidP@ssw0rd123",
 				})
 				if err != nil {
 					t.Fatal(err)
@@ -186,7 +174,6 @@ func Test_Find(t *testing.T) {
 				err = repository.Save(ctx, daccount.Entity{
 					Email:    "user2@example.com",
 					Nickname: "user2",
-					Password: "ValidP@ssw0rd123",
 				})
 				if err != nil {
 					t.Fatal(err)
@@ -211,7 +198,6 @@ func Test_Find(t *testing.T) {
 				err := repository.Save(ctx, daccount.Entity{
 					Email:    "test@example.com",
 					Nickname: "testuser",
-					Password: "ValidP@ssw0rd123",
 				})
 				if err != nil {
 					t.Fatal(err)
@@ -220,7 +206,6 @@ func Test_Find(t *testing.T) {
 				err = repository.Save(ctx, daccount.Entity{
 					Email:    "other@example.com",
 					Nickname: "otheruser",
-					Password: "ValidP@ssw0rd123",
 				})
 				if err != nil {
 					t.Fatal(err)
@@ -243,7 +228,6 @@ func Test_Find(t *testing.T) {
 				err := repository.Save(ctx, daccount.Entity{
 					Email:    "test@example.com",
 					Nickname: "testuser",
-					Password: "ValidP@ssw0rd123",
 				})
 				if err != nil {
 					t.Fatal(err)
@@ -276,7 +260,6 @@ func Test_Find(t *testing.T) {
 				err := repository.Save(ctx, daccount.Entity{
 					Email:    "test@example.com",
 					Nickname: "testuser",
-					Password: "ValidP@ssw0rd123",
 				})
 				if err != nil {
 					t.Fatal(err)
@@ -296,7 +279,6 @@ func Test_Find(t *testing.T) {
 				err := repository.Save(ctx, daccount.Entity{
 					Email:    "test@example.com",
 					Nickname: "testuser",
-					Password: "ValidP@ssw0rd123",
 				})
 				if err != nil {
 					t.Fatal(err)

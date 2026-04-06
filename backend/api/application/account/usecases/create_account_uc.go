@@ -31,7 +31,7 @@ func (uc *CreateAccountUC) Invoke(ctx context.Context, input account.Entity) (*a
 
 	// Ensure ID is generated using domain method
 	if input.ID == "" {
-		input = account.NewAccount(input.Email, input.Nickname, input.Password)
+		input = account.NewAccount(input.Email, input.Nickname)
 	}
 
 	result, err := uc.repository.Find(ctx, account.DomainQuery{

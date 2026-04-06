@@ -3,11 +3,14 @@ package rest
 import (
 	"context"
 	"log"
+	uauth "sportlink/api/application/auth/usecases"
+	authservice "sportlink/api/application/auth/service"
 	umatchoffer "sportlink/api/application/matchoffer/usecases"
 	umatchrequest "sportlink/api/application/matchrequest/usecases"
 	uplayer "sportlink/api/application/player/usecases"
 	uteam "sportlink/api/application/team/usecases"
 	"sportlink/api/infrastructure/config"
+	iaccount "sportlink/api/infrastructure/persistence/account"
 	imatchoffer "sportlink/api/infrastructure/persistence/matchoffer"
 	imatchrequest "sportlink/api/infrastructure/persistence/matchrequest"
 	iplayer "sportlink/api/infrastructure/persistence/player"
@@ -15,6 +18,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 
+	cauth "sportlink/api/infrastructure/rest/auth"
 	cmatchoffer "sportlink/api/infrastructure/rest/matchoffer"
 	cmatchrequest "sportlink/api/infrastructure/rest/matchrequest"
 	"sportlink/api/infrastructure/rest/monitoring"
@@ -35,6 +39,7 @@ func Routes(router *gin.Engine) {
 	dynamoDbClient := config.NewDynamoDBClient(cfg.DynamoDbCfg)
 
 	// Repositories
+	accountRepository := iaccount.NewRepository(dynamoDbClient, "SportLinkCore")
 	playerRepository := iplayer.NewDynamoDBRepository(dynamoDbClient, "SportLinkCore")
 	teamRepository := iteam.NewRepository(dynamoDbClient, "SportLinkCore")
 	matchOfferRepository := imatchoffer.NewRepository(dynamoDbClient, "SportLinkCore")
@@ -60,7 +65,15 @@ func Routes(router *gin.Engine) {
 	findSentMatchRequests := umatchrequest.NewFindSentMatchRequestsUC(matchRequestRepository)
 	updateMatchRequestStatus := umatchrequest.NewUpdateMatchRequestStatusUC(matchRequestRepository)
 
+	// Auth Use Cases
+	googleVerifier := authservice.NewGoogleTokenVerifier(cfg.AuthCfg.GoogleClientID)
+	jwtService := authservice.NewJWTService(cfg.AuthCfg.JWTSecret)
+	googleAuth := uauth.NewGoogleAuthUC(googleVerifier, accountRepository, jwtService)
+
 	// Controllers
+	authController := cauth.NewController(googleAuth, customValidator)
+	router.POST("/auth/google", authController.GoogleAuth)
+
 	playerController := cplayer.NewController(&createPlayer, customValidator)
 	router.POST("/player", playerController.CreatePlayer)
 

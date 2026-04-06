@@ -1,2 +1,1 @@
-// TODO: replace with real session logic once authentication is implemented
-export const CURRENT_ACCOUNT_ID = 'cabrerajjorge'
+export const CURRENT_ACCOUNT_ID = localStorage.getItem('account_id') ?? ''

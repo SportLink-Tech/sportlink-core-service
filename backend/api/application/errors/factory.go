@@ -29,3 +29,10 @@ func NotFound(message string) AppError {
 		Message: message,
 	}
 }
+
+func Unauthorized(message string) AppError {
+	return AppError{
+		Code:    UnauthorizedErrorCode,
+		Message: message,
+	}
+}

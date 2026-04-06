@@ -10,7 +10,7 @@ type Dto struct {
 	Id       string `dynamodbav:"Id"`
 	Email    string `dynamodbav:"Email"`
 	Nickname string `dynamodbav:"Nickname"`
-	Password string `dynamodbav:"Password"`
+	Picture  string `dynamodbav:"Picture,omitempty"`
 }
 
 func From(entity account.Entity) (Dto, error) {
@@ -18,17 +18,12 @@ func From(entity account.Entity) (Dto, error) {
 		return Dto{}, fmt.Errorf("email could not be empty")
 	}
 
-	hashedPassword, err := entity.GetHashedPassword()
-	if err != nil {
-		return Dto{}, fmt.Errorf("error hashing password: %w", err)
-	}
-
 	return Dto{
 		EntityId: "Entity#Account",
 		Id:       account.GenerateAccountID(entity.Email),
 		Email:    entity.Email,
 		Nickname: entity.Nickname,
-		Password: hashedPassword,
+		Picture:  entity.Picture,
 	}, nil
 }
 
@@ -37,6 +32,6 @@ func (d *Dto) ToDomain() account.Entity {
 		ID:       d.Id,
 		Email:    d.Email,
 		Nickname: d.Nickname,
-		Password: d.Password,
+		Picture:  d.Picture,
 	}
 }

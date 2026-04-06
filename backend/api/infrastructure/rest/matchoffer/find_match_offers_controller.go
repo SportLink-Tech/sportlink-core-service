@@ -23,6 +23,11 @@ func (sc *DefaultController) FindMatchOffers(c *gin.Context) {
 		return
 	}
 
+	if len(result.Entities) == 0 {
+		c.Error(errors.NotFound("no match offers found"))
+		return
+	}
+
 	// Convert domain entities to response DTOs
 	responseDTOs := restmapper.EntitiesToResponses(result.Entities)
 
