@@ -8,7 +8,7 @@ import (
 type Dto struct {
 	EntityId            string `dynamodbav:"EntityId"`            // "Entity#MatchRequest"
 	Id                  string `dynamodbav:"Id"`                  // Generated ULID
-	MatchAnnouncementId string `dynamodbav:"MatchAnnouncementId"` // Referenced announcement ID
+	MatchOfferId string `dynamodbav:"MatchOfferId"` // Referenced announcement ID
 	OwnerAccountId      string `dynamodbav:"OwnerAccountId"`      // Announcement owner account ID (GSI partition key)
 	RequesterAccountId  string `dynamodbav:"RequesterAccountId"`  // Requester account ID
 	Status              string `dynamodbav:"Status"`              // PENDING, ACCEPTED, REJECTED
@@ -20,7 +20,7 @@ func (d *Dto) ToDomain() matchrequest.Entity {
 
 	return matchrequest.Entity{
 		ID:                  d.Id,
-		MatchAnnouncementID: d.MatchAnnouncementId,
+		MatchOfferID: d.MatchOfferId,
 		OwnerAccountID:      d.OwnerAccountId,
 		RequesterAccountID:  d.RequesterAccountId,
 		Status:              status,
@@ -32,7 +32,7 @@ func From(entity matchrequest.Entity) Dto {
 	return Dto{
 		EntityId:            "Entity#MatchRequest",
 		Id:                  entity.ID,
-		MatchAnnouncementId: entity.MatchAnnouncementID,
+		MatchOfferId: entity.MatchOfferID,
 		OwnerAccountId:      entity.OwnerAccountID,
 		RequesterAccountId:  entity.RequesterAccountID,
 		Status:              entity.Status.String(),

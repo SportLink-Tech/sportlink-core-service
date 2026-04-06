@@ -1,6 +1,6 @@
 export interface MatchRequest {
   id: string
-  match_announcement_id: string
+  match_offer_id: string
   owner_account_id: string
   requester_account_id: string
   status: 'PENDING' | 'ACCEPTED' | 'REJECTED'
@@ -8,6 +8,7 @@ export interface MatchRequest {
 }
 
 export interface MatchRequestRepository {
-  create(requesterAccountId: string, matchAnnouncementId: string): Promise<void>
+  create(requesterAccountId: string, matchOfferId: string): Promise<void>
   findSent(requesterAccountId: string, statuses?: string[]): Promise<MatchRequest[]>
+  findReceived(ownerAccountId: string): Promise<MatchRequest[]>
 }

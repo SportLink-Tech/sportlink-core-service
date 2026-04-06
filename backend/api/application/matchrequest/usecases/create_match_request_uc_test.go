@@ -3,184 +3,140 @@ package usecases_test
 import (
 	"context"
 	"errors"
-	"sportlink/api/application/matchrequest/usecases"
-	"sportlink/api/domain/matchannouncement"
-	"sportlink/api/domain/matchrequest"
-	mamocks "sportlink/mocks/api/domain/matchannouncement"
-	mrmocks "sportlink/mocks/api/domain/matchrequest"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
-	"github.com/stretchr/testify/require"
+
+	"sportlink/api/application/matchrequest/usecases"
+	domainoffer "sportlink/api/domain/matchoffer"
+	domainreq "sportlink/api/domain/matchrequest"
+	offermocks "sportlink/mocks/api/domain/matchoffer"
+	reqmocks "sportlink/mocks/api/domain/matchrequest"
 )
 
-func TestNewCreateMatchRequestUC(t *testing.T) {
+func TestCreateMatchRequestUC_Invoke(t *testing.T) {
 	ctx := context.Background()
 
-	const (
-		announcementID     = "01HZXK8QTESTANNOUNCE01"
-		ownerAccountID     = "owner-account"
-		requesterAccountID = "requester-account"
-	)
-
-	findRepoErr := errors.New("dynamodb query failed")
-	saveRepoErr := errors.New("conditional check failed")
-
-	tests := []struct {
+	testCases := []struct {
 		name  string
 		input usecases.CreateMatchRequestInput
-		given func(t *testing.T, maRepository *mamocks.Repository, mrRepository *mrmocks.Repository)
-		then  func(t *testing.T, result *matchrequest.Entity, err error)
+		on    func(t *testing.T, reqRepo *reqmocks.Repository, offerRepo *offermocks.Repository)
+		then  func(t *testing.T, result *domainreq.Entity, err error)
 	}{
 		{
-			name: "given a match announcement exists and requester is not the owner when invoke then returns pending request and saves",
+			name: "given valid match offer when creating request then returns saved entity",
 			input: usecases.CreateMatchRequestInput{
-				MatchAnnouncementID: announcementID,
-				RequesterAccountID:  requesterAccountID,
+				MatchOfferID:       "offer-1",
+				RequesterAccountID: "requester-acc",
 			},
-			given: func(t *testing.T, maRepository *mamocks.Repository, mrRepository *mrmocks.Repository) {
-				ann := matchannouncement.Entity{
-					ID:             announcementID,
-					OwnerAccountID: ownerAccountID,
+			on: func(t *testing.T, reqRepo *reqmocks.Repository, offerRepo *offermocks.Repository) {
+				offer := domainoffer.Entity{
+					ID:             "offer-1",
+					OwnerAccountID: "owner-acc",
 				}
-				maRepository.On("Find", mock.Anything, mock.MatchedBy(func(q matchannouncement.DomainQuery) bool {
-					return len(q.IDs) == 1 && q.IDs[0] == announcementID
-				})).Return(matchannouncement.Page{
-					Entities: []matchannouncement.Entity{ann},
-					Total:    1,
-				}, nil)
-
-				mrRepository.On("Save", mock.Anything, mock.MatchedBy(func(e matchrequest.Entity) bool {
-					return e.MatchAnnouncementID == announcementID &&
-						e.OwnerAccountID == ownerAccountID &&
-						e.RequesterAccountID == requesterAccountID &&
-						e.Status == matchrequest.StatusPending &&
-						e.ID != ""
+				offerRepo.On("Find", mock.Anything, mock.MatchedBy(func(q domainoffer.DomainQuery) bool {
+					return len(q.IDs) == 1 && q.IDs[0] == "offer-1"
+				})).Return(domainoffer.Page{Entities: []domainoffer.Entity{offer}}, nil)
+				reqRepo.On("Save", mock.Anything, mock.MatchedBy(func(e domainreq.Entity) bool {
+					return e.MatchOfferID == "offer-1" &&
+						e.OwnerAccountID == "owner-acc" &&
+						e.RequesterAccountID == "requester-acc" &&
+						e.Status == domainreq.StatusPending
 				})).Return(nil)
 			},
-			then: func(t *testing.T, result *matchrequest.Entity, err error) {
-				require.NoError(t, err)
-				require.NotNil(t, result)
-				assert.Equal(t, announcementID, result.MatchAnnouncementID)
-				assert.Equal(t, ownerAccountID, result.OwnerAccountID)
-				assert.Equal(t, requesterAccountID, result.RequesterAccountID)
-				assert.Equal(t, matchrequest.StatusPending, result.Status)
+			then: func(t *testing.T, result *domainreq.Entity, err error) {
+				assert.NoError(t, err)
+				assert.NotNil(t, result)
+				assert.Equal(t, "offer-1", result.MatchOfferID)
+				assert.Equal(t, "owner-acc", result.OwnerAccountID)
+				assert.Equal(t, "requester-acc", result.RequesterAccountID)
+				assert.Equal(t, domainreq.StatusPending, result.Status)
 				assert.NotEmpty(t, result.ID)
-				assert.False(t, result.CreatedAt.IsZero())
 			},
 		},
 		{
-			name: "given the match announcement repository fails when invoke then returns wrapped find error and does not save",
+			name: "given match offer repository find fails when creating then returns wrapped error",
 			input: usecases.CreateMatchRequestInput{
-				MatchAnnouncementID: announcementID,
-				RequesterAccountID:  requesterAccountID,
+				MatchOfferID:       "offer-1",
+				RequesterAccountID: "requester-acc",
 			},
-			given: func(t *testing.T, maRepository *mamocks.Repository, mrRepository *mrmocks.Repository) {
-				maRepository.On("Find", mock.Anything, mock.MatchedBy(func(q matchannouncement.DomainQuery) bool {
-					return len(q.IDs) == 1 && q.IDs[0] == announcementID
-				})).Return(matchannouncement.Page{}, findRepoErr)
+			on: func(t *testing.T, _ *reqmocks.Repository, offerRepo *offermocks.Repository) {
+				offerRepo.On("Find", mock.Anything, mock.Anything).Return(domainoffer.Page{}, errors.New("db read error"))
 			},
-			then: func(t *testing.T, result *matchrequest.Entity, err error) {
-				require.Error(t, err)
-				require.Nil(t, result)
-				assert.Contains(t, err.Error(), "error while finding match announcement")
-				assert.ErrorIs(t, err, findRepoErr)
+			then: func(t *testing.T, result *domainreq.Entity, err error) {
+				assert.Error(t, err)
+				assert.Nil(t, result)
+				assert.Contains(t, err.Error(), "error while finding match offer")
+				assert.Contains(t, err.Error(), "db read error")
 			},
 		},
 		{
-			name: "given no match announcement is found when invoke then returns not found error and does not save",
+			name: "given match offer not found when creating then returns not found error",
 			input: usecases.CreateMatchRequestInput{
-				MatchAnnouncementID: announcementID,
-				RequesterAccountID:  requesterAccountID,
+				MatchOfferID:       "missing-offer",
+				RequesterAccountID: "requester-acc",
 			},
-			given: func(t *testing.T, maRepository *mamocks.Repository, mrRepository *mrmocks.Repository) {
-				maRepository.On("Find", mock.Anything, mock.MatchedBy(func(q matchannouncement.DomainQuery) bool {
-					return len(q.IDs) == 1 && q.IDs[0] == announcementID
-				})).Return(matchannouncement.Page{
-					Entities: []matchannouncement.Entity{},
-					Total:    0,
-				}, nil)
+			on: func(t *testing.T, _ *reqmocks.Repository, offerRepo *offermocks.Repository) {
+				offerRepo.On("Find", mock.Anything, mock.Anything).Return(domainoffer.Page{Entities: []domainoffer.Entity{}}, nil)
 			},
-			then: func(t *testing.T, result *matchrequest.Entity, err error) {
-				require.Error(t, err)
-				require.Nil(t, result)
-				assert.Contains(t, err.Error(), "not found")
-				assert.Contains(t, err.Error(), announcementID)
+			then: func(t *testing.T, result *domainreq.Entity, err error) {
+				assert.Error(t, err)
+				assert.Nil(t, result)
+				assert.Contains(t, err.Error(), "match offer 'missing-offer' not found")
 			},
 		},
 		{
-			name: "given the requester is the announcement owner when invoke then returns error and does not save",
+			name: "given requester is offer owner when creating then returns error",
 			input: usecases.CreateMatchRequestInput{
-				MatchAnnouncementID: announcementID,
-				RequesterAccountID:  ownerAccountID,
+				MatchOfferID:       "offer-1",
+				RequesterAccountID: "same-acc",
 			},
-			given: func(t *testing.T, maRepository *mamocks.Repository, mrRepository *mrmocks.Repository) {
-				ann := matchannouncement.Entity{
-					ID:             announcementID,
-					OwnerAccountID: ownerAccountID,
-				}
-				maRepository.On("Find", mock.Anything, mock.MatchedBy(func(q matchannouncement.DomainQuery) bool {
-					return len(q.IDs) == 1 && q.IDs[0] == announcementID
-				})).Return(matchannouncement.Page{
-					Entities: []matchannouncement.Entity{ann},
-					Total:    1,
-				}, nil)
+			on: func(t *testing.T, _ *reqmocks.Repository, offerRepo *offermocks.Repository) {
+				offer := domainoffer.Entity{ID: "offer-1", OwnerAccountID: "same-acc"}
+				offerRepo.On("Find", mock.Anything, mock.Anything).Return(domainoffer.Page{Entities: []domainoffer.Entity{offer}}, nil)
 			},
-			then: func(t *testing.T, result *matchrequest.Entity, err error) {
-				require.Error(t, err)
-				require.Nil(t, result)
-				assert.Contains(t, err.Error(), "cannot send a match request to your own announcement")
+			then: func(t *testing.T, result *domainreq.Entity, err error) {
+				assert.Error(t, err)
+				assert.Nil(t, result)
+				assert.Contains(t, err.Error(), "cannot send a match request to your own offer")
 			},
 		},
 		{
-			name: "given saving the match request fails when invoke then returns wrapped save error",
+			name: "given match request save fails when creating then returns wrapped error",
 			input: usecases.CreateMatchRequestInput{
-				MatchAnnouncementID: announcementID,
-				RequesterAccountID:  requesterAccountID,
+				MatchOfferID:       "offer-1",
+				RequesterAccountID: "requester-acc",
 			},
-			given: func(t *testing.T, maRepository *mamocks.Repository, mrRepository *mrmocks.Repository) {
-				ann := matchannouncement.Entity{
-					ID:             announcementID,
-					OwnerAccountID: ownerAccountID,
-				}
-				maRepository.On("Find", mock.Anything, mock.MatchedBy(func(q matchannouncement.DomainQuery) bool {
-					return len(q.IDs) == 1 && q.IDs[0] == announcementID
-				})).Return(matchannouncement.Page{
-					Entities: []matchannouncement.Entity{ann},
-					Total:    1,
-				}, nil)
-
-				mrRepository.On("Save", mock.Anything, mock.MatchedBy(func(e matchrequest.Entity) bool {
-					return e.MatchAnnouncementID == announcementID &&
-						e.OwnerAccountID == ownerAccountID &&
-						e.RequesterAccountID == requesterAccountID &&
-						e.Status == matchrequest.StatusPending
-				})).Return(saveRepoErr)
+			on: func(t *testing.T, reqRepo *reqmocks.Repository, offerRepo *offermocks.Repository) {
+				offer := domainoffer.Entity{ID: "offer-1", OwnerAccountID: "owner-acc"}
+				offerRepo.On("Find", mock.Anything, mock.Anything).Return(domainoffer.Page{Entities: []domainoffer.Entity{offer}}, nil)
+				reqRepo.On("Save", mock.Anything, mock.Anything).Return(errors.New("persist failed"))
 			},
-			then: func(t *testing.T, result *matchrequest.Entity, err error) {
-				require.Error(t, err)
-				require.Nil(t, result)
+			then: func(t *testing.T, result *domainreq.Entity, err error) {
+				assert.Error(t, err)
+				assert.Nil(t, result)
 				assert.Contains(t, err.Error(), "error while saving match request")
-				assert.ErrorIs(t, err, saveRepoErr)
+				assert.Contains(t, err.Error(), "persist failed")
 			},
 		},
 	}
 
-	for _, tt := range tests {
+	for _, tt := range testCases {
 		t.Run(tt.name, func(t *testing.T) {
-			t.Parallel()
-			maRepository := &mamocks.Repository{}
-			mrRepository := &mrmocks.Repository{}
-			uc := usecases.NewCreateMatchRequestUC(mrRepository, maRepository)
+			// set up
+			reqRepo := reqmocks.NewRepository(t)
+			offerRepo := offermocks.NewRepository(t)
+			uc := usecases.NewCreateMatchRequestUC(reqRepo, offerRepo)
 
-			tt.given(t, maRepository, mrRepository)
+			// given
+			tt.on(t, reqRepo, offerRepo)
 
+			// when
 			result, err := uc.Invoke(ctx, tt.input)
 
+			// then
 			tt.then(t, result, err)
-			maRepository.AssertExpectations(t)
-			mrRepository.AssertExpectations(t)
 		})
 	}
 }

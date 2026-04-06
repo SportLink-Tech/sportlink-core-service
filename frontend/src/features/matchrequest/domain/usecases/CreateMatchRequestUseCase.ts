@@ -5,10 +5,10 @@ export class CreateMatchRequestUseCase {
 
   async execute(
     requesterAccountId: string,
-    matchAnnouncementId: string,
+    matchOfferId: string,
   ): Promise<{ success: boolean; error?: string }> {
     try {
-      await this.repository.create(requesterAccountId, matchAnnouncementId)
+      await this.repository.create(requesterAccountId, matchOfferId)
       return { success: true }
     } catch (error) {
       return {

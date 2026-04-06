@@ -25,7 +25,7 @@ insert_team() {
     local category=$3
     local entity_id="Entity#Team"
     local id="SPORT#${sport}#NAME#${name}"
-    
+
     awslocal dynamodb put-item \
         --table-name "$TABLE_NAME" \
         --region "$REGION" \
@@ -36,8 +36,33 @@ insert_team() {
             \"Sport\": {\"S\": \"${sport}\"}
         }" \
         --return-consumed-capacity TOTAL > /dev/null
-    
+
     echo "✓ Equipo insertado: ${name} (${sport}, Categoría ${category})"
+}
+
+# Función auxiliar para insertar un equipo con propietario (aparece en "Mis equipos")
+insert_owner_team() {
+    local sport=$1
+    local name=$2
+    local category=$3
+    local owner=$4
+    local entity_id="Entity#Team"
+    local id="SPORT#${sport}#NAME#${name}"
+
+    awslocal dynamodb put-item \
+        --table-name "$TABLE_NAME" \
+        --region "$REGION" \
+        --item "{
+            \"EntityId\": {\"S\": \"${entity_id}\"},
+            \"Id\": {\"S\": \"${id}\"},
+            \"Name\": {\"S\": \"${name}\"},
+            \"Category\": {\"N\": \"${category}\"},
+            \"Sport\": {\"S\": \"${sport}\"},
+            \"OwnerAccountId\": {\"S\": \"${owner}\"}
+        }" \
+        --return-consumed-capacity TOTAL > /dev/null
+
+    echo "✓ Equipo (con propietario) insertado: ${name} (${sport}, Categoría ${category}, owner: ${owner})"
 }
 
 # Equipos de Fútbol
@@ -60,6 +85,9 @@ insert_team "Tennis" "Tennis Club Elite" 5
 insert_team "Tennis" "Ace Masters" 6
 insert_team "Tennis" "Tennis Buenos Aires" 4
 insert_team "Tennis" "Pro Tennis Team" 7
+
+# Equipos del usuario actual (aparecen en "Mis equipos")
+insert_owner_team "Football" "Los Cabreras FC" "5" "cabrerajjorge"
 
 print_banner "Equipos insertados correctamente"
 

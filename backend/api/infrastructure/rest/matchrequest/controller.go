@@ -1,6 +1,8 @@
 package matchrequest
 
 import (
+	"sportlink/api/application/matchrequest/usecases"
+
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
 )
@@ -13,18 +15,18 @@ type Controller interface {
 }
 
 type DefaultController struct {
-	createMatchRequestUC       CreateMatchRequestUseCase
-	findMatchRequestsUC        FindMatchRequestsUseCase
-	findSentMatchRequestsUC    FindSentMatchRequestsUseCase
-	updateMatchRequestStatusUC UpdateMatchRequestStatusUseCase
+	createMatchRequestUC       *usecases.CreateMatchRequestUC
+	findMatchRequestsUC        *usecases.FindMatchRequestsUC
+	findSentMatchRequestsUC    *usecases.FindSentMatchRequestsUC
+	updateMatchRequestStatusUC *usecases.UpdateMatchRequestStatusUC
 	validator                  *validator.Validate
 }
 
 func NewController(
-	createMatchRequestUC CreateMatchRequestUseCase,
-	findMatchRequestsUC FindMatchRequestsUseCase,
-	findSentMatchRequestsUC FindSentMatchRequestsUseCase,
-	updateMatchRequestStatusUC UpdateMatchRequestStatusUseCase,
+	createMatchRequestUC *usecases.CreateMatchRequestUC,
+	findMatchRequestsUC *usecases.FindMatchRequestsUC,
+	findSentMatchRequestsUC *usecases.FindSentMatchRequestsUC,
+	updateMatchRequestStatusUC *usecases.UpdateMatchRequestStatusUC,
 	validator *validator.Validate,
 ) Controller {
 	return &DefaultController{

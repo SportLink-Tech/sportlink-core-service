@@ -362,7 +362,7 @@ for _, tc := range testCases {
 
 ### Using Matchers
 
-- **ALWAYS use specific matchers** - `mock.Anything` is a **TERRIBLE PRACTICE** that must be avoided
+- **ALWAYS use specific matchers** — **`mock.Anything` must never be used** (no exceptions)
 - **Use `mock.MatchedBy()`** for complex validation logic
 - **Be specific** about what you're matching - validate the actual values being passed
 
@@ -379,21 +379,27 @@ Using `mock.Anything` is a **code smell** that indicates you're not really testi
 
 ### Examples
 
-✅ **Good** (Specific matchers - validates the actual data):
+✅ **Good** (Specific matchers — `Invoke` receives `context.Context` plus the input; match both):
 ```go
-useCaseMock.On("Invoke", mock.MatchedBy(func(entity domain.Entity) bool {
-    return entity.TeamName == "Boca" &&
-           entity.Sport == common.Paddle &&
-           entity.Location.Country == "Argentina"
-})).Return(expectedEntity, nil)
+useCaseMock.On("Invoke",
+    mock.MatchedBy(func(c context.Context) bool { return c == wantCtx }),
+    mock.MatchedBy(func(entity domain.Entity) bool {
+        return entity.TeamName == "Boca" &&
+            entity.Sport == common.Paddle &&
+            entity.Location.Country == "Argentina"
+    }),
+).Return(expectedEntity, nil)
 ```
 
-✅ **Good** (For DynamoDB queries - validates query structure):
+✅ **Good** (For DynamoDB queries — match **every** argument, including `context.Context`):
 ```go
-mockClient.On("Query", mock.Anything, mock.MatchedBy(func(input *dynamodb.QueryInput) bool {
-    return input.Limit != nil && 
-           *input.Limit == 100 &&
-           input.FilterExpression != nil
+// wantCtx is the same context.Context instance passed into the code under test (e.g. ctx := context.Background()).
+mockClient.On("Query", mock.MatchedBy(func(c context.Context) bool {
+    return c == wantCtx
+}), mock.MatchedBy(func(input *dynamodb.QueryInput) bool {
+    return input.Limit != nil &&
+        *input.Limit == 100 &&
+        input.FilterExpression != nil
 })).Return(&dynamodb.QueryOutput{...}, nil)
 ```
 
@@ -409,18 +415,20 @@ mockClient.On("Query", mock.Anything, mock.Anything).Return(&dynamodb.QueryOutpu
 // You're not testing what query parameters are being used!
 ```
 
-### Exception: Context Parameters ONLY
+### Matching `context.Context`
 
-The **ONLY** exception is for `context.Context` parameters, where `mock.Anything` is acceptable:
+`context.Context` is **not** special: **do not** use `mock.Anything` for it. In tests where you control the context, create a variable (e.g. `ctx := context.Background()`), pass it into the code under test (or attach it with `req = req.WithContext(ctx)` for HTTP), and match with identity:
 
 ```go
-repository.On("Save", mock.Anything, mock.MatchedBy(func(entity Entity) bool {
+repository.On("Save", mock.MatchedBy(func(c context.Context) bool {
+    return c == ctx
+}), mock.MatchedBy(func(entity Entity) bool {
     return entity.Name == "Boca" &&
-           entity.Category == common.L5
+        entity.Category == common.L5
 })).Return(nil)
 ```
 
-**Important**: Even though we use `mock.Anything` for context, we **still validate** all other parameters with specific matchers.
+If the production code derives a new context (e.g. `context.WithTimeout`), match what you can assert safely (deadline, cancellation, or values you set with `context.WithValue` in the test) — never fall back to `mock.Anything`.
 
 ## Deterministic Tests
 
@@ -479,6 +487,7 @@ package matchannouncement_test
 
 import (
     "bytes"
+    "context"
     "encoding/json"
     "net/http"
     "net/http/httptest"
@@ -504,7 +513,7 @@ func TestCreateMatchAnnouncement(t *testing.T) {
     testCases := []struct {
         name    string
         payload request.NewMatchAnnouncementRequest
-        on      func(t *testing.T, useCaseMock *UseCaseMock)
+        on      func(t *testing.T, useCaseMock *UseCaseMock, ctx context.Context)
         then    func(t *testing.T, responseCode int, response map[string]interface{})
     }{
         {
@@ -514,10 +523,13 @@ func TestCreateMatchAnnouncement(t *testing.T) {
                 Sport:    "Paddle",
                 // ... other fields
             },
-            on: func(t *testing.T, useCaseMock *UseCaseMock) {
-                useCaseMock.On("Invoke", mock.MatchedBy(func(entity domain.Entity) bool {
-                    return entity.TeamName == "Boca" && entity.Sport == common.Paddle
-                })).Return(expectedEntity, nil)
+            on: func(t *testing.T, useCaseMock *UseCaseMock, ctx context.Context) {
+                useCaseMock.On("Invoke",
+                    mock.MatchedBy(func(c context.Context) bool { return c == ctx }),
+                    mock.MatchedBy(func(entity domain.Entity) bool {
+                        return entity.TeamName == "Boca" && entity.Sport == common.Paddle
+                    }),
+                ).Return(expectedEntity, nil)
             },
             then: func(t *testing.T, responseCode int, response map[string]interface{}) {
                 assert.Equal(t, http.StatusCreated, responseCode)
@@ -530,6 +542,8 @@ func TestCreateMatchAnnouncement(t *testing.T) {
         t.Run(tc.name, func(t *testing.T) {
             t.Parallel()
 
+            ctx := context.Background()
+
             // Setup
             useCaseMock := amocks.NewUseCase[domain.Entity, domain.Entity](t)
             controller := matchannouncement.NewController(useCaseMock, nil, validator)
@@ -540,9 +554,10 @@ func TestCreateMatchAnnouncement(t *testing.T) {
             router.POST("/match-announcement", controller.CreateMatchAnnouncement)
 
             // Given
-            tc.on(t, useCaseMock)
+            tc.on(t, useCaseMock, ctx)
             jsonData, _ := json.Marshal(tc.payload)
             req, _ := http.NewRequest("POST", "/match-announcement", bytes.NewBuffer(jsonData))
+            req = req.WithContext(ctx)
             req.Header.Set("Content-Type", "application/json")
             resp := httptest.NewRecorder()
 
@@ -580,7 +595,7 @@ When writing tests, ensure:
 - [ ] Mocks are generated using `mockery` and placed in `mocks/` directory
 - [ ] Test names follow `given when then` convention as **complete sentences** (no underscores) in business terms
 - [ ] Test structure uses table-driven approach with `on` and `then` functions
-- [ ] Specific matchers are used (no `mock.Anything` except for contexts)
+- [ ] Specific matchers are used — **never** `mock.Anything` (including for `context.Context`; use `MatchedBy` as in the examples above)
 - [ ] Tests are deterministic (no random data, fixed values)
 - [ ] Tests are isolated and independent
 - [ ] All external dependencies are mocked

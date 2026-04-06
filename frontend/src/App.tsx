@@ -1,36 +1,36 @@
 import { Routes, Route } from 'react-router-dom'
 import { Layout } from './components/Layout'
-import { MatchAnnouncementModule } from './features/matchannouncement/MatchAnnouncementModule'
-import { ListMatchAnnouncementsPage } from './features/matchannouncement/ui/pages/ListMatchAnnouncementsPage'
-import { CreateMatchAnnouncementPage } from './features/matchannouncement/ui/pages/CreateMatchAnnouncementPage'
+import { MatchOfferModule } from './features/matchoffer/MatchOfferModule'
+import { ListMatchOffersPage } from './features/matchoffer/ui/pages/ListMatchOffersPage'
+import { CreateMatchOfferPage } from './features/matchoffer/ui/pages/CreateMatchOfferPage'
 import { TeamModule } from './features/team/TeamModule'
 import { CreateTeamPage } from './features/team/ui/pages/CreateTeamPage'
 import { MyTeamsPage } from './features/team/ui/pages/MyTeamsPage'
-import { MyAnnouncementsPage } from './features/matchannouncement/ui/pages/MyAnnouncementsPage'
+import { MyOffersPage } from './features/matchoffer/ui/pages/MyOffersPage'
 import { MatchRequestModule } from './features/matchrequest/MatchRequestModule'
 
 /**
  * App Component
- * Wraps the application with MatchAnnouncementModule for Dependency Injection
+ * Wraps the application with MatchOfferModule for Dependency Injection
  * Following Atomic Hexagonal Architecture
  */
 function App() {
   return (
-    <MatchAnnouncementModule>
+    <MatchOfferModule>
       <MatchRequestModule>
         <TeamModule>
           <Layout>
             <Routes>
-              <Route path="/" element={<ListMatchAnnouncementsPage />} />
-              <Route path="/create" element={<CreateMatchAnnouncementPage />} />
+              <Route path="/" element={<ListMatchOffersPage />} />
+              <Route path="/create" element={<CreateMatchOfferPage />} />
               <Route path="/create-team" element={<CreateTeamPage />} />
               <Route path="/my-teams" element={<MyTeamsPage />} />
-              <Route path="/my-announcements" element={<MyAnnouncementsPage />} />
+              <Route path="/my-offers" element={<MyOffersPage />} />
             </Routes>
           </Layout>
         </TeamModule>
       </MatchRequestModule>
-    </MatchAnnouncementModule>
+    </MatchOfferModule>
   )
 }
 

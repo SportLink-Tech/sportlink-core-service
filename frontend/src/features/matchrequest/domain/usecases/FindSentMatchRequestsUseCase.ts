@@ -6,7 +6,7 @@ export class FindSentMatchRequestsUseCase {
   async execute(requesterAccountId: string, statuses?: string[]): Promise<Set<string>> {
     try {
       const requests = await this.repository.findSent(requesterAccountId, statuses)
-      return new Set(requests.map((r) => r.match_announcement_id).filter(Boolean))
+      return new Set(requests.map((r) => r.match_offer_id).filter(Boolean))
     } catch {
       return new Set()
     }

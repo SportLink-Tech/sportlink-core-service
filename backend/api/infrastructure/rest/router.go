@@ -3,19 +3,19 @@ package rest
 import (
 	"context"
 	"log"
-	umatchannouncement "sportlink/api/application/matchannouncement/usecases"
+	umatchoffer "sportlink/api/application/matchoffer/usecases"
 	umatchrequest "sportlink/api/application/matchrequest/usecases"
 	uplayer "sportlink/api/application/player/usecases"
 	uteam "sportlink/api/application/team/usecases"
 	"sportlink/api/infrastructure/config"
-	imatchannouncement "sportlink/api/infrastructure/persistence/matchannouncement"
+	imatchoffer "sportlink/api/infrastructure/persistence/matchoffer"
 	imatchrequest "sportlink/api/infrastructure/persistence/matchrequest"
 	iplayer "sportlink/api/infrastructure/persistence/player"
 	iteam "sportlink/api/infrastructure/persistence/team"
 
 	"github.com/gin-gonic/gin"
 
-	cmatchannouncement "sportlink/api/infrastructure/rest/matchannouncement"
+	cmatchoffer "sportlink/api/infrastructure/rest/matchoffer"
 	cmatchrequest "sportlink/api/infrastructure/rest/matchrequest"
 	"sportlink/api/infrastructure/rest/monitoring"
 	cplayer "sportlink/api/infrastructure/rest/player"
@@ -37,7 +37,7 @@ func Routes(router *gin.Engine) {
 	// Repositories
 	playerRepository := iplayer.NewDynamoDBRepository(dynamoDbClient, "SportLinkCore")
 	teamRepository := iteam.NewRepository(dynamoDbClient, "SportLinkCore")
-	matchAnnouncementRepository := imatchannouncement.NewRepository(dynamoDbClient, "SportLinkCore")
+	matchOfferRepository := imatchoffer.NewRepository(dynamoDbClient, "SportLinkCore")
 	matchRequestRepository := imatchrequest.NewRepository(dynamoDbClient, "SportLinkCore")
 
 	// Player Use Cases
@@ -48,12 +48,13 @@ func Routes(router *gin.Engine) {
 	retrieveTeam := uteam.NewRetrieveTeamUC(teamRepository)
 	findTeam := uteam.NewFindTeamUC(teamRepository)
 
-	// Match Announcement Use Cases
-	createMatchAnnouncement := umatchannouncement.NewCreateMatchAnnouncementUC(matchAnnouncementRepository, teamRepository)
-	findMatchAnnouncements := umatchannouncement.NewFindMatchAnnouncementUC(matchAnnouncementRepository)
+	// Match Offer Use Cases
+	createMatchOffer := umatchoffer.NewCreateMatchOfferUC(matchOfferRepository, teamRepository)
+	findMatchOffers := umatchoffer.NewFindMatchOfferUC(matchOfferRepository)
+	deleteMatchOffer := umatchoffer.NewDeleteMatchOfferUC(matchOfferRepository)
 
 	// Match Request Use Cases
-	createMatchRequest := umatchrequest.NewCreateMatchRequestUC(matchRequestRepository, matchAnnouncementRepository)
+	createMatchRequest := umatchrequest.NewCreateMatchRequestUC(matchRequestRepository, matchOfferRepository)
 	findMatchRequests := umatchrequest.NewFindMatchRequestsUC(matchRequestRepository)
 	findSentMatchRequests := umatchrequest.NewFindSentMatchRequestsUC(matchRequestRepository)
 	updateMatchRequestStatus := umatchrequest.NewUpdateMatchRequestStatusUC(matchRequestRepository)
@@ -68,13 +69,14 @@ func Routes(router *gin.Engine) {
 	router.GET("/sport/:sport/team/:team", teamController.RetrieveTeam)
 	router.GET("/sport/:sport/team", teamController.FindTeam)
 
-	matchAnnouncementController := cmatchannouncement.NewController(createMatchAnnouncement, findMatchAnnouncements, customValidator)
-	router.POST("/account/:accountId/match-announcement", matchAnnouncementController.CreateMatchAnnouncement)
-	router.GET("/match-announcement", matchAnnouncementController.FindMatchAnnouncements)
-	router.GET("/account/:accountId/match-announcement", matchAnnouncementController.FindAccountMatchAnnouncements)
+	matchOfferController := cmatchoffer.NewController(createMatchOffer, findMatchOffers, deleteMatchOffer, customValidator)
+	router.POST("/account/:accountId/match-offer", matchOfferController.CreateMatchOffer)
+	router.GET("/match-offer", matchOfferController.FindMatchOffers)
+	router.GET("/account/:accountId/match-offer", matchOfferController.FindAccountMatchOffers)
+	router.DELETE("/account/:accountId/match-offer/:offerId", matchOfferController.DeleteMatchOffer)
 
 	matchRequestController := cmatchrequest.NewController(createMatchRequest, findMatchRequests, findSentMatchRequests, updateMatchRequestStatus, customValidator)
-	router.POST("/account/:accountId/match-announcement/:announcementId/match-request", matchRequestController.CreateMatchRequest)
+	router.POST("/account/:accountId/match-offer/:announcementId/match-request", matchRequestController.CreateMatchRequest)
 	router.GET("/account/:accountId/match-request", matchRequestController.FindMatchRequests)
 	router.GET("/account/:accountId/sent-match-request", matchRequestController.FindSentMatchRequests)
 	router.PATCH("/account/:accountId/match-request/:requestId", matchRequestController.UpdateMatchRequestStatus)

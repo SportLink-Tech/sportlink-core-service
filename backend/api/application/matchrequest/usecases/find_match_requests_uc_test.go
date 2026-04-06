@@ -3,87 +3,94 @@ package usecases_test
 import (
 	"context"
 	"errors"
-	"sportlink/api/application/matchrequest/usecases"
-	"sportlink/api/domain/matchrequest"
-	mrmocks "sportlink/mocks/api/domain/matchrequest"
 	"testing"
 	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
-	"github.com/stretchr/testify/require"
+
+	"sportlink/api/application/matchrequest/usecases"
+	domainreq "sportlink/api/domain/matchrequest"
+	reqmocks "sportlink/mocks/api/domain/matchrequest"
 )
 
-func TestNewFindMatchRequestsUC(t *testing.T) {
+func TestFindMatchRequestsUC_Invoke(t *testing.T) {
 	ctx := context.Background()
-	ownerID := "owner-account"
-	findErr := errors.New("repository find failed")
 
-	tests := []struct {
-		name  string
-		given func(t *testing.T, mrRepository *mrmocks.Repository)
-		then  func(t *testing.T, result []matchrequest.Entity, err error)
+	testCases := []struct {
+		name            string
+		ownerAccountID  string
+		on              func(t *testing.T, repository *reqmocks.Repository)
+		then            func(t *testing.T, result []domainreq.Entity, err error)
 	}{
 		{
-			name: "given repository returns incoming requests when invoke then returns entities",
-			given: func(t *testing.T, mrRepository *mrmocks.Repository) {
-				entities := []matchrequest.Entity{
+			name:           "given repository returns requests when finding by owner then returns entities",
+			ownerAccountID: "owner-acc",
+			on: func(t *testing.T, repository *reqmocks.Repository) {
+				now := time.Now()
+				entities := []domainreq.Entity{
 					{
-						ID: "req-1", MatchAnnouncementID: "ann-1",
-						OwnerAccountID: ownerID, RequesterAccountID: "other",
-						Status: matchrequest.StatusPending, CreatedAt: time.Now(),
+						ID:                 "mr-1",
+						MatchOfferID:       "offer-1",
+						OwnerAccountID:     "owner-acc",
+						RequesterAccountID: "req-a",
+						Status:             domainreq.StatusPending,
+						CreatedAt:          now,
 					},
 				}
-				mrRepository.On("Find", mock.Anything, mock.MatchedBy(func(q matchrequest.DomainQuery) bool {
-					return len(q.OwnerAccountIDs) == 1 && q.OwnerAccountIDs[0] == ownerID
+				repository.On("Find", mock.Anything, mock.MatchedBy(func(q domainreq.DomainQuery) bool {
+					return len(q.OwnerAccountIDs) == 1 && q.OwnerAccountIDs[0] == "owner-acc"
 				})).Return(entities, nil)
 			},
-			then: func(t *testing.T, result []matchrequest.Entity, err error) {
-				require.NoError(t, err)
-				require.Len(t, result, 1)
-				assert.Equal(t, ownerID, result[0].OwnerAccountID)
+			then: func(t *testing.T, result []domainreq.Entity, err error) {
+				assert.NoError(t, err)
+				assert.Len(t, result, 1)
+				assert.Equal(t, "mr-1", result[0].ID)
+				assert.Equal(t, "owner-acc", result[0].OwnerAccountID)
 			},
 		},
 		{
-			name: "given repository returns no requests when invoke then returns empty without error",
-			given: func(t *testing.T, mrRepository *mrmocks.Repository) {
-				mrRepository.On("Find", mock.Anything, mock.MatchedBy(func(q matchrequest.DomainQuery) bool {
-					return len(q.OwnerAccountIDs) == 1 && q.OwnerAccountIDs[0] == ownerID
-				})).Return([]matchrequest.Entity{}, nil)
+			name:           "given repository returns empty when finding by owner then returns empty slice",
+			ownerAccountID: "owner-without-requests",
+			on: func(t *testing.T, repository *reqmocks.Repository) {
+				repository.On("Find", mock.Anything, mock.MatchedBy(func(q domainreq.DomainQuery) bool {
+					return len(q.OwnerAccountIDs) == 1 && q.OwnerAccountIDs[0] == "owner-without-requests"
+				})).Return([]domainreq.Entity{}, nil)
 			},
-			then: func(t *testing.T, result []matchrequest.Entity, err error) {
-				require.NoError(t, err)
+			then: func(t *testing.T, result []domainreq.Entity, err error) {
+				assert.NoError(t, err)
 				assert.Empty(t, result)
 			},
 		},
 		{
-			name: "given repository fails when invoke then returns wrapped error",
-			given: func(t *testing.T, mrRepository *mrmocks.Repository) {
-				mrRepository.On("Find", mock.Anything, mock.MatchedBy(func(q matchrequest.DomainQuery) bool {
-					return len(q.OwnerAccountIDs) == 1 && q.OwnerAccountIDs[0] == ownerID
-				})).Return(nil, findErr)
+			name:           "given repository find fails when finding by owner then returns wrapped error",
+			ownerAccountID: "owner-acc",
+			on: func(t *testing.T, repository *reqmocks.Repository) {
+				repository.On("Find", mock.Anything, mock.Anything).Return(nil, errors.New("query failed"))
 			},
-			then: func(t *testing.T, result []matchrequest.Entity, err error) {
-				require.Error(t, err)
-				require.Nil(t, result)
+			then: func(t *testing.T, result []domainreq.Entity, err error) {
+				assert.Error(t, err)
+				assert.Nil(t, result)
 				assert.Contains(t, err.Error(), "error while finding match requests")
-				assert.ErrorIs(t, err, findErr)
+				assert.Contains(t, err.Error(), "query failed")
 			},
 		},
 	}
 
-	for _, tt := range tests {
+	for _, tt := range testCases {
 		t.Run(tt.name, func(t *testing.T) {
-			t.Parallel()
-			mrRepository := &mrmocks.Repository{}
-			uc := usecases.NewFindMatchRequestsUC(mrRepository)
+			// set up
+			repository := reqmocks.NewRepository(t)
+			uc := usecases.NewFindMatchRequestsUC(repository)
 
-			tt.given(t, mrRepository)
+			// given
+			tt.on(t, repository)
 
-			result, err := uc.Invoke(ctx, ownerID)
+			// when
+			result, err := uc.Invoke(ctx, tt.ownerAccountID)
 
+			// then
 			tt.then(t, result, err)
-			mrRepository.AssertExpectations(t)
 		})
 	}
 }

@@ -4,7 +4,7 @@ import "time"
 
 type Entity struct {
 	ID                  string
-	MatchAnnouncementID string
+	MatchOfferID string
 	HomeTeamID          string
 	AwayTeamID          string
 	MatchDate           time.Time

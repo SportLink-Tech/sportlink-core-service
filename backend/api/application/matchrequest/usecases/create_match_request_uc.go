@@ -3,51 +3,51 @@ package usecases
 import (
 	"context"
 	"fmt"
-	"sportlink/api/domain/matchannouncement"
+	"sportlink/api/domain/matchoffer"
 	"sportlink/api/domain/matchrequest"
 )
 
 type CreateMatchRequestInput struct {
-	MatchAnnouncementID string
+	MatchOfferID string
 	RequesterAccountID  string
 }
 
 type CreateMatchRequestUC struct {
 	matchRequestRepository      matchrequest.Repository
-	matchAnnouncementRepository matchannouncement.Repository
+	matchOfferRepository matchoffer.Repository
 }
 
 func NewCreateMatchRequestUC(
 	matchRequestRepository matchrequest.Repository,
-	matchAnnouncementRepository matchannouncement.Repository,
+	matchOfferRepository matchoffer.Repository,
 ) *CreateMatchRequestUC {
 	return &CreateMatchRequestUC{
 		matchRequestRepository:      matchRequestRepository,
-		matchAnnouncementRepository: matchAnnouncementRepository,
+		matchOfferRepository: matchOfferRepository,
 	}
 }
 
 func (uc *CreateMatchRequestUC) Invoke(ctx context.Context, input CreateMatchRequestInput) (*matchrequest.Entity, error) {
-	// Fetch the match announcement to get the owner account ID
-	page, err := uc.matchAnnouncementRepository.Find(ctx, matchannouncement.DomainQuery{
-		IDs: []string{input.MatchAnnouncementID},
+	// Fetch the match offer to get the owner account ID
+	page, err := uc.matchOfferRepository.Find(ctx, matchoffer.DomainQuery{
+		IDs: []string{input.MatchOfferID},
 	})
 	if err != nil {
-		return nil, fmt.Errorf("error while finding match announcement: %w", err)
+		return nil, fmt.Errorf("error while finding match offer: %w", err)
 	}
 	if len(page.Entities) == 0 {
-		return nil, fmt.Errorf("match announcement '%s' not found", input.MatchAnnouncementID)
+		return nil, fmt.Errorf("match offer '%s' not found", input.MatchOfferID)
 	}
-	announcement := &page.Entities[0]
+	offer := &page.Entities[0]
 
-	// Prevent the owner from requesting their own announcement
-	if announcement.OwnerAccountID == input.RequesterAccountID {
-		return nil, fmt.Errorf("cannot send a match request to your own announcement")
+	// Prevent the owner from requesting their own offer
+	if offer.OwnerAccountID == input.RequesterAccountID {
+		return nil, fmt.Errorf("cannot send a match request to your own offer")
 	}
 
 	entity := matchrequest.NewMatchRequest(
-		input.MatchAnnouncementID,
-		announcement.OwnerAccountID,
+		input.MatchOfferID,
+		offer.OwnerAccountID,
 		input.RequesterAccountID,
 	)
 

@@ -217,7 +217,7 @@ export function Layout({ children }: LayoutProps) {
                 <Typography variant="body1">Mis equipos</Typography>
               </MenuItem>
               <MenuItem
-                onClick={() => handleNavigate('/my-announcements')}
+                onClick={() => handleNavigate('/my-offers')}
                 sx={{
                   py: 1.5,
                   px: 2,
@@ -225,7 +225,7 @@ export function Layout({ children }: LayoutProps) {
                 }}
               >
                 <EventIcon sx={{ mr: 2, fontSize: 24, color: 'text.secondary' }} />
-                <Typography variant="body1">Mis anuncios</Typography>
+                <Typography variant="body1">Mis publicaciones</Typography>
               </MenuItem>
             </Box>
 

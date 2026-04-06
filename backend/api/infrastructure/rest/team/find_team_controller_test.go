@@ -5,98 +5,323 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"sportlink/api/application/team/usecases"
+	"sportlink/api/domain/common"
+	"sportlink/api/domain/player"
+	team2 "sportlink/api/domain/team"
+	"sportlink/api/infrastructure/middleware"
+	"sportlink/api/infrastructure/rest/team"
+	tmocks "sportlink/mocks/api/domain/team"
 	"testing"
 
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
-
-	"sportlink/api/domain/common"
-	"sportlink/api/domain/player"
-	team2 "sportlink/api/domain/team"
-	"sportlink/api/infrastructure/middleware"
-	"sportlink/api/infrastructure/rest/team"
-	amocks "sportlink/mocks/api/application"
 )
 
-func TestFindTeam(t *testing.T) {
-	v := validator.New()
+func TestFindTeamController(t *testing.T) {
+	validator := validator.New()
 
 	testCases := []struct {
 		name          string
 		sport         string
 		nameQuery     string
 		categoryQuery string
-		given         func(t *testing.T, find *amocks.UseCase[team2.DomainQuery, []team2.Entity])
-		then          func(t *testing.T, responseCode int, response interface{})
+		on            func(t *testing.T, teamRepository *tmocks.Repository)
+		assertions    func(t *testing.T, responseCode int, response interface{})
 	}{
 		{
-			name:      "given use case returns teams when find then returns ok",
+			name:      "find teams successfully - multiple results",
 			sport:     "Football",
 			nameQuery: "Boca",
-			given: func(t *testing.T, find *amocks.UseCase[team2.DomainQuery, []team2.Entity]) {
-				slice := []team2.Entity{
-					{Name: "Boca Juniors", Sport: common.Football, Category: common.L1, Stats: *common.NewStats(10, 5, 2), Members: []player.Entity{}},
-					{Name: "Boca Unidos", Sport: common.Football, Category: common.L2, Stats: *common.NewStats(5, 3, 1), Members: []player.Entity{}},
-				}
-				find.On("Invoke", mock.Anything, mock.MatchedBy(func(q team2.DomainQuery) bool {
-					return len(q.Sports) == 1 && q.Sports[0] == common.Football && q.Name == "Boca"
-				})).Return(&slice, nil)
+			on: func(t *testing.T, teamRepository *tmocks.Repository) {
+				teamRepository.On("Find", mock.Anything, mock.MatchedBy(func(query team2.DomainQuery) bool {
+					return len(query.Sports) == 1 &&
+						query.Sports[0] == common.Football &&
+						query.Name == "Boca"
+				})).Return([]team2.Entity{
+					{
+						Name:     "Boca Juniors",
+						Sport:    common.Football,
+						Category: common.L1,
+						Stats:    *common.NewStats(10, 5, 2),
+						Members:  []player.Entity{},
+					},
+					{
+						Name:     "Boca Unidos",
+						Sport:    common.Football,
+						Category: common.L2,
+						Stats:    *common.NewStats(5, 3, 1),
+						Members:  []player.Entity{},
+					},
+				}, nil)
 			},
-			then: func(t *testing.T, responseCode int, response interface{}) {
+			assertions: func(t *testing.T, responseCode int, response interface{}) {
+				assert.Equal(t, http.StatusOK, responseCode)
+				teams := response.([]interface{})
+				assert.Len(t, teams, 2)
+				firstTeam := teams[0].(map[string]interface{})
+				assert.Equal(t, "Boca Juniors", firstTeam["Name"])
+				secondTeam := teams[1].(map[string]interface{})
+				assert.Equal(t, "Boca Unidos", secondTeam["Name"])
+			},
+		},
+		{
+			name:      "find teams successfully - single result",
+			sport:     "Paddle",
+			nameQuery: "Los Delfines",
+			on: func(t *testing.T, teamRepository *tmocks.Repository) {
+				teamRepository.On("Find", mock.Anything, mock.MatchedBy(func(query team2.DomainQuery) bool {
+					return len(query.Sports) == 1 &&
+						query.Sports[0] == common.Paddle &&
+						query.Name == "Los Delfines"
+				})).Return([]team2.Entity{
+					{
+						Name:     "Los Delfines",
+						Sport:    common.Paddle,
+						Category: common.L7,
+						Stats:    *common.NewStats(15, 2, 1),
+						Members:  []player.Entity{},
+					},
+				}, nil)
+			},
+			assertions: func(t *testing.T, responseCode int, response interface{}) {
+				assert.Equal(t, http.StatusOK, responseCode)
+				teams := response.([]interface{})
+				assert.Len(t, teams, 1)
+				firstTeam := teams[0].(map[string]interface{})
+				assert.Equal(t, "Los Delfines", firstTeam["Name"])
+			},
+		},
+		{
+			name:      "find teams returns 404 - no results",
+			sport:     "Tennis",
+			nameQuery: "NonExistent",
+			on: func(t *testing.T, teamRepository *tmocks.Repository) {
+				teamRepository.On("Find", mock.Anything, mock.MatchedBy(func(query team2.DomainQuery) bool {
+					return len(query.Sports) == 1 &&
+						query.Sports[0] == common.Tennis &&
+						query.Name == "NonExistent"
+				})).Return([]team2.Entity{}, nil)
+			},
+			assertions: func(t *testing.T, responseCode int, response interface{}) {
+				assert.Equal(t, http.StatusNotFound, responseCode)
+				responseMap := response.(map[string]interface{})
+				assert.Equal(t, "not_found", responseMap["code"])
+				assert.Contains(t, responseMap["message"], "No teams found")
+			},
+		},
+		{
+			name:      "find teams fails - repository error",
+			sport:     "Football",
+			nameQuery: "River",
+			on: func(t *testing.T, teamRepository *tmocks.Repository) {
+				teamRepository.On("Find", mock.Anything, mock.MatchedBy(func(query team2.DomainQuery) bool {
+					return len(query.Sports) == 1 &&
+						query.Sports[0] == common.Football &&
+						query.Name == "River"
+				})).Return([]team2.Entity{}, fmt.Errorf("database connection error"))
+			},
+			assertions: func(t *testing.T, responseCode int, response interface{}) {
+				assert.Equal(t, http.StatusConflict, responseCode)
+				responseMap := response.(map[string]interface{})
+				assert.Equal(t, "use_case_execution_error", responseMap["code"])
+				assert.Contains(t, responseMap["message"], "database connection error")
+			},
+		},
+		{
+			name:      "find teams fails - missing sport parameter",
+			sport:     "",
+			nameQuery: "Boca",
+			on: func(t *testing.T, teamRepository *tmocks.Repository) {
+				// No mock setup needed as validation fails before repository call
+			},
+			assertions: func(t *testing.T, responseCode int, response interface{}) {
+				assert.Equal(t, http.StatusBadRequest, responseCode)
+				responseMap := response.(map[string]interface{})
+				assert.Equal(t, "invalid_request_format", responseMap["code"])
+			},
+		},
+		{
+			name:          "find teams by category only",
+			sport:         "Football",
+			nameQuery:     "",
+			categoryQuery: "1",
+			on: func(t *testing.T, teamRepository *tmocks.Repository) {
+				teamRepository.On("Find", mock.Anything, mock.MatchedBy(func(query team2.DomainQuery) bool {
+					return len(query.Sports) == 1 &&
+						query.Sports[0] == common.Football &&
+						len(query.Categories) == 1 &&
+						query.Categories[0] == common.L1 &&
+						query.Name == ""
+				})).Return([]team2.Entity{
+					{
+						Name:     "Boca Juniors",
+						Sport:    common.Football,
+						Category: common.L1,
+						Stats:    *common.NewStats(10, 5, 2),
+						Members:  []player.Entity{},
+					},
+					{
+						Name:     "River Plate",
+						Sport:    common.Football,
+						Category: common.L1,
+						Stats:    *common.NewStats(8, 3, 1),
+						Members:  []player.Entity{},
+					},
+				}, nil)
+			},
+			assertions: func(t *testing.T, responseCode int, response interface{}) {
 				assert.Equal(t, http.StatusOK, responseCode)
 				teams := response.([]interface{})
 				assert.Len(t, teams, 2)
 			},
 		},
 		{
-			name:      "given no teams when find then returns not found",
-			sport:     "Tennis",
-			nameQuery: "NonExistent",
-			given: func(t *testing.T, find *amocks.UseCase[team2.DomainQuery, []team2.Entity]) {
-				slice := []team2.Entity{}
-				find.On("Invoke", mock.Anything, mock.Anything).Return(&slice, nil)
+			name:          "find teams by multiple categories",
+			sport:         "Paddle",
+			nameQuery:     "",
+			categoryQuery: "5,7",
+			on: func(t *testing.T, teamRepository *tmocks.Repository) {
+				teamRepository.On("Find", mock.Anything, mock.MatchedBy(func(query team2.DomainQuery) bool {
+					return len(query.Sports) == 1 &&
+						query.Sports[0] == common.Paddle &&
+						len(query.Categories) == 2 &&
+						query.Categories[0] == common.L5 &&
+						query.Categories[1] == common.L7
+				})).Return([]team2.Entity{
+					{
+						Name:     "Los Tiburones",
+						Sport:    common.Paddle,
+						Category: common.L5,
+						Stats:    *common.NewStats(12, 2, 0),
+						Members:  []player.Entity{},
+					},
+					{
+						Name:     "Los Delfines",
+						Sport:    common.Paddle,
+						Category: common.L7,
+						Stats:    *common.NewStats(15, 1, 0),
+						Members:  []player.Entity{},
+					},
+				}, nil)
 			},
-			then: func(t *testing.T, responseCode int, response interface{}) {
-				assert.Equal(t, http.StatusNotFound, responseCode)
-				m := response.(map[string]interface{})
-				assert.Equal(t, "not_found", m["code"])
-			},
-		},
-		{
-			name:      "given use case error when find then returns conflict",
-			sport:     "Football",
-			nameQuery: "River",
-			given: func(t *testing.T, find *amocks.UseCase[team2.DomainQuery, []team2.Entity]) {
-				find.On("Invoke", mock.Anything, mock.Anything).Return(nil, assert.AnError)
-			},
-			then: func(t *testing.T, responseCode int, response interface{}) {
-				assert.Equal(t, http.StatusConflict, responseCode)
-				m := response.(map[string]interface{})
-				assert.Equal(t, "use_case_execution_error", m["code"])
-			},
-		},
-		{
-			name:      "given missing sport path when find then returns bad request",
-			sport:     "",
-			nameQuery: "Boca",
-			given:     func(t *testing.T, find *amocks.UseCase[team2.DomainQuery, []team2.Entity]) {},
-			then: func(t *testing.T, responseCode int, response interface{}) {
-				assert.Equal(t, http.StatusBadRequest, responseCode)
-				m := response.(map[string]interface{})
-				assert.Equal(t, "invalid_request_format", m["code"])
+			assertions: func(t *testing.T, responseCode int, response interface{}) {
+				assert.Equal(t, http.StatusOK, responseCode)
+				teams := response.([]interface{})
+				assert.Len(t, teams, 2)
 			},
 		},
 		{
-			name:          "given invalid category format when find then returns validation error",
+			name:          "find teams by name and category",
 			sport:         "Football",
+			nameQuery:     "Boca",
+			categoryQuery: "1",
+			on: func(t *testing.T, teamRepository *tmocks.Repository) {
+				teamRepository.On("Find", mock.Anything, mock.MatchedBy(func(query team2.DomainQuery) bool {
+					return len(query.Sports) == 1 &&
+						query.Sports[0] == common.Football &&
+						query.Name == "Boca" &&
+						len(query.Categories) == 1 &&
+						query.Categories[0] == common.L1
+				})).Return([]team2.Entity{
+					{
+						Name:     "Boca Juniors",
+						Sport:    common.Football,
+						Category: common.L1,
+						Stats:    *common.NewStats(10, 5, 2),
+						Members:  []player.Entity{},
+					},
+				}, nil)
+			},
+			assertions: func(t *testing.T, responseCode int, response interface{}) {
+				assert.Equal(t, http.StatusOK, responseCode)
+				teams := response.([]interface{})
+				assert.Len(t, teams, 1)
+				firstTeam := teams[0].(map[string]interface{})
+				assert.Equal(t, "Boca Juniors", firstTeam["Name"])
+			},
+		},
+		{
+			name:          "find all teams by sport only (no name, no category)",
+			sport:         "Paddle",
+			nameQuery:     "",
+			categoryQuery: "",
+			on: func(t *testing.T, teamRepository *tmocks.Repository) {
+				teamRepository.On("Find", mock.Anything, mock.MatchedBy(func(query team2.DomainQuery) bool {
+					return len(query.Sports) == 1 &&
+						query.Sports[0] == common.Paddle &&
+						query.Name == "" &&
+						len(query.Categories) == 0
+				})).Return([]team2.Entity{
+					{
+						Name:     "Los Delfines",
+						Sport:    common.Paddle,
+						Category: common.L7,
+						Stats:    *common.NewStats(15, 2, 1),
+						Members:  []player.Entity{},
+					},
+					{
+						Name:     "Los Tiburones",
+						Sport:    common.Paddle,
+						Category: common.L5,
+						Stats:    *common.NewStats(12, 3, 0),
+						Members:  []player.Entity{},
+					},
+					{
+						Name:     "Los Orcas",
+						Sport:    common.Paddle,
+						Category: common.L3,
+						Stats:    *common.NewStats(8, 4, 2),
+						Members:  []player.Entity{},
+					},
+				}, nil)
+			},
+			assertions: func(t *testing.T, responseCode int, response interface{}) {
+				assert.Equal(t, http.StatusOK, responseCode)
+				teams := response.([]interface{})
+				assert.Len(t, teams, 3)
+				// Verify we got teams from different categories
+				teamNames := make([]string, len(teams))
+				for i, team := range teams {
+					teamMap := team.(map[string]interface{})
+					teamNames[i] = teamMap["Name"].(string)
+					assert.Equal(t, "Paddle", teamMap["Sport"])
+				}
+				assert.Contains(t, teamNames, "Los Delfines")
+				assert.Contains(t, teamNames, "Los Tiburones")
+				assert.Contains(t, teamNames, "Los Orcas")
+			},
+		},
+		{
+			name:          "find teams fails - invalid category format",
+			sport:         "Football",
+			nameQuery:     "",
 			categoryQuery: "invalid",
-			given:         func(t *testing.T, find *amocks.UseCase[team2.DomainQuery, []team2.Entity]) {},
-			then: func(t *testing.T, responseCode int, response interface{}) {
+			on: func(t *testing.T, teamRepository *tmocks.Repository) {
+				// No mock setup needed as validation fails before repository call
+			},
+			assertions: func(t *testing.T, responseCode int, response interface{}) {
 				assert.Equal(t, http.StatusBadRequest, responseCode)
-				m := response.(map[string]interface{})
-				assert.Equal(t, "request_validation_failed", m["code"])
+				responseMap := response.(map[string]interface{})
+				assert.Equal(t, "request_validation_failed", responseMap["code"])
+				assert.Contains(t, responseMap["message"], "invalid category format")
+			},
+		},
+		{
+			name:          "find teams fails - invalid category value",
+			sport:         "Football",
+			nameQuery:     "",
+			categoryQuery: "99",
+			on: func(t *testing.T, teamRepository *tmocks.Repository) {
+				// No mock setup needed as validation fails before repository call
+			},
+			assertions: func(t *testing.T, responseCode int, response interface{}) {
+				assert.Equal(t, http.StatusBadRequest, responseCode)
+				responseMap := response.(map[string]interface{})
+				assert.Equal(t, "request_validation_failed", responseMap["code"])
+				assert.Contains(t, responseMap["message"], "invalid category value")
 			},
 		},
 	}
@@ -104,39 +329,47 @@ func TestFindTeam(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
-			createUC := amocks.NewUseCase[team2.Entity, team2.Entity](t)
-			retrieveUC := amocks.NewUseCase[team2.ID, team2.Entity](t)
-			findUC := amocks.NewUseCase[team2.DomainQuery, []team2.Entity](t)
-			listUC := amocks.NewUseCase[team2.DomainQuery, []team2.Entity](t)
-			tc.given(t, findUC)
+			teamRepository := new(tmocks.Repository)
+			createTeamUC := usecases.NewCreateTeamUC(nil, teamRepository)
+			retrieveTeamUC := usecases.NewRetrieveTeamUC(teamRepository)
+			findTeamUC := usecases.NewFindTeamUC(teamRepository)
 
-			controller := team.NewController(createUC, retrieveUC, findUC, listUC, v)
+			controller := team.NewController(createTeamUC, retrieveTeamUC, findTeamUC, findTeamUC, validator)
+
 			gin.SetMode(gin.TestMode)
-			r := gin.Default()
-			r.Use(middleware.ErrorHandler())
-			r.GET("/sport/:sport/team", controller.FindTeam)
+			router := gin.Default()
+			router.Use(middleware.ErrorHandler())
+			router.GET("/sport/:sport/team", controller.FindTeam)
 
+			// given
+			tc.on(t, teamRepository)
 			url := fmt.Sprintf("/sport/%s/team", tc.sport)
-			q := []string{}
+
+			// Build query string
+			queryParams := []string{}
 			if tc.nameQuery != "" {
-				q = append(q, "name="+tc.nameQuery)
+				queryParams = append(queryParams, fmt.Sprintf("name=%s", tc.nameQuery))
 			}
 			if tc.categoryQuery != "" {
-				q = append(q, "category="+tc.categoryQuery)
+				queryParams = append(queryParams, fmt.Sprintf("category=%s", tc.categoryQuery))
 			}
-			if len(q) > 0 {
-				url += "?" + q[0]
-				for i := 1; i < len(q); i++ {
-					url += "&" + q[i]
+			if len(queryParams) > 0 {
+				url += "?" + queryParams[0]
+				for i := 1; i < len(queryParams); i++ {
+					url += "&" + queryParams[i]
 				}
 			}
-			req, _ := http.NewRequest(http.MethodGet, url, nil)
-			rec := httptest.NewRecorder()
-			r.ServeHTTP(rec, req)
 
+			req, _ := http.NewRequest("GET", url, nil)
+			resp := httptest.NewRecorder()
+
+			// when
+			router.ServeHTTP(resp, req)
+
+			// then
 			var response interface{}
-			_ = json.Unmarshal(rec.Body.Bytes(), &response)
-			tc.then(t, rec.Code, response)
+			json.Unmarshal(resp.Body.Bytes(), &response)
+			tc.assertions(t, resp.Code, response)
 		})
 	}
 }

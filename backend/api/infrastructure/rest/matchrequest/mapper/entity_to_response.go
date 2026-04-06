@@ -8,7 +8,7 @@ import (
 func EntityToResponse(entity matchrequest.Entity) response.MatchRequestResponse {
 	return response.MatchRequestResponse{
 		ID:                  entity.ID,
-		MatchAnnouncementID: entity.MatchAnnouncementID,
+		MatchOfferID: entity.MatchOfferID,
 		OwnerAccountID:      entity.OwnerAccountID,
 		RequesterAccountID:  entity.RequesterAccountID,
 		Status:              entity.Status.String(),

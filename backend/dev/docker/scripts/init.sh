@@ -54,6 +54,12 @@ else
     echo "Warning: seed-match-announcements.sh not found"
 fi
 
+if [ -f "${SCRIPT_DIR}/seed-match-requests.sh" ]; then
+    bash "${SCRIPT_DIR}/seed-match-requests.sh"
+else
+    echo "Warning: seed-match-requests.sh not found"
+fi
+
 print_banner "======================================= Localstack Setup Ends ==========================================================="
 
 echo "All services created and database seeded."

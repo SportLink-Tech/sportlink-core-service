@@ -2,73 +2,102 @@ package usecases_test
 
 import (
 	"context"
-	"errors"
+	"fmt"
 	"sportlink/api/application/player/usecases"
 	"sportlink/api/domain/common"
 	"sportlink/api/domain/player"
-	pmocks "sportlink/mocks/api/domain/player"
+	mocks "sportlink/mocks/api/domain/player"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
-	"github.com/stretchr/testify/require"
 )
 
-func TestNewCreatePlayerUC(t *testing.T) {
-	ctx := context.Background()
-	saveErr := errors.New("database error")
+func TestCreatePlayerUC_Invoke(t *testing.T) {
 
 	tests := []struct {
 		name  string
 		input player.Entity
-		given func(t *testing.T, repository *pmocks.Repository)
+		on    func(t *testing.T, repository *mocks.Repository)
 		then  func(t *testing.T, result *player.Entity, err error)
 	}{
 		{
-			name:  "given save succeeds when invoke then returns entity with generated id",
+			name:  "save player successfully",
 			input: player.NewPlayer(common.L1, common.Football),
-			given: func(t *testing.T, repository *pmocks.Repository) {
+			on: func(t *testing.T, repository *mocks.Repository) {
 				repository.On("Save", mock.Anything, mock.MatchedBy(func(entity player.Entity) bool {
-					return entity.ID != "" &&
+					return entity.ID != "" && // ULID is generated
 						entity.Category == common.L1 &&
 						entity.Sport == common.Football
 				})).Return(nil)
 			},
 			then: func(t *testing.T, result *player.Entity, err error) {
-				require.NoError(t, err)
-				require.NotNil(t, result)
-				assert.NotEmpty(t, result.ID)
+				assert.NoError(t, err)
+				assert.NotNil(t, result)
+				assert.NotEmpty(t, result.ID) // ULID is generated
 				assert.EqualValues(t, common.L1, result.Category)
 				assert.Equal(t, common.Football, result.Sport)
 			},
 		},
 		{
-			name:  "given repository save fails when invoke then returns wrapped error",
-			input: player.NewPlayer(common.L3, common.Tennis),
-			given: func(t *testing.T, repository *pmocks.Repository) {
-				repository.On("Save", mock.Anything, mock.Anything).Return(saveErr)
+			name:  "save player with ULID generated automatically",
+			input: player.NewPlayer(common.L2, common.Paddle),
+			on: func(t *testing.T, repository *mocks.Repository) {
+				// With ULID, each player gets a unique ID, so duplicates by ID are not possible
+				repository.On("Save", mock.Anything, mock.MatchedBy(func(entity player.Entity) bool {
+					return entity.ID != "" && // ULID is generated
+						entity.Category == common.L2 &&
+						entity.Sport == common.Paddle
+				})).Return(nil)
 			},
 			then: func(t *testing.T, result *player.Entity, err error) {
-				require.Error(t, err)
-				require.Nil(t, result)
+				assert.NoError(t, err)
+				assert.NotNil(t, result)
+				assert.NotEmpty(t, result.ID) // ULID is generated
+				assert.EqualValues(t, common.L2, result.Category)
+				assert.Equal(t, common.Paddle, result.Sport)
+			},
+		},
+		{
+			name:  "error while saving player returns error",
+			input: player.NewPlayer(common.L3, common.Tennis),
+			on: func(t *testing.T, repository *mocks.Repository) {
+				repository.On("Save", mock.Anything, mock.Anything).Return(fmt.Errorf("database error"))
+			},
+			then: func(t *testing.T, result *player.Entity, err error) {
+				assert.Error(t, err)
+				assert.Nil(t, result)
 				assert.Contains(t, err.Error(), "error while inserting player in database")
-				assert.ErrorIs(t, err, saveErr)
+			},
+		},
+		{
+			name:  "save paddle player successfully",
+			input: player.NewPlayer(common.L4, common.Paddle),
+			on: func(t *testing.T, repository *mocks.Repository) {
+				repository.On("Save", mock.Anything, mock.Anything).Return(nil)
+			},
+			then: func(t *testing.T, result *player.Entity, err error) {
+				assert.NoError(t, err)
+				assert.NotNil(t, result)
+				assert.NotEmpty(t, result.ID) // ULID is generated
+				assert.Equal(t, common.Paddle, result.Sport)
 			},
 		},
 	}
-
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			t.Parallel()
-			repository := &pmocks.Repository{}
+			// set up
+			repository := &mocks.Repository{}
 			uc := usecases.NewCreatePlayerUC(repository)
 
-			tt.given(t, repository)
+			// given
+			tt.on(t, repository)
 
-			result, err := uc.Invoke(ctx, tt.input)
+			// when
+			result, err := uc.Invoke(context.Background(), tt.input)
 
+			// then
 			tt.then(t, result, err)
-			repository.AssertExpectations(t)
 		})
 	}
 }

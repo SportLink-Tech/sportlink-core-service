@@ -35,7 +35,7 @@ echo "Timestamp actual: ${NOW}"
 # Función para eliminar anuncios antiguos (con Day < TODAY_START)
 cleanup_old_announcements() {
     print_banner "Limpiando anuncios con fechas pasadas..."
-    local entity_id="Entity#MatchAnnouncement"
+    local entity_id="Entity#MatchOffer"
     local deleted_count=0
 
     # Crear archivo temporal para la respuesta del scan
@@ -186,8 +186,14 @@ insert_match_announcement() {
     local longitude=${15:-"null"}         # Longitud GPS opcional
     local owner_account_id=${16:-"seed-account-01"} # ID de cuenta del propietario
 
-    local id=$(generate_uuid)
-    local entity_id="Entity#MatchAnnouncement"
+    local custom_id=${17:-""}
+    local id
+    if [ -n "$custom_id" ]; then
+        id="$custom_id"
+    else
+        id=$(generate_uuid)
+    fi
+    local entity_id="Entity#MatchOffer"
 
     # Calcular timestamps
     local day_seconds=$((TODAY_START + (day_offset * 86400)))
@@ -328,7 +334,8 @@ insert_match_announcement "Tennis Buenos Aires" "Tennis" 5 16 2 "Argentina" "Bue
 insert_match_announcement "Los Leones FC" "Football" 7 18 2 "Argentina" "Buenos Aires" "Los Cardales" "GREATER_THAN" "null" "5" "null" "CONFIRMED" "-34.3213" "-59.0051" "seed-account-02"
 
 # Anuncios propios del usuario actual (cabrerajjorge) - no deben mostrar el botón "Unirme"
-insert_match_announcement "Mi Equipo FC" "Football" 1 20 2 "Argentina" "Buenos Aires" "Los Cardales" "BETWEEN" "null" "4" "6" "PENDING" "-34.3213" "-59.0051" "cabrerajjorge"
-insert_match_announcement "Cabrerajjorge Pádel" "Paddle" 2 19 2 "Argentina" "Buenos Aires" "Pilar" "GREATER_THAN" "null" "5" "null" "PENDING" "-34.4584" "-58.9142" "cabrerajjorge"
+# El primero usa un ID fijo para poder referenciar en seed-match-requests.sh
+insert_match_announcement "Los Cabreras FC" "Football" 1 20 2 "Argentina" "Buenos Aires" "Los Cardales" "BETWEEN" "null" "4" "6" "PENDING" "-34.3213" "-59.0051" "cabrerajjorge" "offer-cabrerajjorge-001"
+insert_match_announcement "Los Cabreras FC" "Paddle" 2 19 2 "Argentina" "Buenos Aires" "Pilar" "GREATER_THAN" "null" "5" "null" "PENDING" "-34.4584" "-58.9142" "cabrerajjorge"
 
 print_banner "Anuncios de partidos insertados correctamente"

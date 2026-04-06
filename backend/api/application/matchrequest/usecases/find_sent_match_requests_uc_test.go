@@ -3,93 +3,102 @@ package usecases_test
 import (
 	"context"
 	"errors"
-	"sportlink/api/application/matchrequest/usecases"
-	"sportlink/api/domain/matchrequest"
-	mrmocks "sportlink/mocks/api/domain/matchrequest"
 	"testing"
 	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
-	"github.com/stretchr/testify/require"
+
+	"sportlink/api/application/matchrequest/usecases"
+	domainreq "sportlink/api/domain/matchrequest"
+	reqmocks "sportlink/mocks/api/domain/matchrequest"
 )
 
-func TestNewFindSentMatchRequestsUC(t *testing.T) {
+func TestFindSentMatchRequestsUC_Invoke(t *testing.T) {
 	ctx := context.Background()
-	requesterID := "requester-account"
-	findErr := errors.New("repository find failed")
 
-	tests := []struct {
-		name     string
-		statuses []matchrequest.Status
-		given    func(t *testing.T, mrRepository *mrmocks.Repository)
-		then     func(t *testing.T, result []matchrequest.Entity, err error)
+	testCases := []struct {
+		name               string
+		requesterAccountID string
+		statuses           []domainreq.Status
+		on                 func(t *testing.T, repository *reqmocks.Repository)
+		then               func(t *testing.T, result []domainreq.Entity, err error)
 	}{
 		{
-			name:     "given repository returns sent requests when invoke then returns entities",
-			statuses: []matchrequest.Status{matchrequest.StatusPending},
-			given: func(t *testing.T, mrRepository *mrmocks.Repository) {
-				entities := []matchrequest.Entity{
+			name:               "given repository returns sent requests when finding then returns entities",
+			requesterAccountID: "requester-acc",
+			statuses:           []domainreq.Status{domainreq.StatusPending},
+			on: func(t *testing.T, repository *reqmocks.Repository) {
+				now := time.Now()
+				entities := []domainreq.Entity{
 					{
-						ID: "req-1", MatchAnnouncementID: "ann-1",
-						OwnerAccountID: "owner-1", RequesterAccountID: requesterID,
-						Status: matchrequest.StatusPending, CreatedAt: time.Now(),
+						ID:                 "mr-1",
+						MatchOfferID:       "offer-1",
+						OwnerAccountID:     "owner-acc",
+						RequesterAccountID: "requester-acc",
+						Status:             domainreq.StatusPending,
+						CreatedAt:          now,
 					},
 				}
-				mrRepository.On("Find", mock.Anything, mock.MatchedBy(func(q matchrequest.DomainQuery) bool {
-					return len(q.RequesterAccountIDs) == 1 && q.RequesterAccountIDs[0] == requesterID &&
-						len(q.Statuses) == 1 && q.Statuses[0] == matchrequest.StatusPending
+				repository.On("Find", mock.Anything, mock.MatchedBy(func(q domainreq.DomainQuery) bool {
+					return len(q.RequesterAccountIDs) == 1 &&
+						q.RequesterAccountIDs[0] == "requester-acc" &&
+						len(q.Statuses) == 1 &&
+						q.Statuses[0] == domainreq.StatusPending
 				})).Return(entities, nil)
 			},
-			then: func(t *testing.T, result []matchrequest.Entity, err error) {
-				require.NoError(t, err)
-				require.Len(t, result, 1)
-				assert.Equal(t, "req-1", result[0].ID)
-				assert.Equal(t, requesterID, result[0].RequesterAccountID)
+			then: func(t *testing.T, result []domainreq.Entity, err error) {
+				assert.NoError(t, err)
+				assert.Len(t, result, 1)
+				assert.Equal(t, "requester-acc", result[0].RequesterAccountID)
 			},
 		},
 		{
-			name:     "given repository returns empty slice when invoke then returns empty without error",
-			statuses: nil,
-			given: func(t *testing.T, mrRepository *mrmocks.Repository) {
-				mrRepository.On("Find", mock.Anything, mock.MatchedBy(func(q matchrequest.DomainQuery) bool {
-					return len(q.RequesterAccountIDs) == 1 && q.RequesterAccountIDs[0] == requesterID && q.Statuses == nil
-				})).Return([]matchrequest.Entity{}, nil)
+			name:               "given nil statuses when finding sent then passes nil statuses to repository",
+			requesterAccountID: "requester-acc",
+			statuses:           nil,
+			on: func(t *testing.T, repository *reqmocks.Repository) {
+				repository.On("Find", mock.Anything, mock.MatchedBy(func(q domainreq.DomainQuery) bool {
+					return len(q.RequesterAccountIDs) == 1 &&
+						q.RequesterAccountIDs[0] == "requester-acc" &&
+						q.Statuses == nil
+				})).Return([]domainreq.Entity{}, nil)
 			},
-			then: func(t *testing.T, result []matchrequest.Entity, err error) {
-				require.NoError(t, err)
+			then: func(t *testing.T, result []domainreq.Entity, err error) {
+				assert.NoError(t, err)
 				assert.Empty(t, result)
 			},
 		},
 		{
-			name:     "given repository fails when invoke then returns wrapped error",
-			statuses: []matchrequest.Status{matchrequest.StatusAccepted},
-			given: func(t *testing.T, mrRepository *mrmocks.Repository) {
-				mrRepository.On("Find", mock.Anything, mock.MatchedBy(func(q matchrequest.DomainQuery) bool {
-					return len(q.RequesterAccountIDs) == 1 && q.RequesterAccountIDs[0] == requesterID
-				})).Return(nil, findErr)
+			name:               "given repository find fails when finding sent then returns wrapped error",
+			requesterAccountID: "requester-acc",
+			statuses:           nil,
+			on: func(t *testing.T, repository *reqmocks.Repository) {
+				repository.On("Find", mock.Anything, mock.Anything).Return(nil, errors.New("scan error"))
 			},
-			then: func(t *testing.T, result []matchrequest.Entity, err error) {
-				require.Error(t, err)
-				require.Nil(t, result)
+			then: func(t *testing.T, result []domainreq.Entity, err error) {
+				assert.Error(t, err)
+				assert.Nil(t, result)
 				assert.Contains(t, err.Error(), "error while finding sent match requests")
-				assert.ErrorIs(t, err, findErr)
+				assert.Contains(t, err.Error(), "scan error")
 			},
 		},
 	}
 
-	for _, tt := range tests {
+	for _, tt := range testCases {
 		t.Run(tt.name, func(t *testing.T) {
-			t.Parallel()
-			mrRepository := &mrmocks.Repository{}
-			uc := usecases.NewFindSentMatchRequestsUC(mrRepository)
+			// set up
+			repository := reqmocks.NewRepository(t)
+			uc := usecases.NewFindSentMatchRequestsUC(repository)
 
-			tt.given(t, mrRepository)
+			// given
+			tt.on(t, repository)
 
-			result, err := uc.Invoke(ctx, requesterID, tt.statuses)
+			// when
+			result, err := uc.Invoke(ctx, tt.requesterAccountID, tt.statuses)
 
+			// then
 			tt.then(t, result, err)
-			mrRepository.AssertExpectations(t)
 		})
 	}
 }
