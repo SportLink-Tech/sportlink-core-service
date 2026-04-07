@@ -131,6 +131,15 @@ export class MatchOfferApiAdapter implements MatchOfferRepository {
     return { data, status: response.status }
   }
 
+  async retrieve(offerId: string): Promise<MatchOffer> {
+    const response = await fetch(`${API_BASE_URL}/match-offer/${offerId}`)
+    const data = await response.json()
+    if (!response.ok) {
+      throw new Error(data.message || 'Error al obtener la publicación')
+    }
+    return data
+  }
+
   async delete(accountId: string, offerId: string): Promise<void> {
     const response = await fetch(`${API_BASE_URL}/account/${encodeURIComponent(accountId)}/match-offer/${offerId}`, {
       method: 'DELETE',

@@ -2,6 +2,7 @@ import { createContext, useContext, ReactNode } from 'react'
 import { CreateMatchOfferUseCase } from '../domain/usecases/CreateMatchOfferUseCase'
 import { FindMatchOffersUseCase } from '../domain/usecases/FindMatchOffersUseCase'
 import { FindAccountMatchOffersUseCase } from '../domain/usecases/FindAccountMatchOffersUseCase'
+import { RetrieveMatchOfferUseCase } from '../domain/usecases/RetrieveMatchOfferUseCase'
 import { DeleteMatchOfferUseCase } from '../domain/usecases/DeleteMatchOfferUseCase'
 import { MatchOfferApiAdapter } from '../infrastructure/adapters/MatchOfferApiAdapter'
 
@@ -13,6 +14,7 @@ interface MatchOfferContextType {
   createMatchOfferUseCase: CreateMatchOfferUseCase
   findMatchOffersUseCase: FindMatchOffersUseCase
   findAccountMatchOffersUseCase: FindAccountMatchOffersUseCase
+  retrieveMatchOfferUseCase: RetrieveMatchOfferUseCase
   deleteMatchOfferUseCase: DeleteMatchOfferUseCase
 }
 
@@ -35,12 +37,14 @@ export function MatchOfferProvider({ children }: { children: ReactNode }) {
   const createMatchOfferUseCase = new CreateMatchOfferUseCase(matchOfferApiAdapter)
   const findMatchOffersUseCase = new FindMatchOffersUseCase(matchOfferApiAdapter)
   const findAccountMatchOffersUseCase = new FindAccountMatchOffersUseCase(matchOfferApiAdapter)
+  const retrieveMatchOfferUseCase = new RetrieveMatchOfferUseCase(matchOfferApiAdapter)
   const deleteMatchOfferUseCase = new DeleteMatchOfferUseCase(matchOfferApiAdapter)
 
   const value: MatchOfferContextType = {
     createMatchOfferUseCase,
     findMatchOffersUseCase,
     findAccountMatchOffersUseCase,
+    retrieveMatchOfferUseCase,
     deleteMatchOfferUseCase,
   }
 

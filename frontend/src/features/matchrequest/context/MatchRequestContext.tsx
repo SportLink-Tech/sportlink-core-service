@@ -1,12 +1,14 @@
 import { createContext, useContext, ReactNode } from 'react'
 import { CreateMatchRequestUseCase } from '../domain/usecases/CreateMatchRequestUseCase'
 import { FindSentMatchRequestsUseCase } from '../domain/usecases/FindSentMatchRequestsUseCase'
+import { FindSentMatchRequestsListUseCase } from '../domain/usecases/FindSentMatchRequestsListUseCase'
 import { FindReceivedMatchRequestsUseCase } from '../domain/usecases/FindReceivedMatchRequestsUseCase'
 import { MatchRequestApiAdapter } from '../infrastructure/adapters/MatchRequestApiAdapter'
 
 interface MatchRequestContextType {
   createMatchRequestUseCase: CreateMatchRequestUseCase
   findSentMatchRequestsUseCase: FindSentMatchRequestsUseCase
+  findSentMatchRequestsListUseCase: FindSentMatchRequestsListUseCase
   findReceivedMatchRequestsUseCase: FindReceivedMatchRequestsUseCase
 }
 
@@ -16,10 +18,11 @@ export function MatchRequestProvider({ children }: { children: ReactNode }) {
   const adapter = new MatchRequestApiAdapter()
   const createMatchRequestUseCase = new CreateMatchRequestUseCase(adapter)
   const findSentMatchRequestsUseCase = new FindSentMatchRequestsUseCase(adapter)
+  const findSentMatchRequestsListUseCase = new FindSentMatchRequestsListUseCase(adapter)
   const findReceivedMatchRequestsUseCase = new FindReceivedMatchRequestsUseCase(adapter)
 
   return (
-    <MatchRequestContext.Provider value={{ createMatchRequestUseCase, findSentMatchRequestsUseCase, findReceivedMatchRequestsUseCase }}>
+    <MatchRequestContext.Provider value={{ createMatchRequestUseCase, findSentMatchRequestsUseCase, findSentMatchRequestsListUseCase, findReceivedMatchRequestsUseCase }}>
       {children}
     </MatchRequestContext.Provider>
   )

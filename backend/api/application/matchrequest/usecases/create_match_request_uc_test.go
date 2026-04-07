@@ -52,7 +52,7 @@ func TestCreateMatchRequestUC_Invoke(t *testing.T) {
 				assert.Equal(t, "owner-acc", result.OwnerAccountID)
 				assert.Equal(t, "requester-acc", result.RequesterAccountID)
 				assert.Equal(t, domainreq.StatusPending, result.Status)
-				assert.NotEmpty(t, result.ID)
+				assert.Equal(t, domainreq.GenerateMatchRequestID("requester-acc", "offer-1"), result.ID)
 			},
 		},
 		{

@@ -11,6 +11,7 @@ import (
 	"sportlink/api/domain/account"
 	"sportlink/api/infrastructure/middleware"
 	cauth "sportlink/api/infrastructure/rest/auth"
+	authmocks "sportlink/mocks/api/application/auth/service"
 	amocks "sportlink/mocks/api/domain/account"
 	"testing"
 
@@ -32,13 +33,6 @@ func (m *mockGoogleVerifier) Verify(ctx context.Context, idToken string) (*servi
 	return args.Get(0).(*service.GoogleTokenInfo), args.Error(1)
 }
 
-type mockJWTService struct{ mock.Mock }
-
-func (m *mockJWTService) Generate(accountID string) (string, error) {
-	args := m.Called(accountID)
-	return args.String(0), args.Error(1)
-}
-
 var googleTokenInfo = &service.GoogleTokenInfo{
 	Email: "user@gmail.com", EmailVerified: "true",
 	Name: "Jorge Cabrera", Picture: "https://photo.url",
@@ -50,13 +44,13 @@ func TestGoogleAuthController(t *testing.T) {
 	testCases := []struct {
 		name       string
 		body       map[string]interface{}
-		on         func(verifier *mockGoogleVerifier, repo *amocks.Repository, jwt *mockJWTService)
+		on         func(verifier *mockGoogleVerifier, repo *amocks.Repository, jwt *authmocks.JWTService)
 		assertions func(t *testing.T, code int, body map[string]interface{}, resp *httptest.ResponseRecorder)
 	}{
 		{
 			name: "new user authenticates and receives cookie",
 			body: map[string]interface{}{"id_token": "valid-token"},
-			on: func(verifier *mockGoogleVerifier, repo *amocks.Repository, jwt *mockJWTService) {
+			on: func(verifier *mockGoogleVerifier, repo *amocks.Repository, jwt *authmocks.JWTService) {
 				verifier.On("Verify", mock.Anything, "valid-token").Return(googleTokenInfo, nil)
 				repo.On("Find", mock.Anything, mock.Anything).Return([]account.Entity{}, nil)
 				repo.On("Save", mock.Anything, mock.Anything).Return(nil)
@@ -72,7 +66,7 @@ func TestGoogleAuthController(t *testing.T) {
 		{
 			name: "existing user authenticates and receives cookie",
 			body: map[string]interface{}{"id_token": "valid-token"},
-			on: func(verifier *mockGoogleVerifier, repo *amocks.Repository, jwt *mockJWTService) {
+			on: func(verifier *mockGoogleVerifier, repo *amocks.Repository, jwt *authmocks.JWTService) {
 				verifier.On("Verify", mock.Anything, "valid-token").Return(googleTokenInfo, nil)
 				repo.On("Find", mock.Anything, mock.Anything).Return([]account.Entity{
 					{ID: "EMAIL#user@gmail.com", AccountID: "01JQTEST0000000000000000AB", Email: "user@gmail.com"},
@@ -87,7 +81,7 @@ func TestGoogleAuthController(t *testing.T) {
 		{
 			name:       "fails with missing id_token",
 			body:       map[string]interface{}{},
-			on:         func(verifier *mockGoogleVerifier, repo *amocks.Repository, jwt *mockJWTService) {},
+			on:         func(verifier *mockGoogleVerifier, repo *amocks.Repository, jwt *authmocks.JWTService) {},
 			assertions: func(t *testing.T, code int, body map[string]interface{}, resp *httptest.ResponseRecorder) {
 				assert.Equal(t, http.StatusBadRequest, code)
 			},
@@ -95,7 +89,7 @@ func TestGoogleAuthController(t *testing.T) {
 		{
 			name: "fails with invalid Google token",
 			body: map[string]interface{}{"id_token": "bad-token"},
-			on: func(verifier *mockGoogleVerifier, repo *amocks.Repository, jwt *mockJWTService) {
+			on: func(verifier *mockGoogleVerifier, repo *amocks.Repository, jwt *authmocks.JWTService) {
 				verifier.On("Verify", mock.Anything, "bad-token").Return(nil, assert.AnError)
 			},
 			assertions: func(t *testing.T, code int, body map[string]interface{}, resp *httptest.ResponseRecorder) {
@@ -110,7 +104,7 @@ func TestGoogleAuthController(t *testing.T) {
 			t.Parallel()
 			verifier := &mockGoogleVerifier{}
 			repo := amocks.NewRepository(t)
-			jwtSvc := &mockJWTService{}
+			jwtSvc := authmocks.NewJWTService(t)
 
 			uc := usecases.NewGoogleAuthUC(verifier, repo, jwtSvc)
 			controller := cauth.NewController(uc, v)

@@ -7,7 +7,7 @@ import (
 
 type Dto struct {
 	EntityId            string `dynamodbav:"EntityId"`            // "Entity#MatchRequest"
-	Id                  string `dynamodbav:"Id"`                  // Generated ULID
+	Id                  string `dynamodbav:"Id"`                  // Composite: AccountId#<requesterID>#MatchOfferId#<offerID>
 	MatchOfferId string `dynamodbav:"MatchOfferId"` // Referenced announcement ID
 	OwnerAccountId      string `dynamodbav:"OwnerAccountId"`      // Announcement owner account ID (GSI partition key)
 	RequesterAccountId  string `dynamodbav:"RequesterAccountId"`  // Requester account ID

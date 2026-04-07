@@ -179,28 +179,27 @@ func (repo *RepositoryAdapter) findByMultipleIDs(ctx context.Context, query matc
 	return all, nil
 }
 
-// findByRequesterAccountID queries all match requests (EntityId partition) and filters by RequesterAccountId.
-// This avoids a Scan by querying the main table partition key directly.
+// findByRequesterAccountID queries match requests using begins_with on the composite sort key.
+// Since Id = AccountId#<requesterID>#MatchOfferId#<offerID>, we can efficiently find all requests
+// from a given requester without scanning the full partition.
 func (repo *RepositoryAdapter) findByRequesterAccountID(ctx context.Context, requesterAccountID string, query matchrequest.DomainQuery) ([]matchrequest.Entity, error) {
-	keyCond := expression.KeyEqual(expression.Key("EntityId"), expression.Value("Entity#MatchRequest"))
+	prefix := matchrequest.GenerateMatchRequestIDPrefix(requesterAccountID)
+	keyCond := expression.KeyAnd(
+		expression.KeyEqual(expression.Key("EntityId"), expression.Value("Entity#MatchRequest")),
+		expression.KeyBeginsWith(expression.Key("Id"), prefix),
+	)
 
-	requesterFilter := expression.Equal(expression.Name("RequesterAccountId"), expression.Value(requesterAccountID))
-	filters := []expression.ConditionBuilder{requesterFilter}
+	builder := expression.NewBuilder().WithKeyCondition(keyCond)
 
 	if len(query.Statuses) > 0 {
 		var vals []expression.OperandBuilder
 		for _, s := range query.Statuses {
 			vals = append(vals, expression.Value(s.String()))
 		}
-		filters = append(filters, expression.Name("Status").In(vals[0], vals[1:]...))
+		builder = builder.WithFilter(expression.Name("Status").In(vals[0], vals[1:]...))
 	}
 
-	combined := filters[0]
-	for i := 1; i < len(filters); i++ {
-		combined = expression.And(combined, filters[i])
-	}
-
-	expr, err := expression.NewBuilder().WithKeyCondition(keyCond).WithFilter(combined).Build()
+	expr, err := builder.Build()
 	if err != nil {
 		return nil, err
 	}

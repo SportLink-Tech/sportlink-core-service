@@ -14,24 +14,27 @@ type Controller interface {
 	CreateMatchOffer(c *gin.Context)
 	FindMatchOffers(c *gin.Context)
 	FindAccountMatchOffers(c *gin.Context)
+	RetrieveMatchOffer(c *gin.Context)
 	DeleteMatchOffer(c *gin.Context)
 }
 
 type DefaultController struct {
-	createMatchOfferUC application.UseCase[matchoffer.Entity, matchoffer.Entity]
-	findMatchOffersUC  application.UseCase[matchoffer.DomainQuery, usecases.FindMatchOfferResult]
-	deleteMatchOfferUC *usecases.DeleteMatchOfferUC
-	validator          *validator.Validate
-	queryParser        parser.QueryParser
+	createMatchOfferUC   application.UseCase[matchoffer.Entity, matchoffer.Entity]
+	findMatchOffersUC    application.UseCase[matchoffer.DomainQuery, usecases.FindMatchOfferResult]
+	retrieveMatchOfferUC *usecases.RetrieveMatchOfferUC
+	deleteMatchOfferUC   *usecases.DeleteMatchOfferUC
+	validator            *validator.Validate
+	queryParser          parser.QueryParser
 }
 
 func NewController(
 	createMatchOfferUC application.UseCase[matchoffer.Entity, matchoffer.Entity],
 	findMatchOffersUC application.UseCase[matchoffer.DomainQuery, usecases.FindMatchOfferResult],
+	retrieveMatchOfferUC *usecases.RetrieveMatchOfferUC,
 	deleteMatchOfferUC *usecases.DeleteMatchOfferUC,
 	validator *validator.Validate,
 ) Controller {
-	return NewControllerWithParser(createMatchOfferUC, findMatchOffersUC, deleteMatchOfferUC, validator, nil)
+	return NewControllerWithParser(createMatchOfferUC, findMatchOffersUC, retrieveMatchOfferUC, deleteMatchOfferUC, validator, nil)
 }
 
 // NewControllerWithParser creates a controller with an optional query parser.
@@ -40,6 +43,7 @@ func NewController(
 func NewControllerWithParser(
 	createMatchOfferUC application.UseCase[matchoffer.Entity, matchoffer.Entity],
 	findMatchOffersUC application.UseCase[matchoffer.DomainQuery, usecases.FindMatchOfferResult],
+	retrieveMatchOfferUC *usecases.RetrieveMatchOfferUC,
 	deleteMatchOfferUC *usecases.DeleteMatchOfferUC,
 	validator *validator.Validate,
 	queryParser parser.QueryParser,
@@ -48,10 +52,11 @@ func NewControllerWithParser(
 		queryParser = parser.NewQueryParser()
 	}
 	return &DefaultController{
-		createMatchOfferUC: createMatchOfferUC,
-		findMatchOffersUC:  findMatchOffersUC,
-		deleteMatchOfferUC: deleteMatchOfferUC,
-		validator:          validator,
-		queryParser:        queryParser,
+		createMatchOfferUC:   createMatchOfferUC,
+		findMatchOffersUC:    findMatchOffersUC,
+		retrieveMatchOfferUC: retrieveMatchOfferUC,
+		deleteMatchOfferUC:   deleteMatchOfferUC,
+		validator:            validator,
+		queryParser:          queryParser,
 	}
 }

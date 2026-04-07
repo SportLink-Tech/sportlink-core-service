@@ -1,16 +1,15 @@
 package matchrequest
 
 import (
+	"fmt"
 	"time"
-
-	"github.com/oklog/ulid/v2"
 )
 
 // Entity represents a match request in the domain.
 // A requester sends a request to join or challenge the owner of a match announcement.
 type Entity struct {
 	ID                  string
-	MatchOfferID string
+	MatchOfferID        string
 	OwnerAccountID      string // account ID of the match announcement owner (receives the request)
 	RequesterAccountID  string // account ID of the user sending the request
 	Status              Status
@@ -23,16 +22,22 @@ func NewMatchRequest(
 	requesterAccountID string,
 ) Entity {
 	return Entity{
-		ID:                  generateMatchRequestID(),
-		MatchOfferID: matchOfferID,
-		OwnerAccountID:      ownerAccountID,
-		RequesterAccountID:  requesterAccountID,
-		Status:              StatusPending,
-		CreatedAt:           time.Now(),
+		ID:                 GenerateMatchRequestID(requesterAccountID, matchOfferID),
+		MatchOfferID:       matchOfferID,
+		OwnerAccountID:     ownerAccountID,
+		RequesterAccountID: requesterAccountID,
+		Status:             StatusPending,
+		CreatedAt:          time.Now(),
 	}
 }
 
-func generateMatchRequestID() string {
-	entropy := ulid.DefaultEntropy()
-	return ulid.MustNew(ulid.Timestamp(time.Now()), entropy).String()
+// GenerateMatchRequestID returns the composite sort key for a match request.
+// Format: AccountId#<requesterAccountID>#MatchOfferId#<matchOfferID>
+func GenerateMatchRequestID(requesterAccountID, matchOfferID string) string {
+	return fmt.Sprintf("AccountId#%s#MatchOfferId#%s", requesterAccountID, matchOfferID)
+}
+
+// GenerateMatchRequestIDPrefix returns the prefix used to query all requests from a requester.
+func GenerateMatchRequestIDPrefix(requesterAccountID string) string {
+	return fmt.Sprintf("AccountId#%s#MatchOfferId#", requesterAccountID)
 }

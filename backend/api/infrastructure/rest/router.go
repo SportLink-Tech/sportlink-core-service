@@ -63,6 +63,7 @@ func Routes(router *gin.Engine) {
 	// Match Offer Use Cases
 	createMatchOffer := umatchoffer.NewCreateMatchOfferUC(matchOfferRepository, teamRepository)
 	findMatchOffers := umatchoffer.NewFindMatchOfferUC(matchOfferRepository)
+	retrieveMatchOffer := umatchoffer.NewRetrieveMatchOfferUC(matchOfferRepository)
 	deleteMatchOffer := umatchoffer.NewDeleteMatchOfferUC(matchOfferRepository)
 
 	// Match Request Use Cases
@@ -93,9 +94,10 @@ func Routes(router *gin.Engine) {
 	router.GET("/sport/:sport/team", teamController.FindTeam)
 	router.PATCH("/sport/:sport/team/:team", teamController.UpdateTeam)
 
-	matchOfferController := cmatchoffer.NewController(createMatchOffer, findMatchOffers, deleteMatchOffer, customValidator)
+	matchOfferController := cmatchoffer.NewController(createMatchOffer, findMatchOffers, retrieveMatchOffer, deleteMatchOffer, customValidator)
 	router.POST("/account/:account_id/match-offer", matchOfferController.CreateMatchOffer)
 	router.GET("/match-offer", matchOfferController.FindMatchOffers)
+	router.GET("/match-offer/:offer_id", matchOfferController.RetrieveMatchOffer)
 	router.GET("/account/:account_id/match-offer", matchOfferController.FindAccountMatchOffers)
 	router.DELETE("/account/:account_id/match-offer/:offer_id", matchOfferController.DeleteMatchOffer)
 

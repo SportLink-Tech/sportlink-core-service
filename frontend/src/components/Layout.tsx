@@ -1,4 +1,7 @@
 import { useState } from 'react'
+import Collapse from '@mui/material/Collapse'
+import ExpandLessIcon from '@mui/icons-material/ExpandLess'
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../features/auth/context/AuthContext'
 import {
@@ -23,6 +26,9 @@ import GroupAddIcon from '@mui/icons-material/GroupAdd'
 import GroupsIcon from '@mui/icons-material/Groups'
 import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown'
 import EventIcon from '@mui/icons-material/Event'
+import SendIcon from '@mui/icons-material/Send'
+import InboxIcon from '@mui/icons-material/Inbox'
+import SwapHorizIcon from '@mui/icons-material/SwapHoriz'
 
 interface LayoutProps {
   children: React.ReactNode
@@ -32,6 +38,8 @@ export function Layout({ children }: LayoutProps) {
   const navigate = useNavigate()
   const location = useLocation()
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null)
+  const [equipoOpen, setEquipoOpen] = useState(false)
+  const [solicitudesOpen, setSolicitudesOpen] = useState(false)
   const { account, logout } = useAuth()
 
   const displayName = account
@@ -46,6 +54,8 @@ export function Layout({ children }: LayoutProps) {
 
   const handleMenuClose = () => {
     setAnchorEl(null)
+    setEquipoOpen(false)
+    setSolicitudesOpen(false)
   }
 
   const handleNavigate = (path: string) => {
@@ -180,76 +190,81 @@ export function Layout({ children }: LayoutProps) {
               </Stack>
             </Paper>
 
-            {/* Menu Items */}
             <Box sx={{ py: 0.5 }}>
-              <MenuItem 
-                onClick={() => handleNavigate('/create')}
-                sx={{ 
-                  py: 1.5,
-                  px: 2,
-                  '&:hover': { bgcolor: 'rgba(0, 0, 0, 0.04)' }
-                }}
-              >
-                <AddCircleIcon sx={{ mr: 2, fontSize: 24, color: 'text.secondary' }} />
-                <Typography variant="body1">Publicar Partido</Typography>
-              </MenuItem>
+              {/* Equipo — expandible */}
               <MenuItem
-                onClick={() => handleNavigate('/create-team')}
-                sx={{
-                  py: 1.5,
-                  px: 2,
-                  '&:hover': { bgcolor: 'rgba(0, 0, 0, 0.04)' }
-                }}
-              >
-                <GroupAddIcon sx={{ mr: 2, fontSize: 24, color: 'text.secondary' }} />
-                <Typography variant="body1">Agregar equipo</Typography>
-              </MenuItem>
-              <MenuItem
-                onClick={() => handleNavigate('/my-teams')}
-                sx={{
-                  py: 1.5,
-                  px: 2,
-                  '&:hover': { bgcolor: 'rgba(0, 0, 0, 0.04)' }
-                }}
+                onClick={() => setEquipoOpen(o => !o)}
+                sx={{ py: 1.5, px: 2, '&:hover': { bgcolor: 'rgba(0, 0, 0, 0.04)' } }}
               >
                 <GroupsIcon sx={{ mr: 2, fontSize: 24, color: 'text.secondary' }} />
-                <Typography variant="body1">Mis equipos</Typography>
+                <Typography variant="body1" sx={{ flex: 1 }}>Equipo</Typography>
+                {equipoOpen ? <ExpandLessIcon fontSize="small" /> : <ExpandMoreIcon fontSize="small" />}
               </MenuItem>
+              <Collapse in={equipoOpen} timeout="auto" unmountOnExit>
+                <MenuItem
+                  onClick={() => handleNavigate('/create-team')}
+                  sx={{ py: 1.25, pl: 6, pr: 2, '&:hover': { bgcolor: 'rgba(0, 0, 0, 0.04)' } }}
+                >
+                  <GroupAddIcon sx={{ mr: 2, fontSize: 20, color: 'text.secondary' }} />
+                  <Typography variant="body2">Crear equipo</Typography>
+                </MenuItem>
+                <MenuItem
+                  onClick={() => handleNavigate('/my-teams')}
+                  sx={{ py: 1.25, pl: 6, pr: 2, '&:hover': { bgcolor: 'rgba(0, 0, 0, 0.04)' } }}
+                >
+                  <GroupsIcon sx={{ mr: 2, fontSize: 20, color: 'text.secondary' }} />
+                  <Typography variant="body2">Mis equipos</Typography>
+                </MenuItem>
+              </Collapse>
+
               <MenuItem
                 onClick={() => handleNavigate('/my-offers')}
-                sx={{
-                  py: 1.5,
-                  px: 2,
-                  '&:hover': { bgcolor: 'rgba(0, 0, 0, 0.04)' }
-                }}
+                sx={{ py: 1.5, px: 2, '&:hover': { bgcolor: 'rgba(0, 0, 0, 0.04)' } }}
               >
                 <EventIcon sx={{ mr: 2, fontSize: 24, color: 'text.secondary' }} />
-                <Typography variant="body1">Mis publicaciones</Typography>
+                <Typography variant="body1">Publicaciones</Typography>
               </MenuItem>
+
+              {/* Solicitudes — expandible */}
+              <MenuItem
+                onClick={() => setSolicitudesOpen(o => !o)}
+                sx={{ py: 1.5, px: 2, '&:hover': { bgcolor: 'rgba(0, 0, 0, 0.04)' } }}
+              >
+                <SwapHorizIcon sx={{ mr: 2, fontSize: 24, color: 'text.secondary' }} />
+                <Typography variant="body1" sx={{ flex: 1 }}>Solicitudes</Typography>
+                {solicitudesOpen ? <ExpandLessIcon fontSize="small" /> : <ExpandMoreIcon fontSize="small" />}
+              </MenuItem>
+              <Collapse in={solicitudesOpen} timeout="auto" unmountOnExit>
+                <MenuItem
+                  onClick={() => handleNavigate('/my-requests/sent')}
+                  sx={{ py: 1.25, pl: 6, pr: 2, '&:hover': { bgcolor: 'rgba(0, 0, 0, 0.04)' } }}
+                >
+                  <SendIcon sx={{ mr: 2, fontSize: 20, color: 'text.secondary' }} />
+                  <Typography variant="body2">Enviadas</Typography>
+                </MenuItem>
+                <MenuItem
+                  onClick={() => handleNavigate('/my-requests/received')}
+                  sx={{ py: 1.25, pl: 6, pr: 2, '&:hover': { bgcolor: 'rgba(0, 0, 0, 0.04)' } }}
+                >
+                  <InboxIcon sx={{ mr: 2, fontSize: 20, color: 'text.secondary' }} />
+                  <Typography variant="body2">Recibidas</Typography>
+                </MenuItem>
+              </Collapse>
             </Box>
 
             <Divider />
 
-            {/* Settings & Logout */}
             <Box sx={{ py: 0.5 }}>
               <MenuItem
                 onClick={() => handleNavigate('/profile')}
-                sx={{
-                  py: 1.5,
-                  px: 2,
-                  '&:hover': { bgcolor: 'rgba(0, 0, 0, 0.04)' }
-                }}
+                sx={{ py: 1.5, px: 2, '&:hover': { bgcolor: 'rgba(0, 0, 0, 0.04)' } }}
               >
                 <PersonIcon sx={{ mr: 2, fontSize: 24, color: 'text.secondary' }} />
                 <Typography variant="body1">Mi Perfil</Typography>
               </MenuItem>
               <MenuItem
                 onClick={() => { logout(); navigate('/login') }}
-                sx={{
-                  py: 1.5,
-                  px: 2,
-                  '&:hover': { bgcolor: 'rgba(0, 0, 0, 0.04)' }
-                }}
+                sx={{ py: 1.5, px: 2, '&:hover': { bgcolor: 'rgba(0, 0, 0, 0.04)' } }}
               >
                 <LogoutIcon sx={{ mr: 2, fontSize: 24, color: 'text.secondary' }} />
                 <Typography variant="body1">Cerrar Sesión</Typography>

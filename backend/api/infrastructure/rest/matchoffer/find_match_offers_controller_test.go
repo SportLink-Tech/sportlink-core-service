@@ -317,7 +317,7 @@ func TestFindMatchOffers(t *testing.T) {
 			// Setup
 			useCaseMock := amocks.NewUseCase[domain.DomainQuery, usecases.FindMatchOfferResult](t)
 			parserMock := pmocks.NewQueryParser(t)
-			controller := matchoffer.NewControllerWithParser(nil, useCaseMock, nil, validator, parserMock)
+			controller := matchoffer.NewControllerWithParser(nil, useCaseMock, nil, nil, validator, parserMock)
 
 			gin.SetMode(gin.TestMode)
 			router := gin.Default()

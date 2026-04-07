@@ -332,7 +332,7 @@ func TestCreateMatchOffer(t *testing.T) {
 
 			// Setup
 			useCaseMock := amocks.NewUseCase[domain.Entity, domain.Entity](t)
-			controller := matchoffer.NewController(useCaseMock, nil, nil, validator)
+			controller := matchoffer.NewController(useCaseMock, nil, nil, nil, validator)
 
 			gin.SetMode(gin.TestMode)
 			router := gin.Default()
