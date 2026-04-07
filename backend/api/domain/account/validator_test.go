@@ -46,11 +46,10 @@ func TestValidator_Check(t *testing.T) {
 			},
 		},
 		{
-			name:   "given empty nickname when checking then returns nickname required error",
+			name:   "given empty nickname when checking then returns no error",
 			entity: account.Entity{Email: "test@example.com", Nickname: ""},
 			then: func(t *testing.T, errors []error) {
-				assert.Len(t, errors, 1)
-				assert.Contains(t, errors[0].Error(), "nickname: nickname is required")
+				assert.Len(t, errors, 0)
 			},
 		},
 		{

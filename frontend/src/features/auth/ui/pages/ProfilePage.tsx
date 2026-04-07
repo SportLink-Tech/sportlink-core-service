@@ -15,6 +15,7 @@ export function ProfilePage() {
           <Avatar
             src={account?.Picture}
             alt={displayName}
+            imgProps={{ referrerPolicy: 'no-referrer' }}
             sx={{ width: 96, height: 96 }}
           />
           <Box textAlign="center">

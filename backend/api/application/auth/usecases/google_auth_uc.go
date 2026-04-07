@@ -47,9 +47,16 @@ func (uc *GoogleAuthUC) Invoke(ctx context.Context, idToken string) (*GoogleAuth
 		if err := uc.accountRepo.Save(ctx, newAccount); err != nil {
 			return nil, fmt.Errorf("error creating account: %w", err)
 		}
-		accountID = newAccount.ID
+		accountID = newAccount.AccountID
 	} else {
-		accountID = accounts[0].ID
+		existing := accounts[0]
+		if existing.AccountID == "" {
+			existing.AccountID = account.GenerateULID()
+			if err := uc.accountRepo.Save(ctx, existing); err != nil {
+				return nil, fmt.Errorf("error migrating account: %w", err)
+			}
+		}
+		accountID = existing.AccountID
 	}
 
 	jwtToken, err := uc.jwtService.Generate(accountID)

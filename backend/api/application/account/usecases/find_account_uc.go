@@ -8,10 +8,10 @@ import (
 	"sportlink/api/domain/account"
 )
 
-// FindAccountInput selects an account either by internal id (e.g. EMAIL#...) or by email address.
+// FindAccountInput selects an account by public AccountID (ULID) or by email address.
 // Exactly one of AccountID or Email must be non-empty (after trim).
 type FindAccountInput struct {
-	AccountID string
+	AccountID string // Public ULID-based ID
 	Email     string
 }
 
@@ -36,7 +36,7 @@ func (f *FindAccountUC) Invoke(ctx context.Context, input FindAccountInput) (*[]
 
 	var query account.DomainQuery
 	if accountID != "" {
-		query.Ids = []string{accountID}
+		query.AccountIDs = []string{accountID}
 	} else {
 		query.Emails = []string{email}
 	}

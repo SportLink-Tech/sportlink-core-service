@@ -58,14 +58,14 @@ func TestGoogleAuthUC_Invoke(t *testing.T) {
 					return len(q.Emails) == 1 && q.Emails[0] == "user@gmail.com"
 				})).Return([]account.Entity{}, nil)
 				repo.On("Save", mock.Anything, mock.MatchedBy(func(e account.Entity) bool {
-					return e.Email == "user@gmail.com" && e.Nickname == "Jorge Cabrera" && e.Picture == "https://photo.url"
+					return e.Email == "user@gmail.com" && e.Picture == "https://photo.url" && e.AccountID != ""
 				})).Return(nil)
-				jwt.On("Generate", "EMAIL#user@gmail.com").Return("signed-jwt", nil)
+				jwt.On("Generate", mock.AnythingOfType("string")).Return("signed-jwt", nil)
 			},
 			then: func(t *testing.T, result *usecases.GoogleAuthResult, err error) {
 				assert.NoError(t, err)
 				assert.Equal(t, "signed-jwt", result.JWTToken)
-				assert.Equal(t, "EMAIL#user@gmail.com", result.AccountID)
+				assert.NotEmpty(t, result.AccountID)
 			},
 		},
 		{
@@ -74,14 +74,14 @@ func TestGoogleAuthUC_Invoke(t *testing.T) {
 			on: func(verifier *mockGoogleVerifier, repo *amocks.Repository, jwt *mockJWTService) {
 				verifier.On("Verify", mock.Anything, "valid-id-token").Return(validTokenInfo, nil)
 				repo.On("Find", mock.Anything, mock.Anything).Return([]account.Entity{
-					{ID: "EMAIL#user@gmail.com", Email: "user@gmail.com", Nickname: "Jorge Cabrera"},
+					{ID: "EMAIL#user@gmail.com", AccountID: "01JQTEST0000000000000000AB", Email: "user@gmail.com"},
 				}, nil)
-				jwt.On("Generate", "EMAIL#user@gmail.com").Return("signed-jwt", nil)
+				jwt.On("Generate", "01JQTEST0000000000000000AB").Return("signed-jwt", nil)
 			},
 			then: func(t *testing.T, result *usecases.GoogleAuthResult, err error) {
 				assert.NoError(t, err)
 				assert.Equal(t, "signed-jwt", result.JWTToken)
-				assert.Equal(t, "EMAIL#user@gmail.com", result.AccountID)
+				assert.Equal(t, "01JQTEST0000000000000000AB", result.AccountID)
 			},
 		},
 		{
@@ -129,9 +129,9 @@ func TestGoogleAuthUC_Invoke(t *testing.T) {
 			on: func(verifier *mockGoogleVerifier, repo *amocks.Repository, jwt *mockJWTService) {
 				verifier.On("Verify", mock.Anything, "valid-id-token").Return(validTokenInfo, nil)
 				repo.On("Find", mock.Anything, mock.Anything).Return([]account.Entity{
-					{ID: "EMAIL#user@gmail.com", Email: "user@gmail.com"},
+					{ID: "EMAIL#user@gmail.com", AccountID: "01JQTEST0000000000000000AB", Email: "user@gmail.com"},
 				}, nil)
-				jwt.On("Generate", mock.Anything).Return("", fmt.Errorf("jwt error"))
+				jwt.On("Generate", "01JQTEST0000000000000000AB").Return("", fmt.Errorf("jwt error"))
 			},
 			then: func(t *testing.T, result *usecases.GoogleAuthResult, err error) {
 				assert.Error(t, err)

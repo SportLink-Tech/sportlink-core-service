@@ -56,22 +56,20 @@ func (repo *RepositoryAdapter) Save(ctx context.Context, entity account.Entity) 
 }
 
 func (repo *RepositoryAdapter) Find(ctx context.Context, query account.DomainQuery) ([]account.Entity, error) {
-	// We only support Query operations (no Scan)
-	// Must have at least Emails or Ids to build key condition
 	hasEmailCriteria := len(query.Emails) > 0
 	hasIdCriteria := len(query.Ids) > 0
+	hasAccountIDCriteria := len(query.AccountIDs) > 0
 
-	if !hasEmailCriteria && !hasIdCriteria {
-		// No valid key condition criteria, return empty
+	if !hasEmailCriteria && !hasIdCriteria && !hasAccountIDCriteria {
 		return []account.Entity{}, nil
 	}
-
-	// Cannot use both Emails and Ids at the same time
 	if hasEmailCriteria && hasIdCriteria {
 		return []account.Entity{}, fmt.Errorf("cannot use both Emails and Ids in query")
 	}
 
-	// For multiple emails/IDs, we need to make multiple queries and combine results
+	if hasAccountIDCriteria {
+		return repo.findByAccountIDs(ctx, query)
+	}
 	if len(query.Emails) > 1 {
 		return repo.findWithMultipleEmails(ctx, query)
 	}
@@ -79,8 +77,49 @@ func (repo *RepositoryAdapter) Find(ctx context.Context, query account.DomainQue
 		return repo.findWithMultipleIds(ctx, query)
 	}
 
-	// Single email, single ID, or empty (handled by findWithQuery)
 	return repo.findWithQuery(ctx, query)
+}
+
+func (repo *RepositoryAdapter) findByAccountIDs(ctx context.Context, query account.DomainQuery) ([]account.Entity, error) {
+	var results []account.Entity
+	seen := make(map[string]bool)
+
+	for _, accountID := range query.AccountIDs {
+		keyCond := expression.KeyEqual(expression.Key("AccountId"), expression.Value(accountID))
+		expr, err := expression.NewBuilder().WithKeyCondition(keyCond).Build()
+		if err != nil {
+			return nil, err
+		}
+
+		indexName := "AccountId-index"
+		resp, err := repo.dbClient.Query(ctx, &dynamodb.QueryInput{
+			TableName:                 aws.String(repo.tableName),
+			IndexName:                 aws.String(indexName),
+			KeyConditionExpression:    expr.KeyCondition(),
+			ExpressionAttributeNames:  expr.Names(),
+			ExpressionAttributeValues: expr.Values(),
+		})
+		if err != nil {
+			return nil, err
+		}
+
+		for _, item := range resp.Items {
+			var dto Dto
+			if err := attributevalue.UnmarshalMap(item, &dto); err != nil {
+				return nil, fmt.Errorf("failed to unmarshal item: %w", err)
+			}
+			entity := dto.ToDomain()
+			if !seen[entity.AccountID] {
+				seen[entity.AccountID] = true
+				results = append(results, entity)
+			}
+		}
+	}
+
+	if results == nil {
+		return []account.Entity{}, nil
+	}
+	return results, nil
 }
 
 func (repo *RepositoryAdapter) findWithMultipleEmails(ctx context.Context, query account.DomainQuery) ([]account.Entity, error) {

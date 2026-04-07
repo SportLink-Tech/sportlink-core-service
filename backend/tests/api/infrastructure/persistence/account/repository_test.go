@@ -23,31 +23,22 @@ func Test_Save(t *testing.T) {
 		assertions func(t *testing.T, err error)
 	}{
 		{
-			name: "save account successfully",
-			entity: daccount.Entity{
-				Email:    "test@example.com",
-				Nickname: "testuser",
-			},
+			name:   "save account successfully",
+			entity: daccount.NewAccount("test@example.com", "testuser"),
 			assertions: func(t *testing.T, err error) {
 				assert.Nil(t, err)
 			},
 		},
 		{
-			name: "save account with special characters in email successfully",
-			entity: daccount.Entity{
-				Email:    "test.user+tag@example.co.uk",
-				Nickname: "testuser2",
-			},
+			name:   "save account with special characters in email successfully",
+			entity: daccount.NewAccount("test.user+tag@example.co.uk", "testuser2"),
 			assertions: func(t *testing.T, err error) {
 				assert.Nil(t, err)
 			},
 		},
 		{
-			name: "save account with nickname containing spaces successfully",
-			entity: daccount.Entity{
-				Email:    "user@example.com",
-				Nickname: "test user",
-			},
+			name:   "save account with nickname containing spaces successfully",
+			entity: daccount.NewAccount("user@example.com", "test user"),
 			assertions: func(t *testing.T, err error) {
 				assert.Nil(t, err)
 			},
@@ -84,11 +75,7 @@ func Test_Find(t *testing.T) {
 				Emails: []string{"test@example.com"},
 			},
 			on: func(t *testing.T, repository daccount.Repository) {
-				err := repository.Save(ctx, daccount.Entity{
-					Email:    "test@example.com",
-					Nickname: "testuser",
-				})
-				if err != nil {
+				if err := repository.Save(ctx, daccount.NewAccount("test@example.com", "testuser")); err != nil {
 					t.Fatal(err)
 				}
 			},
@@ -105,27 +92,14 @@ func Test_Find(t *testing.T) {
 				Emails: []string{"user1@example.com", "user2@example.com"},
 			},
 			on: func(t *testing.T, repository daccount.Repository) {
-				err := repository.Save(ctx, daccount.Entity{
-					Email:    "user1@example.com",
-					Nickname: "user1",
-				})
-				if err != nil {
-					t.Fatal(err)
-				}
-				err = repository.Save(ctx, daccount.Entity{
-					Email:    "user2@example.com",
-					Nickname: "user2",
-				})
-				if err != nil {
-					t.Fatal(err)
-				}
-				// Save an account that should not appear
-				err = repository.Save(ctx, daccount.Entity{
-					Email:    "user3@example.com",
-					Nickname: "user3",
-				})
-				if err != nil {
-					t.Fatal(err)
+				for _, acc := range []daccount.Entity{
+					daccount.NewAccount("user1@example.com", "user1"),
+					daccount.NewAccount("user2@example.com", "user2"),
+					daccount.NewAccount("user3@example.com", "user3"),
+				} {
+					if err := repository.Save(ctx, acc); err != nil {
+						t.Fatal(err)
+					}
 				}
 			},
 			assertions: func(t *testing.T, entities []daccount.Entity, err error) {
@@ -143,11 +117,7 @@ func Test_Find(t *testing.T) {
 				Ids: []string{"EMAIL#test@example.com"},
 			},
 			on: func(t *testing.T, repository daccount.Repository) {
-				err := repository.Save(ctx, daccount.Entity{
-					Email:    "test@example.com",
-					Nickname: "testuser",
-				})
-				if err != nil {
+				if err := repository.Save(ctx, daccount.NewAccount("test@example.com", "testuser")); err != nil {
 					t.Fatal(err)
 				}
 			},
@@ -164,19 +134,13 @@ func Test_Find(t *testing.T) {
 				Ids: []string{"EMAIL#user1@example.com", "EMAIL#user2@example.com"},
 			},
 			on: func(t *testing.T, repository daccount.Repository) {
-				err := repository.Save(ctx, daccount.Entity{
-					Email:    "user1@example.com",
-					Nickname: "user1",
-				})
-				if err != nil {
-					t.Fatal(err)
-				}
-				err = repository.Save(ctx, daccount.Entity{
-					Email:    "user2@example.com",
-					Nickname: "user2",
-				})
-				if err != nil {
-					t.Fatal(err)
+				for _, acc := range []daccount.Entity{
+					daccount.NewAccount("user1@example.com", "user1"),
+					daccount.NewAccount("user2@example.com", "user2"),
+				} {
+					if err := repository.Save(ctx, acc); err != nil {
+						t.Fatal(err)
+					}
 				}
 			},
 			assertions: func(t *testing.T, entities []daccount.Entity, err error) {
@@ -194,21 +158,13 @@ func Test_Find(t *testing.T) {
 				Nicknames: []string{"testuser"},
 			},
 			on: func(t *testing.T, repository daccount.Repository) {
-				// Save account that matches the query
-				err := repository.Save(ctx, daccount.Entity{
-					Email:    "test@example.com",
-					Nickname: "testuser",
-				})
-				if err != nil {
-					t.Fatal(err)
-				}
-				// Save another account with different email and nickname to verify filtering works
-				err = repository.Save(ctx, daccount.Entity{
-					Email:    "other@example.com",
-					Nickname: "otheruser",
-				})
-				if err != nil {
-					t.Fatal(err)
+				for _, acc := range []daccount.Entity{
+					daccount.NewAccount("test@example.com", "testuser"),
+					daccount.NewAccount("other@example.com", "otheruser"),
+				} {
+					if err := repository.Save(ctx, acc); err != nil {
+						t.Fatal(err)
+					}
 				}
 			},
 			assertions: func(t *testing.T, entities []daccount.Entity, err error) {
@@ -225,11 +181,7 @@ func Test_Find(t *testing.T) {
 				Nicknames: []string{"testuser", "anotheruser"},
 			},
 			on: func(t *testing.T, repository daccount.Repository) {
-				err := repository.Save(ctx, daccount.Entity{
-					Email:    "test@example.com",
-					Nickname: "testuser",
-				})
-				if err != nil {
+				if err := repository.Save(ctx, daccount.NewAccount("test@example.com", "testuser")); err != nil {
 					t.Fatal(err)
 				}
 			},
@@ -245,9 +197,7 @@ func Test_Find(t *testing.T) {
 			query: daccount.DomainQuery{
 				Emails: []string{"nonexistent@example.com"},
 			},
-			on: func(t *testing.T, repository daccount.Repository) {
-				// No accounts saved
-			},
+			on: func(t *testing.T, repository daccount.Repository) {},
 			assertions: func(t *testing.T, entities []daccount.Entity, err error) {
 				assert.Nil(t, err)
 				assert.Len(t, entities, 0)
@@ -257,11 +207,7 @@ func Test_Find(t *testing.T) {
 			name:  "find with no criteria returns empty",
 			query: daccount.DomainQuery{},
 			on: func(t *testing.T, repository daccount.Repository) {
-				err := repository.Save(ctx, daccount.Entity{
-					Email:    "test@example.com",
-					Nickname: "testuser",
-				})
-				if err != nil {
+				if err := repository.Save(ctx, daccount.NewAccount("test@example.com", "testuser")); err != nil {
 					t.Fatal(err)
 				}
 			},
@@ -276,11 +222,7 @@ func Test_Find(t *testing.T) {
 				Nicknames: []string{"testuser"},
 			},
 			on: func(t *testing.T, repository daccount.Repository) {
-				err := repository.Save(ctx, daccount.Entity{
-					Email:    "test@example.com",
-					Nickname: "testuser",
-				})
-				if err != nil {
+				if err := repository.Save(ctx, daccount.NewAccount("test@example.com", "testuser")); err != nil {
 					t.Fatal(err)
 				}
 			},
@@ -293,14 +235,31 @@ func Test_Find(t *testing.T) {
 
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
-			// given
 			testCase.on(t, repository)
-
-			// when
 			entities, err := repository.Find(ctx, testCase.query)
-
-			// then
 			testCase.assertions(t, entities, err)
 		})
 	}
+}
+
+func Test_FindByAccountID(t *testing.T) {
+	ctx := context.Background()
+	container := testcontainer.SportLinkContainer(t, ctx)
+	defer container.Terminate(ctx)
+	dynamoDbClient := testcontainer.GetDynamoDbClient(t, container, ctx)
+	repository := account.NewRepository(dynamoDbClient, "SportLinkCore")
+
+	acc := daccount.NewAccount("ulid@example.com", "uliduser")
+	if err := repository.Save(ctx, acc); err != nil {
+		t.Fatal(err)
+	}
+
+	entities, err := repository.Find(ctx, daccount.DomainQuery{
+		AccountIDs: []string{acc.AccountID},
+	})
+
+	assert.Nil(t, err)
+	assert.Len(t, entities, 1)
+	assert.Equal(t, acc.AccountID, entities[0].AccountID)
+	assert.Equal(t, "ulid@example.com", entities[0].Email)
 }

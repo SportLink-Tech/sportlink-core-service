@@ -47,16 +47,16 @@ func TestFindAccountUC_Invoke(t *testing.T) {
 		{
 			name: "given repository returns accounts when finding by account id then returns pointer to entities",
 			input: usecases.FindAccountInput{
-				AccountID: "EMAIL#user@example.com",
+				AccountID: "01JQBM3XK7N8P2T4V6W9YDZCFE",
 			},
 			on: func(t *testing.T, repository *amocks.Repository, ctx context.Context) {
 				entities := []account.Entity{
-					{ID: "EMAIL#user@example.com", Email: "user@example.com"},
+					{ID: "EMAIL#user@example.com", AccountID: "01JQBM3XK7N8P2T4V6W9YDZCFE", Email: "user@example.com"},
 				}
 				repository.On("Find",
 					mock.MatchedBy(func(c context.Context) bool { return c == ctx }),
 					mock.MatchedBy(func(q account.DomainQuery) bool {
-						return len(q.Ids) == 1 && q.Ids[0] == "EMAIL#user@example.com" && len(q.Emails) == 0
+						return len(q.AccountIDs) == 1 && q.AccountIDs[0] == "01JQBM3XK7N8P2T4V6W9YDZCFE" && len(q.Emails) == 0
 					}),
 				).Return(entities, nil)
 			},
@@ -64,13 +64,13 @@ func TestFindAccountUC_Invoke(t *testing.T) {
 				assert.NoError(t, err)
 				assert.NotNil(t, result)
 				assert.Len(t, *result, 1)
-				assert.Equal(t, "EMAIL#user@example.com", (*result)[0].ID)
+				assert.Equal(t, "01JQBM3XK7N8P2T4V6W9YDZCFE", (*result)[0].AccountID)
 			},
 		},
 		{
 			name: "given both account id and email when invoking then returns error without calling repository",
 			input: usecases.FindAccountInput{
-				AccountID: "EMAIL#a@b.com",
+				AccountID: "01JQBM3XK7N8P2T4V6W9YDZCFE",
 				Email:     "a@b.com",
 			},
 			on: func(t *testing.T, _ *amocks.Repository, _ context.Context) {},
@@ -125,13 +125,13 @@ func TestFindAccountUC_Invoke(t *testing.T) {
 		{
 			name: "given repository find fails when finding then returns error",
 			input: usecases.FindAccountInput{
-				AccountID: "EMAIL#missing@example.com",
+				AccountID: "01JQBM3XK7N8P2T4V6W9YDZCFE",
 			},
 			on: func(t *testing.T, repository *amocks.Repository, ctx context.Context) {
 				repository.On("Find",
 					mock.MatchedBy(func(c context.Context) bool { return c == ctx }),
 					mock.MatchedBy(func(q account.DomainQuery) bool {
-						return len(q.Ids) == 1 && q.Ids[0] == "EMAIL#missing@example.com"
+						return len(q.AccountIDs) == 1 && q.AccountIDs[0] == "01JQBM3XK7N8P2T4V6W9YDZCFE"
 					}),
 				).Return(nil, errors.New("database unavailable"))
 			},

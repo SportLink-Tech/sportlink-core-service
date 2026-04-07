@@ -75,13 +75,13 @@ func TestGoogleAuthController(t *testing.T) {
 			on: func(verifier *mockGoogleVerifier, repo *amocks.Repository, jwt *mockJWTService) {
 				verifier.On("Verify", mock.Anything, "valid-token").Return(googleTokenInfo, nil)
 				repo.On("Find", mock.Anything, mock.Anything).Return([]account.Entity{
-					{ID: "EMAIL#user@gmail.com", Email: "user@gmail.com"},
+					{ID: "EMAIL#user@gmail.com", AccountID: "01JQTEST0000000000000000AB", Email: "user@gmail.com"},
 				}, nil)
-				jwt.On("Generate", "EMAIL#user@gmail.com").Return("jwt-token", nil)
+				jwt.On("Generate", "01JQTEST0000000000000000AB").Return("jwt-token", nil)
 			},
 			assertions: func(t *testing.T, code int, body map[string]interface{}, resp *httptest.ResponseRecorder) {
 				assert.Equal(t, http.StatusOK, code)
-				assert.Equal(t, "EMAIL#user@gmail.com", body["account_id"])
+				assert.Equal(t, "01JQTEST0000000000000000AB", body["account_id"])
 			},
 		},
 		{

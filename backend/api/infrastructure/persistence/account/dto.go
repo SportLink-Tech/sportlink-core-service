@@ -8,6 +8,7 @@ import (
 type Dto struct {
 	EntityId  string `dynamodbav:"EntityId"`
 	Id        string `dynamodbav:"Id"`
+	AccountId string `dynamodbav:"AccountId,omitempty"`
 	Email     string `dynamodbav:"Email"`
 	Nickname  string `dynamodbav:"Nickname,omitempty"`
 	FirstName string `dynamodbav:"FirstName,omitempty"`
@@ -23,6 +24,7 @@ func From(entity account.Entity) (Dto, error) {
 	return Dto{
 		EntityId:  "Entity#Account",
 		Id:        account.GenerateAccountID(entity.Email),
+		AccountId: entity.AccountID,
 		Email:     entity.Email,
 		Nickname:  entity.Nickname,
 		FirstName: entity.FirstName,
@@ -34,6 +36,7 @@ func From(entity account.Entity) (Dto, error) {
 func (d *Dto) ToDomain() account.Entity {
 	return account.Entity{
 		ID:        d.Id,
+		AccountID: d.AccountId,
 		Email:     d.Email,
 		Nickname:  d.Nickname,
 		FirstName: d.FirstName,

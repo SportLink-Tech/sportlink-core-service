@@ -124,10 +124,8 @@ export function Layout({ children }: LayoutProps) {
             <Avatar
               alt={displayName}
               src={displayAvatar}
-              sx={{ 
-                width: 40, 
-                height: 40,
-              }}
+              imgProps={{ referrerPolicy: 'no-referrer' }}
+              sx={{ width: 40, height: 40 }}
             />
             <ArrowDropDownIcon sx={{ color: 'text.secondary', fontSize: 20 }} />
           </Box>
@@ -170,7 +168,7 @@ export function Layout({ children }: LayoutProps) {
               }}
             >
               <Stack direction="row" spacing={2} alignItems="center">
-                <Avatar src={displayAvatar} sx={{ width: 56, height: 56 }} />
+                <Avatar src={displayAvatar} imgProps={{ referrerPolicy: 'no-referrer' }} sx={{ width: 56, height: 56 }} />
                 <Box sx={{ flex: 1 }}>
                   <Typography variant="subtitle1" fontWeight={600} fontSize="1.05rem">
                     {displayName}

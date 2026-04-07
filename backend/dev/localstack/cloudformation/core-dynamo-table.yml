@@ -17,6 +17,8 @@ Resources:
           AttributeType: N
         - AttributeName: OwnerAccountId
           AttributeType: S
+        - AttributeName: AccountId
+          AttributeType: S
       KeySchema:
         - AttributeName: EntityId
           KeyType: HASH
@@ -37,6 +39,15 @@ Resources:
         - IndexName: OwnerAccountId-index
           KeySchema:
             - AttributeName: OwnerAccountId
+              KeyType: HASH
+          Projection:
+            ProjectionType: ALL
+          ProvisionedThroughput:
+            ReadCapacityUnits: 5
+            WriteCapacityUnits: 5
+        - IndexName: AccountId-index
+          KeySchema:
+            - AttributeName: AccountId
               KeyType: HASH
           Projection:
             ProjectionType: ALL

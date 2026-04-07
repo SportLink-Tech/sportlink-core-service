@@ -1,10 +1,17 @@
 package account
 
-import "fmt"
+import (
+	"fmt"
+	"math/rand"
+	"time"
+
+	"github.com/oklog/ulid/v2"
+)
 
 // Entity represents an account in the domain
 type Entity struct {
-	ID        string
+	ID        string // DynamoDB sort key: EMAIL#<email>
+	AccountID string // Public-facing short ID (ULID)
 	Email     string
 	Nickname  string
 	FirstName string
@@ -15,9 +22,10 @@ type Entity struct {
 // NewAccount creates a new account entity with an ID generated from the email
 func NewAccount(email, nickname string) Entity {
 	return Entity{
-		ID:       GenerateAccountID(email),
-		Email:    email,
-		Nickname: nickname,
+		ID:        GenerateAccountID(email),
+		AccountID: GenerateULID(),
+		Email:     email,
+		Nickname:  nickname,
 	}
 }
 
@@ -25,6 +33,7 @@ func NewAccount(email, nickname string) Entity {
 func NewGoogleAccount(email, givenName, familyName, picture string) Entity {
 	return Entity{
 		ID:        GenerateAccountID(email),
+		AccountID: GenerateULID(),
 		Email:     email,
 		Nickname:  "",
 		FirstName: givenName,
@@ -33,8 +42,14 @@ func NewGoogleAccount(email, givenName, familyName, picture string) Entity {
 	}
 }
 
-// GenerateAccountID generates an account ID based on the email
+// GenerateAccountID generates the DynamoDB sort key based on the email
 // Format: EMAIL#{{email}}
 func GenerateAccountID(email string) string {
 	return fmt.Sprintf("EMAIL#%s", email)
+}
+
+func GenerateULID() string {
+	t := time.Now()
+	entropy := rand.New(rand.NewSource(t.UnixNano()))
+	return ulid.MustNew(ulid.Timestamp(t), entropy).String()
 }
