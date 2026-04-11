@@ -15,7 +15,8 @@ import {
 } from '@mui/material'
 import AddIcon from '@mui/icons-material/Add'
 import AddCircleIcon from '@mui/icons-material/AddCircle'
-import CheckCircleIcon from '@mui/icons-material/CheckCircle'
+import ArrowBackIcon from '@mui/icons-material/ArrowBack'
+import { useNavigate } from 'react-router-dom'
 import { SportSelect } from '../../../../shared/components/atoms/SportSelect'
 import { CategorySelect } from '../../../../shared/components/atoms/CategorySelect'
 import { Sport } from '../../../../shared/types/team'
@@ -32,6 +33,7 @@ const SPORTS: Sport[] = ['Football', 'Paddle']
 export function CreateTeamPage() {
   const { createTeamUseCase } = useTeamContext()
   const { accountId } = useAuth()
+  const navigate = useNavigate()
 
   const [sport, setSport] = useState<Sport>('Paddle')
   const [name, setName] = useState('')
@@ -39,8 +41,6 @@ export function CreateTeamPage() {
   const [playerIds, setPlayerIds] = useState<string[]>([])
   const [currentPlayerId, setCurrentPlayerId] = useState('')
   const [loading, setLoading] = useState(false)
-  const [successTeamName, setSuccessTeamName] = useState<string | null>(null)
-  const [showSuccessSnackbar, setShowSuccessSnackbar] = useState(false)
   const [showErrorSnackbar, setShowErrorSnackbar] = useState(false)
 
   const handleAddPlayer = () => {
@@ -68,13 +68,7 @@ export function CreateTeamPage() {
     })
 
     if (result.success && result.team) {
-      setSuccessTeamName(result.team.Name)
-      setShowSuccessSnackbar(true)
-      // Reset form
-      setName('')
-      setCategory(0)
-      setPlayerIds([])
-      setCurrentPlayerId('')
+      navigate('/teams')
     } else {
       setShowErrorSnackbar(true)
     }
@@ -99,11 +93,19 @@ export function CreateTeamPage() {
             <Stack spacing={2} alignItems="center">
               <AddCircleIcon sx={{ fontSize: 64 }} />
               <Typography variant="h3" component="h1" align="center" fontWeight={700}>
-                Crear Nuevo Equipo
+                Nuevo Equipo
               </Typography>
               <Typography variant="h6" align="center" sx={{ opacity: 0.95, maxWidth: 600 }}>
-                Registra un nuevo equipo deportivo con su información, categoría y miembros
+                Registrá tu equipo con su deporte, nombre y categoría
               </Typography>
+              <Button
+                variant="contained"
+                startIcon={<ArrowBackIcon />}
+                onClick={() => navigate('/teams')}
+                sx={{ bgcolor: 'white', color: 'primary.main', '&:hover': { bgcolor: 'grey.100' } }}
+              >
+                Volver a mis equipos
+              </Button>
             </Stack>
           </Paper>
 
@@ -197,30 +199,6 @@ export function CreateTeamPage() {
           </Card>
         </Stack>
       </Box>
-
-      {/* Success Snackbar */}
-      <Snackbar
-        open={showSuccessSnackbar}
-        autoHideDuration={4000}
-        onClose={() => setShowSuccessSnackbar(false)}
-        anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
-      >
-        <Alert
-          onClose={() => setShowSuccessSnackbar(false)}
-          severity="success"
-          variant="filled"
-          icon={<CheckCircleIcon />}
-          sx={{
-            width: '100%',
-            fontSize: '1.1rem',
-            '& .MuiAlert-icon': {
-              fontSize: '2rem',
-            },
-          }}
-        >
-          Equipo "{successTeamName}" creado exitosamente
-        </Alert>
-      </Snackbar>
 
       {/* Error Snackbar */}
       <Snackbar

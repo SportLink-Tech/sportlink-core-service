@@ -279,63 +279,22 @@ insert_match_announcement() {
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Coordenadas de referencia
-#   Los Cardales, Exaltación de la Cruz, Buenos Aires: -34.3213, -59.0051
+#   La Boca, Buenos Aires:                             -34.6345, -58.3630
 #   Pilar, Buenos Aires:                               -34.4584, -58.9142
+#   Los Cardales, Exaltación de la Cruz, Buenos Aires: -34.3213, -59.0051
 # ─────────────────────────────────────────────────────────────────────────────
 
-# Anuncios para hoy (día 0)
-# -- Los Cardales --
-insert_match_announcement "Los Leones FC" "Football" 0 18 2 "Argentina" "Buenos Aires" "Los Cardales" "BETWEEN" "null" "4" "6" "PENDING" "-34.3213" "-59.0051" "seed-account-01"
-insert_match_announcement "Rocket Pádel" "Paddle" 0 20 2 "Argentina" "Buenos Aires" "Los Cardales" "GREATER_THAN" "null" "5" "null" "PENDING" "-34.3213" "-59.0051" "seed-account-02"
-insert_match_announcement "Tennis Club Cardales" "Tennis" 0 16 2 "Argentina" "Buenos Aires" "Los Cardales" "SPECIFIC" "5 6" "null" "null" "PENDING" "-34.3213" "-59.0051" "seed-account-03"
+# La Boca - hoy - categorías específicas 4 y 5
+insert_match_announcement "Pádel La Boca" "Paddle" 0 19 2 "Argentina" "Buenos Aires" "La Boca" "SPECIFIC" "4 5" "null" "null" "PENDING" "-34.6345" "-58.3630" "seed-account-01"
 
-# -- Pilar --
-insert_match_announcement "River Plate A" "Football" 0 19 2 "Argentina" "Buenos Aires" "Pilar" "GREATER_THAN" "null" "5" "null" "PENDING" "-34.4584" "-58.9142" "seed-account-02"
-insert_match_announcement "Pádel Express" "Paddle" 0 19 2 "Argentina" "Buenos Aires" "Pilar" "BETWEEN" "null" "4" "6" "PENDING" "-34.4584" "-58.9142" "seed-account-03"
-insert_match_announcement "Tennis Pro Pilar" "Tennis" 0 17 2 "Argentina" "Buenos Aires" "Pilar" "GREATER_THAN" "null" "6" "null" "PENDING" "-34.4584" "-58.9142" "seed-account-01"
+# Pilar - mañana - entre categoría 5 y 7
+insert_match_announcement "Pilar Pádel Club" "Paddle" 1 18 2 "Argentina" "Buenos Aires" "Pilar" "BETWEEN" "null" "5" "7" "PENDING" "-34.4584" "-58.9142" "seed-account-02"
 
-# -- Sin coordenadas (Buenos Aires ciudad) --
-insert_match_announcement "Boca Juniors A" "Football" 0 20 2 "Argentina" "Buenos Aires" "La Boca" "SPECIFIC" "4 5" "null" "null" "PENDING" "null" "null" "seed-account-03"
-insert_match_announcement "Smash Pádel" "Paddle" 0 21 2 "Argentina" "Buenos Aires" "Villa Crespo" "SPECIFIC" "6 7" "null" "null" "PENDING" "null" "null" "seed-account-01"
+# Exaltación de la Cruz - pasado mañana - categoría 6 en adelante
+insert_match_announcement "Los Cardales Pádel" "Paddle" 2 20 2 "Argentina" "Buenos Aires" "Exaltación de la Cruz" "GREATER_THAN" "null" "6" "null" "PENDING" "-34.3213" "-59.0051" "seed-account-03"
 
-# Anuncios para mañana (día 1)
-# -- Los Cardales --
-insert_match_announcement "FC Barcelona Fans" "Football" 1 18 2 "Argentina" "Buenos Aires" "Los Cardales" "SPECIFIC" "4 5" "null" "null" "PENDING" "-34.3213" "-59.0051" "seed-account-02"
-insert_match_announcement "Smash Team" "Paddle" 1 21 2 "Argentina" "Buenos Aires" "Los Cardales" "BETWEEN" "null" "4" "7" "PENDING" "-34.3213" "-59.0051" "seed-account-01"
-
-# -- Pilar --
-insert_match_announcement "Real Madrid Local" "Football" 1 19 2 "Argentina" "Buenos Aires" "Pilar" "GREATER_THAN" "null" "5" "null" "PENDING" "-34.4584" "-58.9142" "seed-account-03"
-insert_match_announcement "Ace Masters" "Tennis" 1 17 2 "Argentina" "Buenos Aires" "Pilar" "LESS_THAN" "null" "null" "6" "PENDING" "-34.4584" "-58.9142" "seed-account-02"
-
-# Anuncios para pasado mañana (día 2)
-# -- Los Cardales --
-insert_match_announcement "Atlético de Madrid" "Football" 2 20 2 "Argentina" "Buenos Aires" "Los Cardales" "GREATER_THAN" "null" "6" "null" "PENDING" "-34.3213" "-59.0051" "seed-account-01"
-insert_match_announcement "Pro Tennis Team" "Tennis" 2 18 2 "Argentina" "Buenos Aires" "Los Cardales" "GREATER_THAN" "null" "6" "null" "PENDING" "-34.3213" "-59.0051" "seed-account-03"
-
-# -- Pilar --
-insert_match_announcement "Paddle Masters" "Paddle" 2 19 2 "Argentina" "Buenos Aires" "Pilar" "SPECIFIC" "6 7" "null" "null" "PENDING" "-34.4584" "-58.9142" "seed-account-02"
-
-# Anuncios para 3 días
-# -- Los Cardales --
-insert_match_announcement "River Plate B" "Football" 3 17 2 "Argentina" "Buenos Aires" "Los Cardales" "BETWEEN" "null" "3" "5" "PENDING" "-34.3213" "-59.0051" "seed-account-03"
-
-# -- Pilar --
-insert_match_announcement "Club Pádel Pilar" "Paddle" 3 20 2 "Argentina" "Buenos Aires" "Pilar" "LESS_THAN" "null" "null" "5" "PENDING" "-34.4584" "-58.9142" "seed-account-01"
-
-# Anuncios para 5 días
-# -- Pilar --
-insert_match_announcement "Boca Juniors Local" "Football" 5 19 2 "Argentina" "Buenos Aires" "Pilar" "SPECIFIC" "4 5 6" "null" "null" "PENDING" "-34.4584" "-58.9142" "seed-account-02"
-insert_match_announcement "Pádel Pro" "Paddle" 5 21 2 "Argentina" "Buenos Aires" "Pilar" "GREATER_THAN" "null" "6" "null" "PENDING" "-34.4584" "-58.9142" "seed-account-03"
-
-# -- Los Cardales --
-insert_match_announcement "Tennis Buenos Aires" "Tennis" 5 16 2 "Argentina" "Buenos Aires" "Los Cardales" "BETWEEN" "null" "4" "6" "PENDING" "-34.3213" "-59.0051" "seed-account-01"
-
-# Un anuncio confirmado en Cardales
-insert_match_announcement "Los Leones FC" "Football" 7 18 2 "Argentina" "Buenos Aires" "Los Cardales" "GREATER_THAN" "null" "5" "null" "CONFIRMED" "-34.3213" "-59.0051" "seed-account-02"
-
-# Anuncios propios del usuario actual (cabrerajjorge) - no deben mostrar el botón "Unirme"
-# El primero usa un ID fijo para poder referenciar en seed-match-requests.sh
-insert_match_announcement "Los Cabreras FC" "Football" 1 20 2 "Argentina" "Buenos Aires" "Los Cardales" "BETWEEN" "null" "4" "6" "PENDING" "-34.3213" "-59.0051" "cabrerajjorge" "offer-cabrerajjorge-001"
-insert_match_announcement "Los Cabreras FC" "Paddle" 2 19 2 "Argentina" "Buenos Aires" "Pilar" "GREATER_THAN" "null" "5" "null" "PENDING" "-34.4584" "-58.9142" "cabrerajjorge"
+# Anuncio propio del usuario actual (cabrerajjorge) - no debe mostrar el botón "Unirme"
+# ID fijo para poder referenciar en seed-match-requests.sh
+insert_match_announcement "Los Cabreras FC" "Paddle" 1 20 2 "Argentina" "Buenos Aires" "La Boca" "BETWEEN" "null" "4" "6" "PENDING" "-34.6345" "-58.3630" "cabrerajjorge" "offer-cabrerajjorge-001"
 
 print_banner "Anuncios de partidos insertados correctamente"

@@ -22,7 +22,6 @@ import SportsIcon from '@mui/icons-material/Sports'
 import PersonIcon from '@mui/icons-material/Person'
 import AddCircleIcon from '@mui/icons-material/AddCircle'
 import LogoutIcon from '@mui/icons-material/Logout'
-import GroupAddIcon from '@mui/icons-material/GroupAdd'
 import GroupsIcon from '@mui/icons-material/Groups'
 import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown'
 import EventIcon from '@mui/icons-material/Event'
@@ -38,7 +37,6 @@ export function Layout({ children }: LayoutProps) {
   const navigate = useNavigate()
   const location = useLocation()
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null)
-  const [equipoOpen, setEquipoOpen] = useState(false)
   const [solicitudesOpen, setSolicitudesOpen] = useState(false)
   const { account, logout } = useAuth()
 
@@ -54,7 +52,6 @@ export function Layout({ children }: LayoutProps) {
 
   const handleMenuClose = () => {
     setAnchorEl(null)
-    setEquipoOpen(false)
     setSolicitudesOpen(false)
   }
 
@@ -106,10 +103,10 @@ export function Layout({ children }: LayoutProps) {
               <EventIcon />
             </IconButton>
             <IconButton
-              onClick={() => navigate('/create')}
-              color={location.pathname === '/create' ? 'secondary' : 'default'}
-              sx={{ 
-                bgcolor: location.pathname === '/create' ? 'secondary.lighter' : 'transparent'
+              onClick={() => navigate('/my-offers/new')}
+              color={location.pathname === '/my-offers/new' ? 'secondary' : 'default'}
+              sx={{
+                bgcolor: location.pathname === '/my-offers/new' ? 'secondary.lighter' : 'transparent'
               }}
             >
               <AddCircleIcon />
@@ -191,31 +188,13 @@ export function Layout({ children }: LayoutProps) {
             </Paper>
 
             <Box sx={{ py: 0.5 }}>
-              {/* Equipo — expandible */}
               <MenuItem
-                onClick={() => setEquipoOpen(o => !o)}
+                onClick={() => handleNavigate('/teams')}
                 sx={{ py: 1.5, px: 2, '&:hover': { bgcolor: 'rgba(0, 0, 0, 0.04)' } }}
               >
                 <GroupsIcon sx={{ mr: 2, fontSize: 24, color: 'text.secondary' }} />
-                <Typography variant="body1" sx={{ flex: 1 }}>Equipo</Typography>
-                {equipoOpen ? <ExpandLessIcon fontSize="small" /> : <ExpandMoreIcon fontSize="small" />}
+                <Typography variant="body1">Mis Equipos</Typography>
               </MenuItem>
-              <Collapse in={equipoOpen} timeout="auto" unmountOnExit>
-                <MenuItem
-                  onClick={() => handleNavigate('/create-team')}
-                  sx={{ py: 1.25, pl: 6, pr: 2, '&:hover': { bgcolor: 'rgba(0, 0, 0, 0.04)' } }}
-                >
-                  <GroupAddIcon sx={{ mr: 2, fontSize: 20, color: 'text.secondary' }} />
-                  <Typography variant="body2">Crear equipo</Typography>
-                </MenuItem>
-                <MenuItem
-                  onClick={() => handleNavigate('/my-teams')}
-                  sx={{ py: 1.25, pl: 6, pr: 2, '&:hover': { bgcolor: 'rgba(0, 0, 0, 0.04)' } }}
-                >
-                  <GroupsIcon sx={{ mr: 2, fontSize: 20, color: 'text.secondary' }} />
-                  <Typography variant="body2">Mis equipos</Typography>
-                </MenuItem>
-              </Collapse>
 
               <MenuItem
                 onClick={() => handleNavigate('/my-offers')}

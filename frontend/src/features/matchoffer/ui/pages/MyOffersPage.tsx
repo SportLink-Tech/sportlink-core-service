@@ -21,6 +21,7 @@ import {
   List,
   ListItem,
   ListItemText,
+  Avatar,
 } from '@mui/material'
 import EventIcon from '@mui/icons-material/Event'
 import LocationOnIcon from '@mui/icons-material/LocationOn'
@@ -29,7 +30,11 @@ import GroupsIcon from '@mui/icons-material/Groups'
 import AccessTimeIcon from '@mui/icons-material/AccessTime'
 import DeleteIcon from '@mui/icons-material/Delete'
 import InboxIcon from '@mui/icons-material/Inbox'
+import AddIcon from '@mui/icons-material/Add'
+import PersonIcon from '@mui/icons-material/Person'
+import { useNavigate } from 'react-router-dom'
 import { useMatchOfferContext } from '../../context/MatchOfferContext'
+import { fetchAccount, Account } from '../../../auth/infrastructure/adapters/AccountApiAdapter'
 import { useMatchRequestContext } from '../../../matchrequest/context/MatchRequestContext'
 import { MatchOffer } from '../../../../shared/types/matchOffer'
 import { MatchRequest } from '../../../matchrequest/domain/ports/MatchRequestRepository'
@@ -39,6 +44,7 @@ export function MyOffersPage() {
   const { findAccountMatchOffersUseCase, deleteMatchOfferUseCase } = useMatchOfferContext()
   const { findReceivedMatchRequestsUseCase } = useMatchRequestContext()
   const { accountId } = useAuth()
+  const navigate = useNavigate()
 
   const [offers, setOffers] = useState<MatchOffer[]>([])
   const [loading, setLoading] = useState(true)
@@ -47,6 +53,7 @@ export function MyOffersPage() {
   const [snackbar, setSnackbar] = useState<{ open: boolean; message: string; severity: 'success' | 'error' }>({ open: false, message: '', severity: 'success' })
 
   const [allRequests, setAllRequests] = useState<MatchRequest[]>([])
+  const [requesterMap, setRequesterMap] = useState<Record<string, Account>>({})
   const [selectedOffer, setSelectedOffer] = useState<MatchOffer | null>(null)
   const [requestsDialogOpen, setRequestsDialogOpen] = useState(false)
 
@@ -57,8 +64,26 @@ export function MyOffersPage() {
       setLoading(false)
     })
 
-    findReceivedMatchRequestsUseCase.execute(accountId ?? '').then((result) => {
-      if (result.success) setAllRequests(result.requests)
+    findReceivedMatchRequestsUseCase.execute(accountId ?? '').then(async (result) => {
+      if (!result.success) return
+      setAllRequests(result.requests)
+
+      const uniqueIds = [...new Set(result.requests.map((r) => r.requester_account_id))]
+      const entries = await Promise.all(
+        uniqueIds.map(async (id) => {
+          try {
+            const account = await fetchAccount(id)
+            return [id, account] as [string, Account]
+          } catch {
+            return null
+          }
+        })
+      )
+      const map: Record<string, Account> = {}
+      for (const entry of entries) {
+        if (entry) map[entry[0]] = entry[1]
+      }
+      setRequesterMap(map)
     })
   }, [])
 
@@ -136,6 +161,14 @@ export function MyOffersPage() {
               <EventIcon sx={{ fontSize: 64 }} />
               <Typography variant="h3" component="h1" align="center" fontWeight={700}>Mis Publicaciones</Typography>
               <Typography variant="h6" align="center" sx={{ opacity: 0.95, maxWidth: 600 }}>Partidos que publicaste buscando rival</Typography>
+              <Button
+                variant="contained"
+                startIcon={<AddIcon />}
+                onClick={() => navigate('/my-offers/new')}
+                sx={{ bgcolor: 'white', color: 'primary.main', '&:hover': { bgcolor: 'grey.100' } }}
+              >
+                Agregar publicación
+              </Button>
             </Stack>
           </Paper>
 
@@ -235,22 +268,57 @@ export function MyOffersPage() {
             </Stack>
           ) : (
             <List disablePadding>
-              {requestsForOffer.map((req, i) => (
-                <Box key={req.id}>
-                  {i > 0 && <Divider />}
-                  <ListItem sx={{ px: 0 }}>
-                    <ListItemText
-                      primary={req.requester_account_id}
-                      secondary={new Date(req.created_at).toLocaleDateString('es-AR', { day: '2-digit', month: 'long', year: 'numeric' })}
-                    />
-                    <Chip
-                      label={getStatusText(req.status)}
-                      size="small"
-                      color={getStatusColor(req.status) as any}
-                    />
-                  </ListItem>
-                </Box>
-              ))}
+              {requestsForOffer.map((req, i) => {
+                const requester = requesterMap[req.requester_account_id]
+                const requesterName = requester
+                  ? `${requester.FirstName} ${requester.LastName}`.trim() || requester.Nickname || requester.Email
+                  : req.requester_account_id
+                return (
+                  <Box key={req.id}>
+                    {i > 0 && <Divider />}
+                    <ListItem sx={{ px: 0, gap: 1.5 }}>
+                      <Avatar src={requester?.Picture} alt={requesterName} sx={{ width: 40, height: 40, flexShrink: 0 }}>
+                        {!requester?.Picture && <PersonIcon />}
+                      </Avatar>
+                      <ListItemText
+                        primary={<Typography variant="body2" fontWeight={600}>{requesterName}</Typography>}
+                        secondary={
+                          <Stack spacing={0.25} mt={0.25}>
+                            {requester?.Nickname && (
+                              <Typography variant="caption" color="text.secondary">@{requester.Nickname}</Typography>
+                            )}
+                            {selectedOffer && (
+                              <>
+                                <Stack direction="row" spacing={0.5} alignItems="center">
+                                  <EventIcon sx={{ fontSize: 13, color: 'text.secondary' }} />
+                                  <Typography variant="caption" color="text.secondary">
+                                    {formatDate(selectedOffer.day)}
+                                  </Typography>
+                                </Stack>
+                                <Stack direction="row" spacing={2}>
+                                  <Stack direction="row" spacing={0.5} alignItems="center">
+                                    <AccessTimeIcon sx={{ fontSize: 13, color: 'text.secondary' }} />
+                                    <Typography variant="caption" color="text.secondary">
+                                      {formatTime(selectedOffer.time_slot.start_time)} - {formatTime(selectedOffer.time_slot.end_time)}
+                                    </Typography>
+                                  </Stack>
+                                  <Stack direction="row" spacing={0.5} alignItems="center">
+                                    <LocationOnIcon sx={{ fontSize: 13, color: 'text.secondary' }} />
+                                    <Typography variant="caption" color="text.secondary">
+                                      {selectedOffer.location.locality}, {selectedOffer.location.province}
+                                    </Typography>
+                                  </Stack>
+                                </Stack>
+                              </>
+                            )}
+                          </Stack>
+                        }
+                      />
+                      <Chip label={getStatusText(req.status)} size="small" color={getStatusColor(req.status) as any} />
+                    </ListItem>
+                  </Box>
+                )
+              })}
             </List>
           )}
         </DialogContent>

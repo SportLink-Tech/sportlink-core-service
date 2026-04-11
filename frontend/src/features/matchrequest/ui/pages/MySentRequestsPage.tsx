@@ -16,6 +16,7 @@ import SendIcon from '@mui/icons-material/Send'
 import InboxIcon from '@mui/icons-material/Inbox'
 import EventIcon from '@mui/icons-material/Event'
 import AccessTimeIcon from '@mui/icons-material/AccessTime'
+import LocationOnIcon from '@mui/icons-material/LocationOn'
 import { useMatchRequestContext } from '../../context/MatchRequestContext'
 import { useMatchOfferContext } from '../../../matchoffer/context/MatchOfferContext'
 import { MatchRequest } from '../../domain/ports/MatchRequestRepository'
@@ -133,17 +134,25 @@ export function MySentRequestsPage() {
                         }
                         secondary={
                           offer ? (
-                            <Stack direction="row" spacing={2} mt={0.5}>
-                              <Stack direction="row" spacing={0.5} alignItems="center">
-                                <EventIcon sx={{ fontSize: 14, color: 'text.secondary' }} />
-                                <Typography variant="caption" color="text.secondary">
-                                  {formatDate(offer.day)}
-                                </Typography>
+                            <Stack spacing={0.5} mt={0.5}>
+                              <Stack direction="row" spacing={2}>
+                                <Stack direction="row" spacing={0.5} alignItems="center">
+                                  <EventIcon sx={{ fontSize: 14, color: 'text.secondary' }} />
+                                  <Typography variant="caption" color="text.secondary">
+                                    {formatDate(offer.day)}
+                                  </Typography>
+                                </Stack>
+                                <Stack direction="row" spacing={0.5} alignItems="center">
+                                  <AccessTimeIcon sx={{ fontSize: 14, color: 'text.secondary' }} />
+                                  <Typography variant="caption" color="text.secondary">
+                                    {formatTime(offer.time_slot.start_time)} - {formatTime(offer.time_slot.end_time)}
+                                  </Typography>
+                                </Stack>
                               </Stack>
                               <Stack direction="row" spacing={0.5} alignItems="center">
-                                <AccessTimeIcon sx={{ fontSize: 14, color: 'text.secondary' }} />
+                                <LocationOnIcon sx={{ fontSize: 14, color: 'text.secondary' }} />
                                 <Typography variant="caption" color="text.secondary">
-                                  {formatTime(offer.time_slot.start_time)} - {formatTime(offer.time_slot.end_time)}
+                                  {offer.location.locality}, {offer.location.province}
                                 </Typography>
                               </Stack>
                             </Stack>

@@ -27,6 +27,7 @@ import {
   Fade,
 } from '@mui/material'
 import AddCircleIcon from '@mui/icons-material/AddCircle'
+import ArrowBackIcon from '@mui/icons-material/ArrowBack'
 import EventIcon from '@mui/icons-material/Event'
 import CheckCircleIcon from '@mui/icons-material/CheckCircle'
 import LocationOnIcon from '@mui/icons-material/LocationOn'
@@ -268,6 +269,14 @@ export function CreateMatchOfferPage() {
               <Typography variant="h6" align="center" sx={{ opacity: 0.95, maxWidth: 600 }}>
                 Anuncia tu intención de jugar un partido y encuentra rivales
               </Typography>
+              <Button
+                variant="contained"
+                startIcon={<ArrowBackIcon />}
+                onClick={() => navigate('/my-offers')}
+                sx={{ bgcolor: 'white', color: 'primary.main', '&:hover': { bgcolor: 'grey.100' } }}
+              >
+                Volver a mis publicaciones
+              </Button>
             </Stack>
           </Paper>
 

@@ -34,9 +34,9 @@ function App() {
                   <Layout>
                     <Routes>
                       <Route path="/" element={<ListMatchOffersPage />} />
-                      <Route path="/create" element={<CreateMatchOfferPage />} />
-                      <Route path="/create-team" element={<CreateTeamPage />} />
-                      <Route path="/my-teams" element={<MyTeamsPage />} />
+                      <Route path="/my-offers/new" element={<CreateMatchOfferPage />} />
+                      <Route path="/teams" element={<MyTeamsPage />} />
+                      <Route path="/teams/new" element={<CreateTeamPage />} />
                       <Route path="/my-offers" element={<MyOffersPage />} />
                       <Route path="/my-requests/sent" element={<MySentRequestsPage />} />
                       <Route path="/my-requests/received" element={<MyReceivedRequestsPage />} />

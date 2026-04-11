@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import {
   Box,
+  Button,
   Card,
   CardContent,
   Typography,
@@ -13,9 +14,11 @@ import {
   Tooltip,
 } from '@mui/material'
 import GroupsIcon from '@mui/icons-material/Groups'
+import AddIcon from '@mui/icons-material/Add'
 import EditIcon from '@mui/icons-material/Edit'
 import CheckIcon from '@mui/icons-material/Check'
 import CloseIcon from '@mui/icons-material/Close'
+import { useNavigate } from 'react-router-dom'
 import { useTeamContext } from '../../context/TeamContext'
 import { Team } from '../../../../shared/types/team'
 import { useAuth } from '../../../auth/context/AuthContext'
@@ -23,6 +26,7 @@ import { useAuth } from '../../../auth/context/AuthContext'
 export function MyTeamsPage() {
   const { listAccountTeamsUseCase, updateTeamUseCase } = useTeamContext()
   const { accountId } = useAuth()
+  const navigate = useNavigate()
   const [teams, setTeams] = useState<Team[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -99,6 +103,14 @@ export function MyTeamsPage() {
             <Typography variant="h6" align="center" sx={{ opacity: 0.95, maxWidth: 600 }}>
               Equipos asociados a tu cuenta
             </Typography>
+            <Button
+              variant="contained"
+              startIcon={<AddIcon />}
+              onClick={() => navigate('/teams/new')}
+              sx={{ bgcolor: 'white', color: 'primary.main', '&:hover': { bgcolor: 'grey.100' } }}
+            >
+              Agregar equipo
+            </Button>
           </Stack>
         </Paper>
 
@@ -113,9 +125,12 @@ export function MyTeamsPage() {
         )}
 
         {!loading && !error && teams.length === 0 && (
-          <Typography align="center" color="text.secondary">
-            No tenés equipos registrados todavía.
-          </Typography>
+          <Paper sx={{ p: 4, textAlign: 'center' }}>
+            <GroupsIcon sx={{ fontSize: 48, color: 'text.secondary', mb: 1 }} />
+            <Typography variant="h6" color="text.secondary">
+              No tenés equipos registrados todavía
+            </Typography>
+          </Paper>
         )}
 
         {!loading && !error && teams.length > 0 && (
