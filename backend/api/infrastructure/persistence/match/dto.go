@@ -3,31 +3,43 @@ package match
 import (
 	"sportlink/api/domain/common"
 	"sportlink/api/domain/match"
+	"strings"
 	"time"
 )
 
-// entityIDPrefix builds the DynamoDB partition key for a given account.
-// Each match is stored under two partition keys — one per participant — so
-// both accounts can query their matches without a scan.
-func entityIDPrefix(accountID string) string {
-	return "AccountMatch#" + accountID
+// Canonical record keys
+const canonicalEntityID = "Entity#Match"
+
+func canonicalIDKey(matchID string) string {
+	return matchID
 }
 
-type Dto struct {
-	EntityId         string  `dynamodbav:"EntityId"`         // "AccountMatch#<account_id>"
-	Id               string  `dynamodbav:"Id"`               // ULID — same for both records of the same match
-	LocalAccountId   string  `dynamodbav:"LocalAccountId"`
-	VisitorAccountId string  `dynamodbav:"VisitorAccountId"`
-	Sport            string  `dynamodbav:"Sport"`
-	Day              int64   `dynamodbav:"Day"`              // Unix timestamp (start of day UTC)
-	Status           string  `dynamodbav:"Status"`
-	LocalScore       *int    `dynamodbav:"LocalScore"`
-	VisitorScore     *int    `dynamodbav:"VisitorScore"`
-	WinnerAccountId  string  `dynamodbav:"WinnerAccountId"`  // empty when not played or draw
-	CreatedAt        int64   `dynamodbav:"CreatedAt"`        // Unix timestamp
+// Pointer record keys — one per participant account, immutable
+func matchAccountEntityID(accountID string) string {
+	return "Entity#MatchAccount#" + accountID
 }
 
-func (d *Dto) ToDomain() match.Entity {
+func matchAccountIDKey(matchID string) string {
+	return "Match#" + matchID
+}
+
+// MatchDto is the canonical record. It is the single source of truth for all
+// mutable match data (status, result, etc.). There is exactly one per match.
+type MatchDto struct {
+	EntityId         string `dynamodbav:"EntityId"` // "Entity#Match"
+	Id               string `dynamodbav:"Id"`       // "<ulid>"
+	LocalAccountId   string `dynamodbav:"LocalAccountId"`
+	VisitorAccountId string `dynamodbav:"VisitorAccountId"`
+	Sport            string `dynamodbav:"Sport"`
+	Day              int64  `dynamodbav:"Day"`            // Unix timestamp (start of day UTC)
+	Status           string `dynamodbav:"Status"`
+	LocalScore       *int   `dynamodbav:"LocalScore"`
+	VisitorScore     *int   `dynamodbav:"VisitorScore"`
+	WinnerAccountId  string `dynamodbav:"WinnerAccountId"` // empty when not played or draw
+	CreatedAt        int64  `dynamodbav:"CreatedAt"`       // Unix timestamp
+}
+
+func (d *MatchDto) ToDomain() match.Entity {
 	status, _ := match.ParseStatus(d.Status)
 
 	var result *match.Result
@@ -39,7 +51,7 @@ func (d *Dto) ToDomain() match.Entity {
 	}
 
 	return match.Entity{
-		ID:               d.Id,
+		ID:               strings.TrimPrefix(d.Id, "MatchId#"),
 		LocalAccountID:   d.LocalAccountId,
 		VisitorAccountID: d.VisitorAccountId,
 		Sport:            common.Sport(d.Sport),
@@ -51,10 +63,18 @@ func (d *Dto) ToDomain() match.Entity {
 	}
 }
 
-// fromEntity builds the two DTOs (one per account) that represent a match in DynamoDB.
-func fromEntity(entity match.Entity) (local Dto, visitor Dto) {
-	base := Dto{
-		Id:               entity.ID,
+// MatchAccountDto is an immutable pointer record, one per participant account.
+// It holds no mutable data — its sole purpose is to allow listing a match by account.
+type MatchAccountDto struct {
+	EntityId string `dynamodbav:"EntityId"` // "Entity#MatchAccount#<accountId>"
+	Id       string `dynamodbav:"Id"`       // "Match#<matchId>"
+}
+
+// fromEntity builds the canonical MatchDto and the two MatchAccountDto pointers.
+func fromEntity(entity match.Entity) (canonical MatchDto, local MatchAccountDto, visitor MatchAccountDto) {
+	canonical = MatchDto{
+		EntityId:         canonicalEntityID,
+		Id:               canonicalIDKey(entity.ID),
 		LocalAccountId:   entity.LocalAccountID,
 		VisitorAccountId: entity.VisitorAccountID,
 		Sport:            string(entity.Sport),
@@ -67,15 +87,19 @@ func fromEntity(entity match.Entity) (local Dto, visitor Dto) {
 	if entity.Result != nil {
 		ls := entity.Result.LocalScore
 		vs := entity.Result.VisitorScore
-		base.LocalScore = &ls
-		base.VisitorScore = &vs
+		canonical.LocalScore = &ls
+		canonical.VisitorScore = &vs
 	}
 
-	local = base
-	local.EntityId = entityIDPrefix(entity.LocalAccountID)
+	local = MatchAccountDto{
+		EntityId: matchAccountEntityID(entity.LocalAccountID),
+		Id:       matchAccountIDKey(entity.ID),
+	}
 
-	visitor = base
-	visitor.EntityId = entityIDPrefix(entity.VisitorAccountID)
+	visitor = MatchAccountDto{
+		EntityId: matchAccountEntityID(entity.VisitorAccountID),
+		Id:       matchAccountIDKey(entity.ID),
+	}
 
-	return local, visitor
+	return canonical, local, visitor
 }

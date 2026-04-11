@@ -28,6 +28,7 @@ import EventIcon from '@mui/icons-material/Event'
 import SendIcon from '@mui/icons-material/Send'
 import InboxIcon from '@mui/icons-material/Inbox'
 import SwapHorizIcon from '@mui/icons-material/SwapHoriz'
+import EmojiEventsIcon from '@mui/icons-material/EmojiEvents'
 
 interface LayoutProps {
   children: React.ReactNode
@@ -202,6 +203,14 @@ export function Layout({ children }: LayoutProps) {
               >
                 <EventIcon sx={{ mr: 2, fontSize: 24, color: 'text.secondary' }} />
                 <Typography variant="body1">Publicaciones</Typography>
+              </MenuItem>
+
+              <MenuItem
+                onClick={() => handleNavigate('/my-matches')}
+                sx={{ py: 1.5, px: 2, '&:hover': { bgcolor: 'rgba(0, 0, 0, 0.04)' } }}
+              >
+                <EmojiEventsIcon sx={{ mr: 2, fontSize: 24, color: 'text.secondary' }} />
+                <Typography variant="body1">Partidos</Typography>
               </MenuItem>
 
               {/* Solicitudes — expandible */}

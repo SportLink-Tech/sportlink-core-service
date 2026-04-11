@@ -7,8 +7,10 @@ import (
 	authservice "sportlink/api/application/auth/service"
 	uauth "sportlink/api/application/auth/usecases"
 	umatchoffer "sportlink/api/application/matchoffer/usecases"
+	umatch "sportlink/api/application/match/usecases"
 	umatchrequest "sportlink/api/application/matchrequest/usecases"
 	imatch "sportlink/api/infrastructure/persistence/match"
+	cmatch "sportlink/api/infrastructure/rest/match"
 	uplayer "sportlink/api/application/player/usecases"
 
 	uteam "sportlink/api/application/team/usecases"
@@ -68,6 +70,9 @@ func Routes(router *gin.Engine) {
 	retrieveMatchOffer := umatchoffer.NewRetrieveMatchOfferUC(matchOfferRepository)
 	deleteMatchOffer := umatchoffer.NewDeleteMatchOfferUC(matchOfferRepository)
 
+	// Match Use Cases
+	findMatches := umatch.NewFindMatchesUC(matchRepository)
+
 	// Match Request Use Cases
 	createMatchRequest := umatchrequest.NewCreateMatchRequestUC(matchRequestRepository, matchOfferRepository)
 	findMatchRequests := umatchrequest.NewFindMatchRequestsUC(matchRequestRepository)
@@ -109,6 +114,9 @@ func Routes(router *gin.Engine) {
 	router.GET("/account/:account_id/match-request", matchRequestController.FindMatchRequests)
 	router.PATCH("/account/:account_id/match-request/:request_id", matchRequestController.UpdateMatchRequestStatus)
 	router.POST("/account/:account_id/match-request/:request_id/accept", matchRequestController.AcceptMatchRequest)
+
+	matchController := cmatch.NewController(findMatches)
+	router.GET("/account/:account_id/match", matchController.FindMatches)
 
 	monitoring.RegisterMetricsRoute(router)
 }

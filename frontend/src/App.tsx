@@ -10,6 +10,7 @@ import { MyOffersPage } from './features/matchoffer/ui/pages/MyOffersPage'
 import { MatchRequestModule } from './features/matchrequest/MatchRequestModule'
 import { MySentRequestsPage } from './features/matchrequest/ui/pages/MySentRequestsPage'
 import { MyReceivedRequestsPage } from './features/matchrequest/ui/pages/MyReceivedRequestsPage'
+import { MyMatchesPage } from './features/match/ui/pages/MyMatchesPage'
 import { LoginPage } from './features/auth/ui/pages/LoginPage'
 import { ProfilePage } from './features/auth/ui/pages/ProfilePage'
 import { useAuth } from './features/auth/context/AuthContext'
@@ -40,6 +41,7 @@ function App() {
                       <Route path="/my-offers" element={<MyOffersPage />} />
                       <Route path="/my-requests/sent" element={<MySentRequestsPage />} />
                       <Route path="/my-requests/received" element={<MyReceivedRequestsPage />} />
+                      <Route path="/my-matches" element={<MyMatchesPage />} />
                       <Route path="/profile" element={<ProfilePage />} />
                     </Routes>
                   </Layout>
