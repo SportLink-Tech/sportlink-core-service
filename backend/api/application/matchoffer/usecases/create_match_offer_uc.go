@@ -11,13 +11,13 @@ import (
 
 type CreateMatchOfferUC struct {
 	matchOfferRepository matchoffer.Repository
-	teamRepository              team.Repository
+	teamRepository       team.Repository
 }
 
 func NewCreateMatchOfferUC(matchOfferRepository matchoffer.Repository, teamRepository team.Repository) *CreateMatchOfferUC {
 	return &CreateMatchOfferUC{
 		matchOfferRepository: matchOfferRepository,
-		teamRepository:              teamRepository,
+		teamRepository:       teamRepository,
 	}
 }
 

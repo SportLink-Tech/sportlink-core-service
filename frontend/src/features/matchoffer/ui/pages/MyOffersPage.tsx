@@ -20,7 +20,6 @@ import {
   DialogActions,
   List,
   ListItem,
-  ListItemText,
   Avatar,
 } from '@mui/material'
 import EventIcon from '@mui/icons-material/Event'
@@ -36,13 +35,15 @@ import { useNavigate } from 'react-router-dom'
 import { useMatchOfferContext } from '../../context/MatchOfferContext'
 import { fetchAccount, Account } from '../../../auth/infrastructure/adapters/AccountApiAdapter'
 import { useMatchRequestContext } from '../../../matchrequest/context/MatchRequestContext'
+import CheckIcon from '@mui/icons-material/Check'
+import CloseIcon from '@mui/icons-material/Close'
 import { MatchOffer } from '../../../../shared/types/matchOffer'
 import { MatchRequest } from '../../../matchrequest/domain/ports/MatchRequestRepository'
 import { useAuth } from '../../../auth/context/AuthContext'
 
 export function MyOffersPage() {
   const { findAccountMatchOffersUseCase, deleteMatchOfferUseCase } = useMatchOfferContext()
-  const { findReceivedMatchRequestsUseCase } = useMatchRequestContext()
+  const { findReceivedMatchRequestsUseCase, acceptMatchRequestUseCase } = useMatchRequestContext()
   const { accountId } = useAuth()
   const navigate = useNavigate()
 
@@ -56,6 +57,7 @@ export function MyOffersPage() {
   const [requesterMap, setRequesterMap] = useState<Record<string, Account>>({})
   const [selectedOffer, setSelectedOffer] = useState<MatchOffer | null>(null)
   const [requestsDialogOpen, setRequestsDialogOpen] = useState(false)
+  const [acceptingId, setAcceptingId] = useState<string | null>(null)
 
   useEffect(() => {
     findAccountMatchOffersUseCase.execute(accountId ?? '').then((result) => {
@@ -102,6 +104,18 @@ export function MyOffersPage() {
   const handleOpenRequests = (offer: MatchOffer) => {
     setSelectedOffer(offer)
     setRequestsDialogOpen(true)
+  }
+
+  const handleAccept = async (requestId: string) => {
+    setAcceptingId(requestId)
+    const result = await acceptMatchRequestUseCase.execute(accountId ?? '', requestId)
+    setAcceptingId(null)
+    if (result.success) {
+      setAllRequests((prev) => prev.map((r) => r.id === requestId ? { ...r, status: 'ACCEPTED' } : r))
+      setSnackbar({ open: true, message: 'Solicitud aceptada correctamente', severity: 'success' })
+    } else {
+      setSnackbar({ open: true, message: result.error ?? 'Error al aceptar la solicitud', severity: 'error' })
+    }
   }
 
   const requestsForOffer = selectedOffer
@@ -276,45 +290,65 @@ export function MyOffersPage() {
                 return (
                   <Box key={req.id}>
                     {i > 0 && <Divider />}
-                    <ListItem sx={{ px: 0, gap: 1.5 }}>
-                      <Avatar src={requester?.Picture} alt={requesterName} sx={{ width: 40, height: 40, flexShrink: 0 }}>
-                        {!requester?.Picture && <PersonIcon />}
-                      </Avatar>
-                      <ListItemText
-                        primary={<Typography variant="body2" fontWeight={600}>{requesterName}</Typography>}
-                        secondary={
-                          <Stack spacing={0.25} mt={0.25}>
+                    <ListItem sx={{ px: 0 }}>
+                      <Stack spacing={1.5} width="100%">
+                        <Stack direction="row" spacing={1.5} alignItems="center">
+                          <Avatar src={requester?.Picture} alt={requesterName} sx={{ width: 40, height: 40, flexShrink: 0 }}>
+                            {!requester?.Picture && <PersonIcon />}
+                          </Avatar>
+                          <Box>
+                            <Typography variant="body2" fontWeight={600}>{requesterName}</Typography>
                             {requester?.Nickname && (
                               <Typography variant="caption" color="text.secondary">@{requester.Nickname}</Typography>
                             )}
-                            {selectedOffer && (
-                              <>
-                                <Stack direction="row" spacing={0.5} alignItems="center">
-                                  <EventIcon sx={{ fontSize: 13, color: 'text.secondary' }} />
-                                  <Typography variant="caption" color="text.secondary">
-                                    {formatDate(selectedOffer.day)}
-                                  </Typography>
-                                </Stack>
-                                <Stack direction="row" spacing={2}>
-                                  <Stack direction="row" spacing={0.5} alignItems="center">
-                                    <AccessTimeIcon sx={{ fontSize: 13, color: 'text.secondary' }} />
-                                    <Typography variant="caption" color="text.secondary">
-                                      {formatTime(selectedOffer.time_slot.start_time)} - {formatTime(selectedOffer.time_slot.end_time)}
-                                    </Typography>
-                                  </Stack>
-                                  <Stack direction="row" spacing={0.5} alignItems="center">
-                                    <LocationOnIcon sx={{ fontSize: 13, color: 'text.secondary' }} />
-                                    <Typography variant="caption" color="text.secondary">
-                                      {selectedOffer.location.locality}, {selectedOffer.location.province}
-                                    </Typography>
-                                  </Stack>
-                                </Stack>
-                              </>
-                            )}
+                          </Box>
+                        </Stack>
+
+                        {selectedOffer && (
+                          <Stack spacing={0.25} pl={7}>
+                            <Stack direction="row" spacing={0.5} alignItems="center">
+                              <EventIcon sx={{ fontSize: 13, color: 'text.secondary' }} />
+                              <Typography variant="caption" color="text.secondary">{formatDate(selectedOffer.day)}</Typography>
+                            </Stack>
+                            <Stack direction="row" spacing={2}>
+                              <Stack direction="row" spacing={0.5} alignItems="center">
+                                <AccessTimeIcon sx={{ fontSize: 13, color: 'text.secondary' }} />
+                                <Typography variant="caption" color="text.secondary">
+                                  {formatTime(selectedOffer.time_slot.start_time)} - {formatTime(selectedOffer.time_slot.end_time)}
+                                </Typography>
+                              </Stack>
+                              <Stack direction="row" spacing={0.5} alignItems="center">
+                                <LocationOnIcon sx={{ fontSize: 13, color: 'text.secondary' }} />
+                                <Typography variant="caption" color="text.secondary">
+                                  {selectedOffer.location.locality}, {selectedOffer.location.province}
+                                </Typography>
+                              </Stack>
+                            </Stack>
                           </Stack>
-                        }
-                      />
-                      <Chip label={getStatusText(req.status)} size="small" color={getStatusColor(req.status) as any} />
+                        )}
+
+                        <Box pl={7}>
+                          {req.status === 'PENDING' ? (
+                            <Stack direction="row" spacing={1}>
+                              <Button
+                                variant="contained"
+                                color="success"
+                                size="small"
+                                startIcon={<CheckIcon />}
+                                disabled={acceptingId === req.id}
+                                onClick={() => handleAccept(req.id)}
+                              >
+                                {acceptingId === req.id ? 'Aceptando...' : 'Aceptar'}
+                              </Button>
+                              <Button variant="outlined" color="error" size="small" startIcon={<CloseIcon />} disabled>
+                                Rechazar
+                              </Button>
+                            </Stack>
+                          ) : (
+                            <Chip label={getStatusText(req.status)} size="small" color={getStatusColor(req.status) as any} />
+                          )}
+                        </Box>
+                      </Stack>
                     </ListItem>
                   </Box>
                 )

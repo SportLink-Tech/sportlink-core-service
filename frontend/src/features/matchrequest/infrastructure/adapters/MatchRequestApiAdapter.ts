@@ -25,6 +25,17 @@ export class MatchRequestApiAdapter implements MatchRequestRepository {
     return response.json()
   }
 
+  async accept(ownerAccountId: string, requestId: string): Promise<void> {
+    const response = await fetch(
+      `${API_BASE_URL}/account/${ownerAccountId}/match-request/${requestId}/accept`,
+      { method: 'POST' },
+    )
+    if (!response.ok) {
+      const data = await response.json().catch(() => ({}))
+      throw new Error(data.message || 'Error al aceptar la solicitud')
+    }
+  }
+
   async findSent(requesterAccountId: string, statuses?: string[]): Promise<MatchRequest[]> {
     const queryParams = new URLSearchParams({ sent: 'true' })
     if (statuses && statuses.length > 0) {

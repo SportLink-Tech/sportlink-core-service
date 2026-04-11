@@ -10,14 +10,17 @@ import {
   Divider,
   List,
   ListItem,
-  ListItemText,
   Avatar,
+  Button,
+  Snackbar,
 } from '@mui/material'
 import InboxIcon from '@mui/icons-material/Inbox'
 import EventIcon from '@mui/icons-material/Event'
 import AccessTimeIcon from '@mui/icons-material/AccessTime'
 import PersonIcon from '@mui/icons-material/Person'
 import LocationOnIcon from '@mui/icons-material/LocationOn'
+import CheckIcon from '@mui/icons-material/Check'
+import CloseIcon from '@mui/icons-material/Close'
 import { useMatchRequestContext } from '../../context/MatchRequestContext'
 import { useMatchOfferContext } from '../../../matchoffer/context/MatchOfferContext'
 import { MatchRequest } from '../../domain/ports/MatchRequestRepository'
@@ -55,7 +58,7 @@ function formatTime(dateTimeString: string): string {
 }
 
 export function MyReceivedRequestsPage() {
-  const { findReceivedMatchRequestsUseCase } = useMatchRequestContext()
+  const { findReceivedMatchRequestsUseCase, acceptMatchRequestUseCase } = useMatchRequestContext()
   const { retrieveMatchOfferUseCase } = useMatchOfferContext()
   const { accountId } = useAuth()
 
@@ -64,6 +67,8 @@ export function MyReceivedRequestsPage() {
   const [requesterMap, setRequesterMap] = useState<Record<string, Account>>({})
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [acceptingId, setAcceptingId] = useState<string | null>(null)
+  const [snackbar, setSnackbar] = useState<{ open: boolean; message: string; severity: 'success' | 'error' }>({ open: false, message: '', severity: 'success' })
 
   useEffect(() => {
     findReceivedMatchRequestsUseCase.execute(accountId ?? '').then(async (result) => {
@@ -112,7 +117,20 @@ export function MyReceivedRequestsPage() {
     })
   }, [])
 
+  const handleAccept = async (requestId: string) => {
+    setAcceptingId(requestId)
+    const result = await acceptMatchRequestUseCase.execute(accountId ?? '', requestId)
+    setAcceptingId(null)
+    if (result.success) {
+      setRequests((prev) => prev.map((r) => r.id === requestId ? { ...r, status: 'ACCEPTED' } : r))
+      setSnackbar({ open: true, message: 'Solicitud aceptada correctamente', severity: 'success' })
+    } else {
+      setSnackbar({ open: true, message: result.error ?? 'Error al aceptar la solicitud', severity: 'error' })
+    }
+  }
+
   return (
+    <>
     <Box>
       <Stack spacing={4}>
         <Paper
@@ -154,55 +172,65 @@ export function MyReceivedRequestsPage() {
                 return (
                   <Box key={req.id}>
                     {i > 0 && <Divider />}
-                    <ListItem sx={{ px: 3, py: 2, gap: 2 }}>
-                      <Avatar
-                        src={requester?.Picture}
-                        alt={requesterName}
-                        sx={{ width: 40, height: 40, flexShrink: 0 }}
-                      >
-                        {!requester?.Picture && <PersonIcon />}
-                      </Avatar>
-                      <ListItemText
-                        primary={
-                          <Typography variant="body1" fontWeight={600}>
-                            {requesterName}
-                          </Typography>
-                        }
-                        secondary={
-                          <Stack spacing={0.5} mt={0.5}>
-                            {offer && (
-                              <>
-                                <Stack direction="row" spacing={2}>
-                                  <Stack direction="row" spacing={0.5} alignItems="center">
-                                    <EventIcon sx={{ fontSize: 14, color: 'text.secondary' }} />
-                                    <Typography variant="caption" color="text.secondary">
-                                      {formatDate(offer.day)}
-                                    </Typography>
-                                  </Stack>
-                                  <Stack direction="row" spacing={0.5} alignItems="center">
-                                    <AccessTimeIcon sx={{ fontSize: 14, color: 'text.secondary' }} />
-                                    <Typography variant="caption" color="text.secondary">
-                                      {formatTime(offer.time_slot.start_time)} - {formatTime(offer.time_slot.end_time)}
-                                    </Typography>
-                                  </Stack>
-                                </Stack>
-                                <Stack direction="row" spacing={0.5} alignItems="center">
-                                  <LocationOnIcon sx={{ fontSize: 14, color: 'text.secondary' }} />
-                                  <Typography variant="caption" color="text.secondary">
-                                    {offer.location.locality}, {offer.location.province}
-                                  </Typography>
-                                </Stack>
-                              </>
-                            )}
+                    <ListItem sx={{ px: 3, py: 2 }}>
+                      <Stack spacing={1.5} width="100%">
+                        <Stack direction="row" spacing={2} alignItems="center">
+                          <Avatar src={requester?.Picture} alt={requesterName} sx={{ width: 40, height: 40, flexShrink: 0 }}>
+                            {!requester?.Picture && <PersonIcon />}
+                          </Avatar>
+                          <Box>
+                            <Typography variant="body1" fontWeight={600}>{requesterName}</Typography>
                             {requester?.Nickname && (
-                              <Typography variant="caption" color="text.secondary">
-                                @{requester.Nickname}
-                              </Typography>
+                              <Typography variant="caption" color="text.secondary">@{requester.Nickname}</Typography>
                             )}
+                          </Box>
+                        </Stack>
+
+                        {offer && (
+                          <Stack spacing={0.5} pl={7}>
+                            <Stack direction="row" spacing={2}>
+                              <Stack direction="row" spacing={0.5} alignItems="center">
+                                <EventIcon sx={{ fontSize: 14, color: 'text.secondary' }} />
+                                <Typography variant="caption" color="text.secondary">{formatDate(offer.day)}</Typography>
+                              </Stack>
+                              <Stack direction="row" spacing={0.5} alignItems="center">
+                                <AccessTimeIcon sx={{ fontSize: 14, color: 'text.secondary' }} />
+                                <Typography variant="caption" color="text.secondary">
+                                  {formatTime(offer.time_slot.start_time)} - {formatTime(offer.time_slot.end_time)}
+                                </Typography>
+                              </Stack>
+                            </Stack>
+                            <Stack direction="row" spacing={0.5} alignItems="center">
+                              <LocationOnIcon sx={{ fontSize: 14, color: 'text.secondary' }} />
+                              <Typography variant="caption" color="text.secondary">
+                                {offer.location.locality}, {offer.location.province}
+                              </Typography>
+                            </Stack>
                           </Stack>
-                        }
-                      />
-                      <Chip label={statusText(req.status)} size="small" color={statusColor(req.status)} />
+                        )}
+
+                        <Box pl={7}>
+                          {req.status === 'PENDING' ? (
+                            <Stack direction="row" spacing={1}>
+                              <Button
+                                variant="contained"
+                                color="success"
+                                size="small"
+                                startIcon={<CheckIcon />}
+                                disabled={acceptingId === req.id}
+                                onClick={() => handleAccept(req.id)}
+                              >
+                                {acceptingId === req.id ? 'Aceptando...' : 'Aceptar'}
+                              </Button>
+                              <Button variant="outlined" color="error" size="small" startIcon={<CloseIcon />} disabled>
+                                Rechazar
+                              </Button>
+                            </Stack>
+                          ) : (
+                            <Chip label={statusText(req.status)} size="small" color={statusColor(req.status)} />
+                          )}
+                        </Box>
+                      </Stack>
                     </ListItem>
                   </Box>
                 )
@@ -212,5 +240,17 @@ export function MyReceivedRequestsPage() {
         )}
       </Stack>
     </Box>
+
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={4000}
+        onClose={() => setSnackbar((s) => ({ ...s, open: false }))}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+      >
+        <Alert severity={snackbar.severity} onClose={() => setSnackbar((s) => ({ ...s, open: false }))}>
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
+    </>
   )
 }

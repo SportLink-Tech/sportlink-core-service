@@ -48,6 +48,31 @@ func NewMatchOffer(
 	}
 }
 
+func (s Entity) Confirm() Entity {
+	s.Status = StatusConfirmed
+	return s
+}
+
+func (s Entity) IsPending() bool {
+	loc, _ := time.LoadLocation("America/New_York")
+	if s.IsExpire(loc) {
+		return false
+	}
+	return s.Status == StatusPending
+
+}
+
+// IsExpire returns true if the match has already ended based on the current time.
+// It uses TimeSlot.EndTime as the expiry boundary — once the match end time has
+// passed, the offer is considered expired regardless of its Status.
+// loc defaults to GMT-3 (Argentina) when nil.
+func (s Entity) IsExpire(loc *time.Location) bool {
+	if loc == nil {
+		loc = time.FixedZone("GMT-3", -3*60*60)
+	}
+	return time.Now().In(loc).After(s.TimeSlot.EndTime.In(loc))
+}
+
 // generateMatchOfferID generates a ULID for the match offer
 func generateMatchOfferID() string {
 	entropy := ulid.DefaultEntropy()

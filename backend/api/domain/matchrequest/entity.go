@@ -8,12 +8,12 @@ import (
 // Entity represents a match request in the domain.
 // A requester sends a request to join or challenge the owner of a match announcement.
 type Entity struct {
-	ID                  string
-	MatchOfferID        string
-	OwnerAccountID      string // account ID of the match announcement owner (receives the request)
-	RequesterAccountID  string // account ID of the user sending the request
-	Status              Status
-	CreatedAt           time.Time
+	ID                 string
+	MatchOfferID       string
+	OwnerAccountID     string // account ID of the match announcement owner (receives the request)
+	RequesterAccountID string // account ID of the user sending the request
+	Status             Status
+	CreatedAt          time.Time
 }
 
 func NewMatchRequest(
@@ -29,6 +29,22 @@ func NewMatchRequest(
 		Status:             StatusPending,
 		CreatedAt:          time.Now(),
 	}
+}
+func (s Entity) Accept() Entity {
+	s.Status = StatusAccepted
+	return s
+}
+
+func (s Entity) IsPending() bool {
+	return s.Status == StatusPending
+}
+
+func (s Entity) IsRejected() bool {
+	return s.Status == StatusRejected
+}
+
+func (s Entity) IsAccepted() bool {
+	return s.Status == StatusAccepted
 }
 
 // GenerateMatchRequestID returns the composite sort key for a match request.

@@ -8,6 +8,7 @@ import (
 	uauth "sportlink/api/application/auth/usecases"
 	umatchoffer "sportlink/api/application/matchoffer/usecases"
 	umatchrequest "sportlink/api/application/matchrequest/usecases"
+	imatch "sportlink/api/infrastructure/persistence/match"
 	uplayer "sportlink/api/application/player/usecases"
 
 	uteam "sportlink/api/application/team/usecases"
@@ -47,6 +48,7 @@ func Routes(router *gin.Engine) {
 	teamRepository := iteam.NewRepository(dynamoDbClient, "SportLinkCore")
 	matchOfferRepository := imatchoffer.NewRepository(dynamoDbClient, "SportLinkCore")
 	matchRequestRepository := imatchrequest.NewRepository(dynamoDbClient, "SportLinkCore")
+	matchRepository := imatch.NewRepository(dynamoDbClient, "SportLinkCore")
 
 	// Account Use Cases
 	findAccount := uaccount.NewFindAccountUC(accountRepository)
@@ -70,6 +72,7 @@ func Routes(router *gin.Engine) {
 	createMatchRequest := umatchrequest.NewCreateMatchRequestUC(matchRequestRepository, matchOfferRepository)
 	findMatchRequests := umatchrequest.NewFindMatchRequestsUC(matchRequestRepository)
 	updateMatchRequestStatus := umatchrequest.NewUpdateMatchRequestStatusUC(matchRequestRepository)
+	acceptMatchRequest := umatchrequest.NewAcceptMatchRequestUC(matchRepository, matchRequestRepository, matchOfferRepository)
 
 	// Auth Use Cases
 	googleVerifier := authservice.NewGoogleTokenVerifier(cfg.AuthCfg.GoogleClientID)
@@ -101,10 +104,11 @@ func Routes(router *gin.Engine) {
 	router.GET("/account/:account_id/match-offer", matchOfferController.FindAccountMatchOffers)
 	router.DELETE("/account/:account_id/match-offer/:offer_id", matchOfferController.DeleteMatchOffer)
 
-	matchRequestController := cmatchrequest.NewController(createMatchRequest, findMatchRequests, updateMatchRequestStatus, customValidator)
+	matchRequestController := cmatchrequest.NewController(createMatchRequest, findMatchRequests, updateMatchRequestStatus, acceptMatchRequest, customValidator)
 	router.POST("/account/:account_id/match-offer/:offer_id/match-request", matchRequestController.CreateMatchRequest)
 	router.GET("/account/:account_id/match-request", matchRequestController.FindMatchRequests)
 	router.PATCH("/account/:account_id/match-request/:request_id", matchRequestController.UpdateMatchRequestStatus)
+	router.POST("/account/:account_id/match-request/:request_id/accept", matchRequestController.AcceptMatchRequest)
 
 	monitoring.RegisterMetricsRoute(router)
 }

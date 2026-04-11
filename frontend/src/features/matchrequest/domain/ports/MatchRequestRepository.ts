@@ -11,4 +11,5 @@ export interface MatchRequestRepository {
   create(requesterAccountId: string, matchOfferId: string): Promise<void>
   findSent(requesterAccountId: string, statuses?: string[]): Promise<MatchRequest[]>
   findReceived(ownerAccountId: string): Promise<MatchRequest[]>
+  accept(ownerAccountId: string, requestId: string): Promise<void>
 }
