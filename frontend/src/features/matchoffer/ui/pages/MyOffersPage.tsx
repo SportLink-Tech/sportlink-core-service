@@ -37,12 +37,13 @@ import { fetchAccount, Account } from '../../../auth/infrastructure/adapters/Acc
 import { useMatchRequestContext } from '../../../matchrequest/context/MatchRequestContext'
 import CheckIcon from '@mui/icons-material/Check'
 import CloseIcon from '@mui/icons-material/Close'
+import EmojiEventsIcon from '@mui/icons-material/EmojiEvents'
 import { MatchOffer } from '../../../../shared/types/matchOffer'
 import { MatchRequest } from '../../../matchrequest/domain/ports/MatchRequestRepository'
 import { useAuth } from '../../../auth/context/AuthContext'
 
 export function MyOffersPage() {
-  const { findAccountMatchOffersUseCase, deleteMatchOfferUseCase } = useMatchOfferContext()
+  const { findAccountMatchOffersUseCase, deleteMatchOfferUseCase, confirmMatchOfferUseCase } = useMatchOfferContext()
   const { findReceivedMatchRequestsUseCase, acceptMatchRequestUseCase } = useMatchRequestContext()
   const { accountId } = useAuth()
   const navigate = useNavigate()
@@ -58,6 +59,7 @@ export function MyOffersPage() {
   const [selectedOffer, setSelectedOffer] = useState<MatchOffer | null>(null)
   const [requestsDialogOpen, setRequestsDialogOpen] = useState(false)
   const [acceptingId, setAcceptingId] = useState<string | null>(null)
+  const [confirming, setConfirming] = useState(false)
 
   useEffect(() => {
     findAccountMatchOffersUseCase.execute(accountId ?? '').then((result) => {
@@ -115,6 +117,20 @@ export function MyOffersPage() {
       setSnackbar({ open: true, message: 'Solicitud aceptada correctamente', severity: 'success' })
     } else {
       setSnackbar({ open: true, message: result.error ?? 'Error al aceptar la solicitud', severity: 'error' })
+    }
+  }
+
+  const handleConfirm = async () => {
+    if (!selectedOffer?.id) return
+    setConfirming(true)
+    const result = await confirmMatchOfferUseCase.execute(accountId ?? '', selectedOffer.id)
+    setConfirming(false)
+    if (result.success) {
+      setOffers((prev) => prev.map((o) => o.id === selectedOffer.id ? { ...o, status: 'CONFIRMED' } : o))
+      setRequestsDialogOpen(false)
+      setSnackbar({ open: true, message: 'Partido confirmado correctamente', severity: 'success' })
+    } else {
+      setSnackbar({ open: true, message: result.error ?? 'Error al confirmar el partido', severity: 'error' })
     }
   }
 
@@ -357,6 +373,17 @@ export function MyOffersPage() {
           )}
         </DialogContent>
         <DialogActions>
+          {selectedOffer?.status === 'PENDING' && requestsForOffer.some((r) => r.status === 'ACCEPTED') && (
+            <Button
+              variant="contained"
+              color="success"
+              startIcon={<EmojiEventsIcon />}
+              disabled={confirming}
+              onClick={handleConfirm}
+            >
+              {confirming ? 'Confirmando...' : 'Confirmar partido'}
+            </Button>
+          )}
           <Button onClick={() => setRequestsDialogOpen(false)}>Cerrar</Button>
         </DialogActions>
       </Dialog>

@@ -7,12 +7,11 @@ import (
 
 func EntityToResponse(entity match.Entity) response.MatchResponse {
 	return response.MatchResponse{
-		ID:               entity.ID,
-		LocalAccountID:   entity.LocalAccountID,
-		VisitorAccountID: entity.VisitorAccountID,
-		Sport:            string(entity.Sport),
-		Day:              entity.Day,
-		Status:           entity.Status.String(),
-		CreatedAt:        entity.CreatedAt,
+		ID:           entity.ID,
+		Participants: entity.Participants,
+		Sport:        string(entity.Sport),
+		Day:          entity.Day,
+		Status:       entity.Status.String(),
+		CreatedAt:    entity.CreatedAt,
 	}
 }

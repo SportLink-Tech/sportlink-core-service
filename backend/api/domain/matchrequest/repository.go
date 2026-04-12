@@ -5,6 +5,7 @@ import "context"
 // DomainQuery represents the search criteria for match requests
 type DomainQuery struct {
 	IDs                 []string // Search by specific request IDs
+	MatchOfferIDs       []string // Search by match offer IDs
 	OwnerAccountIDs     []string // Search by match announcement owner account IDs
 	RequesterAccountIDs []string // Search by requester account IDs
 	Statuses            []Status // Search by statuses

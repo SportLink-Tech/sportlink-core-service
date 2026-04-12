@@ -28,6 +28,7 @@ type Dto struct {
 	CreatedAt      int64    `dynamodbav:"CreatedAt"`                // Unix timestamp of creation
 	ExpiresAt      int64    `dynamodbav:"ExpiresAt"`                // TTL for DynamoDB (Unix timestamp)
 	OwnerAccountId string   `dynamodbav:"OwnerAccountId,omitempty"` // Account ID of the owner
+	Capacity       int      `dynamodbav:"Capacity"`                 // 0 = no auto-confirm; >0 = total spots
 }
 
 func (d *Dto) ToDomain() matchoffer.Entity {
@@ -77,5 +78,6 @@ func (d *Dto) ToDomain() matchoffer.Entity {
 		Status:             status,
 		CreatedAt:          createdAt,
 		OwnerAccountID:     d.OwnerAccountId,
+		Capacity:           d.Capacity,
 	}
 }

@@ -62,7 +62,7 @@ func TestCreateMatchOffer(t *testing.T) {
 					domain.NewLocation("Argentina", "Buenos Aires", "Palermo"),
 					domain.NewGreaterThanCategory(common.L4),
 					domain.StatusPending,
-					time.Now(),	"",
+					time.Now(),	"", 0,
 
 				)
 
@@ -259,7 +259,7 @@ func TestCreateMatchOffer(t *testing.T) {
 					domain.NewLocation("Argentina", "Buenos Aires", "Palermo"),
 					domain.NewSpecificCategories([]common.Category{common.L4, common.L5, common.L6}),
 					domain.StatusPending,
-					time.Now(),	"",
+					time.Now(),	"", 0,
 
 				)
 
@@ -307,7 +307,7 @@ func TestCreateMatchOffer(t *testing.T) {
 					domain.NewLocation("Argentina", "Buenos Aires", "Palermo"),
 					categoryRange,
 					domain.StatusPending,
-					time.Now(),	"",
+					time.Now(),	"", 0,
 
 				)
 
@@ -332,7 +332,7 @@ func TestCreateMatchOffer(t *testing.T) {
 
 			// Setup
 			useCaseMock := amocks.NewUseCase[domain.Entity, domain.Entity](t)
-			controller := matchoffer.NewController(useCaseMock, nil, nil, nil, validator)
+			controller := matchoffer.NewController(useCaseMock, nil, nil, nil, nil, validator)
 
 			gin.SetMode(gin.TestMode)
 			router := gin.Default()

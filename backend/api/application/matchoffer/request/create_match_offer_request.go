@@ -2,12 +2,13 @@ package request
 
 // NewMatchOfferRequest defines the structure of the request body for the match offer creation endpoint.
 type NewMatchOfferRequest struct {
-	TeamName           string             `json:"team_name" validate:"required"`
+	TeamName           string             `json:"team_name"`
 	Sport              string             `json:"sport" validate:"required"`
 	Day                string             `json:"day" validate:"required"` // ISO date string
 	TimeSlot           TimeSlot           `json:"time_slot" validate:"required"`
 	Location           Location           `json:"location" validate:"required"`
 	AdmittedCategories CategoryRangeInput `json:"admitted_categories" validate:"required"`
+	Capacity           int                `json:"capacity"` // 0 = no auto-confirm; >0 = total spots (owner + requesters)
 }
 
 type TimeSlot struct {

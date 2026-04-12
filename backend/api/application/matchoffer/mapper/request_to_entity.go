@@ -120,5 +120,6 @@ func CreationRequestToEntity(req request.NewMatchOfferRequest, ownerAccountID st
 		matchoffer.StatusPending,
 		createdAt,
 		ownerAccountID,
+		req.Capacity,
 	), nil
 }

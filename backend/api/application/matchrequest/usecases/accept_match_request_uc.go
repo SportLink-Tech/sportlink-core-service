@@ -4,7 +4,8 @@ import (
 	"context"
 	"fmt"
 	"sportlink/api/application/errors"
-	"sportlink/api/domain/match"
+	appevents "sportlink/api/application/events"
+	matchofferevent "sportlink/api/application/matchoffer/events"
 	"sportlink/api/domain/matchoffer"
 	"sportlink/api/domain/matchrequest"
 	"sportlink/pkg/log"
@@ -16,24 +17,24 @@ type AcceptMatchRequestInput struct {
 }
 
 type AcceptMatchRequestUC struct {
-	matchRepository        match.Repository
 	matchRequestRepository matchrequest.Repository
 	matchOfferRepository   matchoffer.Repository
+	publisher              appevents.Publisher[matchofferevent.MatchOfferCapacityReachedEvent]
 }
 
 func NewAcceptMatchRequestUC(
-	matchRepository match.Repository,
 	matchRequestRepository matchrequest.Repository,
 	matchOfferRepository matchoffer.Repository,
+	publisher appevents.Publisher[matchofferevent.MatchOfferCapacityReachedEvent],
 ) *AcceptMatchRequestUC {
 	return &AcceptMatchRequestUC{
-		matchRepository:        matchRepository,
 		matchRequestRepository: matchRequestRepository,
 		matchOfferRepository:   matchOfferRepository,
+		publisher:              publisher,
 	}
 }
 
-func (uc *AcceptMatchRequestUC) Invoke(ctx context.Context, input AcceptMatchRequestInput) (*match.Entity, error) {
+func (uc *AcceptMatchRequestUC) Invoke(ctx context.Context, input AcceptMatchRequestInput) (*matchrequest.Entity, error) {
 	matchReq, err := uc.getMatchRequest(ctx, input.MatchRequestId)
 	if err != nil {
 		log.GetLogger(ctx).Error(fmt.Sprintf("failed to get match request %s", input.MatchRequestId), err)
@@ -61,26 +62,45 @@ func (uc *AcceptMatchRequestUC) Invoke(ctx context.Context, input AcceptMatchReq
 		return nil, err
 	}
 
-	newMatch := match.NewMatch(matchReq.OwnerAccountID, matchReq.RequesterAccountID, matchOffer.Sport, matchOffer.Day)
-	err = uc.matchRepository.Save(ctx, newMatch)
-	if err != nil {
-		log.GetLogger(ctx).Error(fmt.Sprintf("failed to save match %s", newMatch.ID), err)
-		return nil, err
-	}
-
-	err = uc.matchRequestRepository.Save(ctx, matchReq.Accept())
-	if err != nil {
+	accepted := matchReq.Accept()
+	if err = uc.matchRequestRepository.Save(ctx, accepted); err != nil {
 		log.GetLogger(ctx).Error(fmt.Sprintf("failed to save accepted match request %s", input.MatchRequestId), err)
 		return nil, err
 	}
 
-	err = uc.matchOfferRepository.Save(ctx, matchOffer.Confirm())
-	if err != nil {
-		log.GetLogger(ctx).Error(fmt.Sprintf("failed to save confirmed match offer %s", matchReq.MatchOfferID), err)
-		return nil, err
+	if err = uc.tryPublishIfCapacityReached(ctx, matchOffer); err != nil {
+		log.GetLogger(ctx).Error(fmt.Sprintf("failed to publish capacity reached event for offer %s", matchOffer.ID), err)
 	}
 
-	return &newMatch, nil
+	return &accepted, nil
+}
+
+func (uc *AcceptMatchRequestUC) tryPublishIfCapacityReached(ctx context.Context, offer *matchoffer.Entity) error {
+	if offer.Capacity == 0 {
+		return nil
+	}
+	count, err := uc.countAcceptedRequests(ctx, offer.ID)
+	if err != nil {
+		return err
+	}
+	if count == offer.Capacity-1 {
+		return uc.publisher.Publish(ctx, matchofferevent.MatchOfferCapacityReachedEvent{
+			MatchOfferID:   offer.ID,
+			OwnerAccountID: offer.OwnerAccountID,
+		})
+	}
+	return nil
+}
+
+func (uc *AcceptMatchRequestUC) countAcceptedRequests(ctx context.Context, matchOfferID string) (int, error) {
+	requests, err := uc.matchRequestRepository.Find(ctx, matchrequest.DomainQuery{
+		MatchOfferIDs: []string{matchOfferID},
+		Statuses:      []matchrequest.Status{matchrequest.StatusAccepted},
+	})
+	if err != nil {
+		return 0, err
+	}
+	return len(requests), nil
 }
 
 func (uc *AcceptMatchRequestUC) getMatchRequest(ctx context.Context, matchRequestId string) (*matchrequest.Entity, error) {
@@ -91,7 +111,6 @@ func (uc *AcceptMatchRequestUC) getMatchRequest(ctx context.Context, matchReques
 	if len(matchReqs) == 0 || len(matchReqs) > 1 {
 		return nil, errors.UseCaseExecutionFailed("match request not found or multiple match requests found for the given ID")
 	}
-
 	return &matchReqs[0], nil
 }
 

@@ -119,10 +119,10 @@ env-down:
 .PHONY: coverage-report
 coverage-report:
 	@echo "Running tests and creating coverage report..."
-	@cd backend && go test ./... -coverprofile=coverage_full.out > /dev/null 2>&1
+	@cd backend && GOROOT="C:/Program Files/Go" go test ./... -coverprofile=coverage_full.out > /dev/null 2>&1
 	@cd backend && grep -Ev "(/mocks/|/dev/|/cmd/)" coverage_full.out > coverage.out
-	@cd backend && go tool cover -html=coverage.out -o coverage.html > /dev/null 2>&1
-	@cd backend && echo "Total code coverage: $$(go tool cover -func=coverage.out | grep total: | awk '{print $$3}')" && rm -f coverage_full.out coverage.out
+	@cd backend && GOROOT="C:/Program Files/Go" go tool cover -html=coverage.out -o coverage.html > /dev/null 2>&1
+	@cd backend && echo "Total code coverage: $$(GOROOT="C:/Program Files/Go" go tool cover -func=coverage.out | grep total: | awk '{print $$3}')" && rm -f coverage_full.out coverage.out
 
 .PHONY: lint
 lint:
@@ -132,8 +132,8 @@ lint:
 .PHONY: test
 test:
 	@echo "Running tests..."
-	@cd backend && go clean --testcache
-	@cd backend && go test -cover -parallel 4 ./... | grep -v '?'
+	@cd backend && GOROOT="C:/Program Files/Go" go clean --testcache
+	@cd backend && GOROOT="C:/Program Files/Go" go test -cover -parallel 4 ./... | grep -v '?'
 
 .PHONY: generate-mocks
 generate-mocks:

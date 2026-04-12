@@ -11,5 +11,6 @@ export interface MatchOfferRepository {
   findByAccount(accountId: string, statuses?: string[]): Promise<{ data: MatchOffer[]; status: number }>
   retrieve(offerId: string): Promise<MatchOffer>
   delete(accountId: string, offerId: string): Promise<void>
+  confirm(accountId: string, offerId: string): Promise<void>
 }
 

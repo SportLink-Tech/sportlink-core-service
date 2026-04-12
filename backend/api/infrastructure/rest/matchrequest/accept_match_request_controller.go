@@ -3,7 +3,7 @@ package matchrequest
 import (
 	"net/http"
 	"sportlink/api/application/matchrequest/usecases"
-	matchmapper "sportlink/api/infrastructure/rest/match/mapper"
+	reqmapper "sportlink/api/infrastructure/rest/matchrequest/mapper"
 
 	"github.com/gin-gonic/gin"
 )
@@ -22,5 +22,5 @@ func (sc *DefaultController) AcceptMatchRequest(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusCreated, matchmapper.EntityToResponse(*result))
+	c.JSON(http.StatusOK, reqmapper.EntityToResponse(*result))
 }

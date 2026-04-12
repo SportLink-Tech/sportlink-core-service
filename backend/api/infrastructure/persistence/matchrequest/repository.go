@@ -59,6 +59,7 @@ func (repo *RepositoryAdapter) Find(ctx context.Context, query matchrequest.Doma
 	hasOwnerCriteria := len(query.OwnerAccountIDs) > 0
 	hasIDCriteria := len(query.IDs) > 0
 	hasRequesterCriteria := len(query.RequesterAccountIDs) == 1 && !hasOwnerCriteria && !hasIDCriteria
+	hasOfferCriteria := len(query.MatchOfferIDs) > 0 && !hasOwnerCriteria && !hasIDCriteria && !hasRequesterCriteria
 
 	switch {
 	case hasOwnerCriteria && len(query.OwnerAccountIDs) > 1:
@@ -71,6 +72,8 @@ func (repo *RepositoryAdapter) Find(ctx context.Context, query matchrequest.Doma
 		return repo.findByPrimaryKey(ctx, query.IDs[0], query)
 	case hasRequesterCriteria:
 		return repo.findByRequesterAccountID(ctx, query.RequesterAccountIDs[0], query)
+	case hasOfferCriteria:
+		return repo.findByMatchOfferIDs(ctx, query)
 	default:
 		return []matchrequest.Entity{}, nil
 	}
@@ -273,6 +276,58 @@ func (repo *RepositoryAdapter) UpdateStatus(ctx context.Context, id string, owne
 	return nil
 }
 
+// findByMatchOfferIDs scans all requests filtering by MatchOfferId.
+// This is a scan-based approach — use only when no other index key is available.
+func (repo *RepositoryAdapter) findByMatchOfferIDs(ctx context.Context, query matchrequest.DomainQuery) ([]matchrequest.Entity, error) {
+	keyCond := expression.KeyEqual(expression.Key("EntityId"), expression.Value("Entity#MatchRequest"))
+
+	var offerVals []expression.OperandBuilder
+	for _, id := range query.MatchOfferIDs {
+		offerVals = append(offerVals, expression.Value(id))
+	}
+	offerFilter := expression.Name("MatchOfferId").In(offerVals[0], offerVals[1:]...)
+
+	builder := expression.NewBuilder().WithKeyCondition(keyCond).WithFilter(offerFilter)
+	builder = includeFilters(query, builder)
+
+	expr, err := builder.Build()
+	if err != nil {
+		return nil, err
+	}
+
+	var entities []matchrequest.Entity
+	var lastKey map[string]types.AttributeValue
+	for {
+		input := &dynamodb.QueryInput{
+			TableName:                 aws.String(repo.tableName),
+			KeyConditionExpression:    expr.KeyCondition(),
+			FilterExpression:          expr.Filter(),
+			ExpressionAttributeNames:  expr.Names(),
+			ExpressionAttributeValues: expr.Values(),
+		}
+		if lastKey != nil {
+			input.ExclusiveStartKey = lastKey
+		}
+		resp, err := repo.dbClient.Query(ctx, input)
+		if err != nil {
+			return nil, err
+		}
+		items, err := unmarshalItems(resp.Items)
+		if err != nil {
+			return nil, err
+		}
+		entities = append(entities, items...)
+		if resp.LastEvaluatedKey == nil {
+			break
+		}
+		lastKey = resp.LastEvaluatedKey
+	}
+	if entities == nil {
+		return []matchrequest.Entity{}, nil
+	}
+	return entities, nil
+}
+
 func includeFilters(query matchrequest.DomainQuery, builder expression.Builder) expression.Builder {
 	var filters []expression.ConditionBuilder
 
@@ -282,6 +337,14 @@ func includeFilters(query matchrequest.DomainQuery, builder expression.Builder) 
 			values = append(values, expression.Value(id))
 		}
 		filters = append(filters, expression.Name("RequesterAccountId").In(values[0], values[1:]...))
+	}
+
+	if len(query.MatchOfferIDs) > 0 {
+		var values []expression.OperandBuilder
+		for _, id := range query.MatchOfferIDs {
+			values = append(values, expression.Value(id))
+		}
+		filters = append(filters, expression.Name("MatchOfferId").In(values[0], values[1:]...))
 	}
 
 	if len(query.Statuses) > 0 {

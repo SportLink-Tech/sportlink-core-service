@@ -151,5 +151,18 @@ export class MatchOfferApiAdapter implements MatchOfferRepository {
       throw new Error(error.message || 'Error al eliminar la oferta')
     }
   }
+
+  async confirm(accountId: string, offerId: string): Promise<void> {
+    const response = await fetch(
+      `${API_BASE_URL}/account/${encodeURIComponent(accountId)}/match-offer/${offerId}/confirm`,
+      { method: 'POST' }
+    )
+
+    if (!response.ok) {
+      const data = await response.json().catch(() => ({}))
+      const error: ApiError = data
+      throw new Error(error.message || 'Error al confirmar el partido')
+    }
+  }
 }
 

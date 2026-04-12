@@ -26,13 +26,12 @@ func TestFindMatches(t *testing.T) {
 	fixedDay := time.Date(2026, 5, 10, 0, 0, 0, 0, time.UTC)
 
 	acceptedMatch := domainmatch.Entity{
-		ID:               "01MATCH001",
-		LocalAccountID:   "owner-1",
-		VisitorAccountID: "requester-1",
-		Sport:            common.Paddle,
-		Day:              fixedDay,
-		Status:           domainmatch.StatusAccepted,
-		CreatedAt:        fixedDay,
+		ID:           "01MATCH001",
+		Participants: []string{"owner-1", "requester-1"},
+		Sport:        common.Paddle,
+		Day:          fixedDay,
+		Status:       domainmatch.StatusAccepted,
+		CreatedAt:    fixedDay,
 	}
 
 	testCases := []struct {
@@ -61,7 +60,8 @@ func TestFindMatches(t *testing.T) {
 				assert.Len(t, arr, 1)
 				first := arr[0].(map[string]interface{})
 				assert.Equal(t, "01MATCH001", first["id"])
-				assert.Equal(t, "owner-1", first["local_account_id"])
+				participants := first["participants"].([]interface{})
+				assert.Equal(t, "owner-1", participants[0])
 				assert.Equal(t, "Paddle", first["sport"])
 				assert.Equal(t, "ACCEPTED", first["status"])
 			},

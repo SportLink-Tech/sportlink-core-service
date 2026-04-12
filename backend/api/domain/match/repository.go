@@ -9,7 +9,7 @@ type DomainQuery struct {
 
 type Repository interface {
 	// Save persists a match. Writes two records (one per account) so both
-	// LocalAccountID and VisitorAccountID can efficiently list their matches.
+	// All participants can efficiently list their matches.
 	Save(ctx context.Context, entity Entity) error
 
 	// Find returns all matches for the given account (as local or visitor).

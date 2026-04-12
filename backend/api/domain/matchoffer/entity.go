@@ -21,6 +21,7 @@ type Entity struct {
 	Status             Status
 	CreatedAt          time.Time
 	OwnerAccountID     string
+	Capacity           int // 0 = no auto-confirm; >0 = total spots (owner + accepted requesters)
 }
 
 func NewMatchOffer(
@@ -33,6 +34,7 @@ func NewMatchOffer(
 	status Status,
 	createdAt time.Time,
 	ownerAccountID string,
+	capacity int,
 ) Entity {
 	return Entity{
 		ID:                 generateMatchOfferID(),
@@ -45,6 +47,7 @@ func NewMatchOffer(
 		Status:             status,
 		CreatedAt:          createdAt,
 		OwnerAccountID:     ownerAccountID,
+		Capacity:           capacity,
 	}
 }
 

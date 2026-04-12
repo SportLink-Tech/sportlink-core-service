@@ -59,8 +59,8 @@ export function MyMatchesPage() {
       .then(async (result) => {
         setMatches(result)
 
-        const opponentIds = result.map((m) =>
-          m.local_account_id === accountId ? m.visitor_account_id : m.local_account_id
+        const opponentIds = result.flatMap((m) =>
+          m.participants.filter((id) => id !== accountId)
         )
         const uniqueIds = [...new Set(opponentIds)]
 
@@ -85,16 +85,19 @@ export function MyMatchesPage() {
       .finally(() => setLoading(false))
   }, [accountId])
 
-  const opponentOf = (m: Match): Account | undefined => {
-    const opponentId = m.local_account_id === accountId ? m.visitor_account_id : m.local_account_id
-    return accountMap[opponentId]
-  }
+  const opponentsOf = (m: Match): Account[] =>
+    m.participants
+      .filter((id) => id !== accountId)
+      .map((id) => accountMap[id])
+      .filter(Boolean) as Account[]
 
-  const opponentName = (m: Match): string => {
-    const acc = opponentOf(m)
-    const opponentId = m.local_account_id === accountId ? m.visitor_account_id : m.local_account_id
-    if (!acc) return opponentId
-    return `${acc.FirstName} ${acc.LastName}`.trim() || acc.Nickname || acc.Email
+  const opponentNames = (m: Match): string => {
+    const opponentIds = m.participants.filter((id) => id !== accountId)
+    const opponents = opponentsOf(m)
+    if (opponents.length === 0) return opponentIds.join(', ')
+    return opponents
+      .map((acc) => `${acc.FirstName} ${acc.LastName}`.trim() || acc.Nickname || acc.Email)
+      .join(', ')
   }
 
   return (
@@ -131,9 +134,8 @@ export function MyMatchesPage() {
           <Paper elevation={0} sx={{ borderRadius: 2, border: '1px solid', borderColor: 'divider' }}>
             <List disablePadding>
               {matches.map((match, i) => {
-                const opponent = opponentOf(match)
-                const name = opponentName(match)
-                const isLocal = match.local_account_id === accountId
+                const opponents = opponentsOf(match)
+                const names = opponentNames(match)
                 return (
                   <Box key={match.id}>
                     {i > 0 && <Divider />}
@@ -141,15 +143,22 @@ export function MyMatchesPage() {
                       <Stack spacing={1} width="100%">
                         <Stack direction="row" spacing={2} alignItems="center" justifyContent="space-between">
                           <Stack direction="row" spacing={2} alignItems="center">
-                            <Avatar src={opponent?.Picture} alt={name} sx={{ width: 40, height: 40 }}>
-                              {!opponent?.Picture && <PersonIcon />}
-                            </Avatar>
-                            <Box>
-                              <Typography variant="body1" fontWeight={600}>{name}</Typography>
-                              {opponent?.Nickname && (
-                                <Typography variant="caption" color="text.secondary">@{opponent.Nickname}</Typography>
-                              )}
-                            </Box>
+                            <Stack direction="row" spacing={-1}>
+                              {opponents.length > 0
+                                ? opponents.map((opp, idx) => (
+                                    <Avatar
+                                      key={idx}
+                                      src={opp.Picture}
+                                      alt={`${opp.FirstName} ${opp.LastName}`}
+                                      sx={{ width: 40, height: 40, border: '2px solid white' }}
+                                    >
+                                      <PersonIcon />
+                                    </Avatar>
+                                  ))
+                                : <Avatar sx={{ width: 40, height: 40 }}><PersonIcon /></Avatar>
+                              }
+                            </Stack>
+                            <Typography variant="body1" fontWeight={600}>{names}</Typography>
                           </Stack>
                           <Chip label={statusText(match.status)} size="small" color={statusColor(match.status)} />
                         </Stack>
@@ -165,9 +174,6 @@ export function MyMatchesPage() {
                             <SportsIcon sx={{ fontSize: 14, color: 'text.secondary' }} />
                             <Typography variant="caption" color="text.secondary">{match.sport}</Typography>
                           </Stack>
-                          <Typography variant="caption" color="text.secondary">
-                            {isLocal ? 'Local' : 'Visitante'}
-                          </Typography>
                         </Stack>
                       </Stack>
                     </ListItem>

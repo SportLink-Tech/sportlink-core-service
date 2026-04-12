@@ -42,7 +42,7 @@ func TestRepository_Save(t *testing.T) {
 				location,
 				ddomain.NewSpecificCategories([]common.Category{5, 6, 7}),
 				ddomain.StatusPending,
-				time.Now().In(tz),	"",
+				time.Now().In(tz),	"", 0,
 
 			),
 			setupMock: func(mockClient *amocks.DynamoDBClientInterface, entity ddomain.Entity) {
@@ -70,7 +70,7 @@ func TestRepository_Save(t *testing.T) {
 				location,
 				ddomain.NewGreaterThanCategory(5),
 				ddomain.StatusPending,
-				time.Now().In(tz),	"",
+				time.Now().In(tz),	"", 0,
 
 			),
 			setupMock: func(mockClient *amocks.DynamoDBClientInterface, entity ddomain.Entity) {
@@ -90,7 +90,7 @@ func TestRepository_Save(t *testing.T) {
 				location,
 				ddomain.NewSpecificCategories([]common.Category{5, 6, 7}),
 				ddomain.StatusPending,
-				time.Now().In(tz),	"",
+				time.Now().In(tz),	"", 0,
 
 			),
 			setupMock: func(mockClient *amocks.DynamoDBClientInterface, entity ddomain.Entity) {
@@ -149,7 +149,7 @@ func TestRepository_Find(t *testing.T) {
 					location,
 					ddomain.NewSpecificCategories([]common.Category{5}),
 					ddomain.StatusPending,
-					time.Now().In(tz),	"",
+					time.Now().In(tz),	"", 0,
 
 				)
 				dto, _ := matchoffer.From(entity)
@@ -196,7 +196,7 @@ func TestRepository_Find(t *testing.T) {
 					location,
 					ddomain.NewSpecificCategories([]common.Category{5}),
 					ddomain.StatusPending,
-					time.Now().In(tz),	"",
+					time.Now().In(tz),	"", 0,
 
 				)
 				dto1, _ := matchoffer.From(entity1)
@@ -210,7 +210,7 @@ func TestRepository_Find(t *testing.T) {
 					location,
 					ddomain.NewSpecificCategories([]common.Category{5}),
 					ddomain.StatusConfirmed,
-					time.Now().In(tz),	"",
+					time.Now().In(tz),	"", 0,
 
 				)
 				dto2, _ := matchoffer.From(entity2)
@@ -254,7 +254,7 @@ func TestRepository_Find(t *testing.T) {
 					location,
 					ddomain.NewSpecificCategories([]common.Category{5}),
 					ddomain.StatusPending,
-					time.Now().In(tz),	"",
+					time.Now().In(tz),	"", 0,
 
 				)
 				dto1, _ := matchoffer.From(entity1)
@@ -268,7 +268,7 @@ func TestRepository_Find(t *testing.T) {
 					location,
 					ddomain.NewSpecificCategories([]common.Category{5}),
 					ddomain.StatusPending,
-					time.Now().In(tz),	"",
+					time.Now().In(tz),	"", 0,
 
 				)
 				dto2, _ := matchoffer.From(entity2)
@@ -282,7 +282,7 @@ func TestRepository_Find(t *testing.T) {
 					location,
 					ddomain.NewSpecificCategories([]common.Category{5}),
 					ddomain.StatusPending,
-					time.Now().In(tz),	"",
+					time.Now().In(tz),	"", 0,
 
 				)
 				dto3, _ := matchoffer.From(entity3)
@@ -325,7 +325,7 @@ func TestRepository_Find(t *testing.T) {
 					location,
 					ddomain.NewSpecificCategories([]common.Category{5}),
 					ddomain.StatusPending,
-					time.Now().In(tz),	"",
+					time.Now().In(tz),	"", 0,
 
 				)
 				dto, _ := matchoffer.From(entity)
@@ -370,7 +370,7 @@ func TestRepository_Find(t *testing.T) {
 					location,
 					ddomain.NewSpecificCategories([]common.Category{5}),
 					ddomain.StatusPending,
-					time.Now().In(tz),	"",
+					time.Now().In(tz),	"", 0,
 
 				)
 				dto, _ := matchoffer.From(entity)
@@ -415,7 +415,7 @@ func TestRepository_Find(t *testing.T) {
 					location,
 					ddomain.NewSpecificCategories([]common.Category{5}),
 					ddomain.StatusPending,
-					time.Now().In(tz),	"",
+					time.Now().In(tz),	"", 0,
 
 				)
 				dto, _ := matchoffer.From(entity)
@@ -455,7 +455,7 @@ func TestRepository_Find(t *testing.T) {
 					location,
 					ddomain.NewSpecificCategories([]common.Category{5}),
 					ddomain.StatusPending,
-					time.Now().In(tz),	"",
+					time.Now().In(tz),	"", 0,
 
 				)
 				dto, _ := matchoffer.From(entity)
@@ -505,7 +505,7 @@ func TestRepository_Find(t *testing.T) {
 					location,
 					ddomain.NewSpecificCategories([]common.Category{5}),
 					ddomain.StatusPending,
-					time.Now().In(tz),	"",
+					time.Now().In(tz),	"", 0,
 
 				)
 				dto1, _ := matchoffer.From(entity1)
@@ -519,7 +519,7 @@ func TestRepository_Find(t *testing.T) {
 					location,
 					ddomain.NewSpecificCategories([]common.Category{5}),
 					ddomain.StatusPending,
-					time.Now().In(tz),	"",
+					time.Now().In(tz),	"", 0,
 
 				)
 				dto2, _ := matchoffer.From(entity2)

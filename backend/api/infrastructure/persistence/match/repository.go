@@ -39,33 +39,34 @@ func NewRepositoryWithInterface(client DynamoDBClientInterface, tableName string
 	}
 }
 
-// Save persists a match atomically as three DynamoDB items:
+// Save persists a match atomically:
 //   - one canonical record (source of truth for all mutable data)
-//   - two immutable pointer records (one per participant account, for efficient listing)
+//   - one immutable pointer record per participant (for efficient listing)
 func (repo *RepositoryAdapter) Save(ctx context.Context, entity match.Entity) error {
-	canonical, localPtr, visitorPtr := fromEntity(entity)
+	canonical, pointers := fromEntity(entity)
 
 	canonicalAV, err := attributevalue.MarshalMap(canonical)
 	if err != nil {
 		return fmt.Errorf("failed to marshal canonical match: %w", err)
 	}
 
-	localAV, err := attributevalue.MarshalMap(localPtr)
-	if err != nil {
-		return fmt.Errorf("failed to marshal local match account pointer: %w", err)
-	}
+	transactItems := make([]types.TransactWriteItem, 0, 1+len(pointers))
+	transactItems = append(transactItems, types.TransactWriteItem{
+		Put: &types.Put{TableName: aws.String(repo.tableName), Item: canonicalAV},
+	})
 
-	visitorAV, err := attributevalue.MarshalMap(visitorPtr)
-	if err != nil {
-		return fmt.Errorf("failed to marshal visitor match account pointer: %w", err)
+	for i, ptr := range pointers {
+		av, err := attributevalue.MarshalMap(ptr)
+		if err != nil {
+			return fmt.Errorf("failed to marshal match account pointer %d: %w", i, err)
+		}
+		transactItems = append(transactItems, types.TransactWriteItem{
+			Put: &types.Put{TableName: aws.String(repo.tableName), Item: av},
+		})
 	}
 
 	_, err = repo.dbClient.TransactWriteItems(ctx, &dynamodb.TransactWriteItemsInput{
-		TransactItems: []types.TransactWriteItem{
-			{Put: &types.Put{TableName: aws.String(repo.tableName), Item: canonicalAV}},
-			{Put: &types.Put{TableName: aws.String(repo.tableName), Item: localAV}},
-			{Put: &types.Put{TableName: aws.String(repo.tableName), Item: visitorAV}},
-		},
+		TransactItems: transactItems,
 	})
 	if err != nil {
 		return fmt.Errorf("failed to save match transaction: %w", err)

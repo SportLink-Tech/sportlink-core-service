@@ -332,6 +332,7 @@ func From(entity matchoffer.Entity) (Dto, error) {
 		CreatedAt:      createdAt,
 		ExpiresAt:      expiresAt,
 		OwnerAccountId: entity.OwnerAccountID,
+		Capacity:       entity.Capacity,
 	}
 
 	if entity.Location.HasCoords() {

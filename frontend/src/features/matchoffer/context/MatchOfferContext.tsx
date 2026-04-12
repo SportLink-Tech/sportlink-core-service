@@ -4,41 +4,29 @@ import { FindMatchOffersUseCase } from '../domain/usecases/FindMatchOffersUseCas
 import { FindAccountMatchOffersUseCase } from '../domain/usecases/FindAccountMatchOffersUseCase'
 import { RetrieveMatchOfferUseCase } from '../domain/usecases/RetrieveMatchOfferUseCase'
 import { DeleteMatchOfferUseCase } from '../domain/usecases/DeleteMatchOfferUseCase'
+import { ConfirmMatchOfferUseCase } from '../domain/usecases/ConfirmMatchOfferUseCase'
 import { MatchOfferApiAdapter } from '../infrastructure/adapters/MatchOfferApiAdapter'
 
-/**
- * MatchOffer Context Interface
- * Exposes use cases to UI components
- */
 interface MatchOfferContextType {
   createMatchOfferUseCase: CreateMatchOfferUseCase
   findMatchOffersUseCase: FindMatchOffersUseCase
   findAccountMatchOffersUseCase: FindAccountMatchOffersUseCase
   retrieveMatchOfferUseCase: RetrieveMatchOfferUseCase
   deleteMatchOfferUseCase: DeleteMatchOfferUseCase
+  confirmMatchOfferUseCase: ConfirmMatchOfferUseCase
 }
 
 const MatchOfferContext = createContext<MatchOfferContextType | undefined>(undefined)
 
-/**
- * MatchOffer Provider
- * Implements Dependency Injection
- * Following Hexagonal Architecture:
- * 1. Creates adapter (MatchOfferApiAdapter)
- * 2. Injects adapter into use cases
- * 3. Provides use cases to UI components
- */
 export function MatchOfferProvider({ children }: { children: ReactNode }) {
-  // Create adapter instance (Infrastructure layer)
   const matchOfferApiAdapter = new MatchOfferApiAdapter()
 
-  // Wire dependencies: Inject adapter into use cases (Domain layer)
-  // This applies the Dependency Inversion Principle
   const createMatchOfferUseCase = new CreateMatchOfferUseCase(matchOfferApiAdapter)
   const findMatchOffersUseCase = new FindMatchOffersUseCase(matchOfferApiAdapter)
   const findAccountMatchOffersUseCase = new FindAccountMatchOffersUseCase(matchOfferApiAdapter)
   const retrieveMatchOfferUseCase = new RetrieveMatchOfferUseCase(matchOfferApiAdapter)
   const deleteMatchOfferUseCase = new DeleteMatchOfferUseCase(matchOfferApiAdapter)
+  const confirmMatchOfferUseCase = new ConfirmMatchOfferUseCase(matchOfferApiAdapter)
 
   const value: MatchOfferContextType = {
     createMatchOfferUseCase,
@@ -46,15 +34,12 @@ export function MatchOfferProvider({ children }: { children: ReactNode }) {
     findAccountMatchOffersUseCase,
     retrieveMatchOfferUseCase,
     deleteMatchOfferUseCase,
+    confirmMatchOfferUseCase,
   }
 
   return <MatchOfferContext.Provider value={value}>{children}</MatchOfferContext.Provider>
 }
 
-/**
- * Custom Hook to use MatchOffer Context
- * UI components use this hook to access use cases
- */
 export function useMatchOfferContext(): MatchOfferContextType {
   const context = useContext(MatchOfferContext)
   if (!context) {
@@ -62,4 +47,3 @@ export function useMatchOfferContext(): MatchOfferContextType {
   }
   return context
 }
-

@@ -240,6 +240,65 @@ type DefaultController struct {
 3. **Keep functions small** - Each function should have a single responsibility
 4. **Use interfaces liberally** - They reduce coupling and increase testability
 
+## Low Cyclomatic Complexity
+
+Every function should do **one thing**. If a function fetches data, validates it, transforms it, and persists it, it is doing four things — break it apart.
+
+**Target cyclomatic complexity ≤ 5 per function.** Every `if`, `for`, and `switch` branch adds 1.
+
+### Separate the *what* from the *how*
+
+`Invoke` (or any orchestrating function) should read like a sequence of named steps. Each step is delegated to a helper that signals its intent. Guard clauses and validation belong inside the helper, not in the top-level function. Pure transformations (no I/O, no side effects) are free functions — not methods — so they can be tested in isolation.
+
+```go
+// Bad: Invoke does everything inline
+func (uc *ConfirmMatchOfferUC) Invoke(ctx context.Context, input ConfirmMatchOfferInput) (*match.Entity, error) {
+    requests, err := uc.matchRequestRepository.Find(ctx, matchrequest.DomainQuery{
+        MatchOfferIDs: []string{input.MatchOfferID},
+        Statuses:      []matchrequest.Status{matchrequest.StatusAccepted},
+    })
+    if err != nil { ... }
+    if len(requests) == 0 {
+        return nil, errors.UseCaseExecutionFailed("no accepted requests found")
+    }
+    participants := make([]string, 0, 1+len(requests))
+    participants = append(participants, input.OwnerAccountID)
+    for _, r := range requests { participants = append(participants, r.RequesterAccountID) }
+    ...
+}
+
+// Good: Invoke reads like a story; helpers handle the detail
+func (uc *ConfirmMatchOfferUC) Invoke(ctx context.Context, input ConfirmMatchOfferInput) (*match.Entity, error) {
+    requests, err := uc.getAcceptedRequests(ctx, input.MatchOfferID)
+    if err != nil { ... }
+    newMatch := match.NewMatch(buildParticipants(input.OwnerAccountID, requests), offer.Sport, offer.Day)
+    ...
+}
+
+// Helper: fetch + domain validation in one place
+func (uc *ConfirmMatchOfferUC) getAcceptedRequests(ctx context.Context, offerID string) ([]matchrequest.Entity, error) {
+    requests, err := uc.matchRequestRepository.Find(ctx, matchrequest.DomainQuery{
+        MatchOfferIDs: []string{offerID},
+        Statuses:      []matchrequest.Status{matchrequest.StatusAccepted},
+    })
+    if err != nil { return nil, err }
+    if len(requests) == 0 {
+        return nil, errors.UseCaseExecutionFailed("no accepted requests found for this match offer")
+    }
+    return requests, nil
+}
+
+// Pure transformation: free function, no receiver, no I/O
+func buildParticipants(ownerID string, requests []matchrequest.Entity) []string {
+    participants := make([]string, 0, 1+len(requests))
+    participants = append(participants, ownerID)
+    for _, r := range requests { participants = append(participants, r.RequesterAccountID) }
+    return participants
+}
+```
+
+This principle applies to use cases, repository adapters, controllers, and every other layer.
+
 ## Mock Generation
 
 ### Using Mockery

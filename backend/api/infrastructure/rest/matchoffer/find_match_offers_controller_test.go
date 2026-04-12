@@ -317,7 +317,7 @@ func TestFindMatchOffers(t *testing.T) {
 			// Setup
 			useCaseMock := amocks.NewUseCase[domain.DomainQuery, usecases.FindMatchOfferResult](t)
 			parserMock := pmocks.NewQueryParser(t)
-			controller := matchoffer.NewControllerWithParser(nil, useCaseMock, nil, nil, validator, parserMock)
+			controller := matchoffer.NewControllerWithParser(nil, useCaseMock, nil, nil, nil, validator, parserMock)
 
 			gin.SetMode(gin.TestMode)
 			router := gin.Default()
@@ -362,7 +362,7 @@ func createTestOffer(teamName string, sport common.Sport, status domain.Status) 
 		location,
 		categoryRange,
 		status,
-		time.Now(),	"",
+		time.Now(),	"", 0,
 
 	)
 }
