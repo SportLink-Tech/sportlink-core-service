@@ -7,6 +7,7 @@ import (
 	"sportlink/api/domain/common"
 	dmatch "sportlink/api/domain/match"
 	domain "sportlink/api/domain/matchoffer"
+	dmatchrequest "sportlink/api/domain/matchrequest"
 	"sportlink/api/infrastructure/persistence/account"
 	"sportlink/api/infrastructure/persistence/match"
 	"sportlink/api/infrastructure/persistence/matchoffer"
@@ -34,8 +35,50 @@ func Test_ConfirmMatchOfferUC(t *testing.T) {
 	tests := []struct {
 		name  string
 		setup func(t *testing.T) usecase.ConfirmMatchOfferInput
-		then  func(t *testing.T, entity *dmatch.Entity, err error)
+		then  func(t *testing.T, offerId string, entity *dmatch.Entity, err error)
 	}{
+		{
+			name: "given a pending offer with pending requests when confirming then all the requests are rejected",
+			setup: func(t *testing.T) usecase.ConfirmMatchOfferInput {
+				ownerAcc := helper.NewAccountBuilder(t, acRepo).
+					WithEmail("cabrerajjorge1@gmail.com").
+					WithNickname("owner").
+					Build(ctx)
+
+				visitor := helper.NewAccountBuilder(t, acRepo).
+					WithEmail("jocabrera1@fi.uba.ar").
+					WithNickname("visitor").
+					Build(ctx)
+
+				offer := helper.NewMatchOfferBuilder(t, moRepo).
+					WithSport(common.Paddle).
+					WithOwnerAccountID(ownerAcc.AccountID).
+					WithCapacity(2).
+					Build(ctx)
+
+				_ = helper.NewMatchRequestBuilder(t, mrRepo, moRepo).
+					WithMatchOfferID(offer.ID).
+					WithRequesterAccountID(visitor.AccountID).
+					Build(ctx)
+
+				return usecase.ConfirmMatchOfferInput{
+					MatchOfferID:   offer.ID,
+					OwnerAccountID: ownerAcc.AccountID,
+				}
+			},
+			then: func(t *testing.T, offerId string, entity *dmatch.Entity, err error) {
+				assert.Nil(t, err)
+				assert.NotNil(t, entity)
+				matchRequests, _ := mrRepo.Find(ctx, dmatchrequest.DomainQuery{
+					MatchOfferIDs: []string{offerId},
+					Statuses: []dmatchrequest.Status{
+						dmatchrequest.StatusRejected,
+					},
+				})
+				assert.Equal(t, entity.Status, dmatch.StatusAccepted)
+				assert.True(t, len(matchRequests) == 1)
+			},
+		},
 		{
 			name: "given a pending offer with accepted requests when confirming then creates match",
 			setup: func(t *testing.T) usecase.ConfirmMatchOfferInput {
@@ -65,12 +108,12 @@ func Test_ConfirmMatchOfferUC(t *testing.T) {
 					OwnerAccountID: ownerAcc.AccountID,
 				}
 			},
-			then: func(t *testing.T, entity *dmatch.Entity, err error) {
+			then: func(t *testing.T, offerId string, entity *dmatch.Entity, err error) {
 				assert.Nil(t, err)
 				assert.NotNil(t, entity.ID)
 				assert.Equal(t, entity.Status, dmatch.StatusAccepted)
 				page, _ := moRepo.Find(ctx, domain.DomainQuery{
-					IDs: []string{entity.ID},
+					IDs: []string{offerId},
 				})
 				assert.Equal(t, domain.StatusConfirmed, page.Entities[0].Status)
 			},
@@ -85,7 +128,7 @@ func Test_ConfirmMatchOfferUC(t *testing.T) {
 			entity, err := confirmMatchOfferUC.Invoke(ctx, input)
 
 			// then
-			tc.then(t, entity, err)
+			tc.then(t, input.MatchOfferID, entity, err)
 		})
 	}
 }
