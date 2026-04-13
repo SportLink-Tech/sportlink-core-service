@@ -95,6 +95,14 @@ func TestConfirmMatchOfferUC_Invoke(t *testing.T) {
 						return o.ID == "offer-1" && o.Status == domainoffer.StatusConfirmed
 					}),
 				).Return(nil)
+
+				reqRepo.On("Find",
+					mock.MatchedBy(func(c context.Context) bool { return c == ctx }),
+					mock.MatchedBy(func(q domainreq.DomainQuery) bool {
+						return len(q.MatchOfferIDs) == 1 && q.MatchOfferIDs[0] == "offer-1" &&
+							len(q.Statuses) == 1 && q.Statuses[0] == domainreq.StatusPending
+					}),
+				).Return([]domainreq.Entity{}, nil)
 			},
 			then: func(t *testing.T, result *domainmatch.Entity, err error) {
 				assert.NoError(t, err)
@@ -126,7 +134,8 @@ func TestConfirmMatchOfferUC_Invoke(t *testing.T) {
 				reqRepo.On("Find",
 					mock.MatchedBy(func(c context.Context) bool { return c == ctx }),
 					mock.MatchedBy(func(q domainreq.DomainQuery) bool {
-						return len(q.MatchOfferIDs) == 1 && q.MatchOfferIDs[0] == "offer-1"
+						return len(q.MatchOfferIDs) == 1 && q.MatchOfferIDs[0] == "offer-1" &&
+							len(q.Statuses) == 1 && q.Statuses[0] == domainreq.StatusAccepted
 					}),
 				).Return(twoRequests, nil)
 
@@ -144,6 +153,26 @@ func TestConfirmMatchOfferUC_Invoke(t *testing.T) {
 					mock.MatchedBy(func(c context.Context) bool { return c == ctx }),
 					mock.MatchedBy(func(o domainoffer.Entity) bool {
 						return o.ID == "offer-1" && o.Status == domainoffer.StatusConfirmed
+					}),
+				).Return(nil)
+
+				pendingRequest := domainreq.Entity{
+					ID: "AccountId#requester-3#MatchOfferId#offer-1", MatchOfferID: "offer-1",
+					OwnerAccountID: "owner-1", RequesterAccountID: "requester-3",
+					Status: domainreq.StatusPending, CreatedAt: fixedNow,
+				}
+				reqRepo.On("Find",
+					mock.MatchedBy(func(c context.Context) bool { return c == ctx }),
+					mock.MatchedBy(func(q domainreq.DomainQuery) bool {
+						return len(q.MatchOfferIDs) == 1 && q.MatchOfferIDs[0] == "offer-1" &&
+							len(q.Statuses) == 1 && q.Statuses[0] == domainreq.StatusPending
+					}),
+				).Return([]domainreq.Entity{pendingRequest}, nil)
+
+				reqRepo.On("SaveAll",
+					mock.MatchedBy(func(c context.Context) bool { return c == ctx }),
+					mock.MatchedBy(func(entities []domainreq.Entity) bool {
+						return len(entities) == 1 && entities[0].Status == domainreq.StatusRejected
 					}),
 				).Return(nil)
 			},
@@ -227,7 +256,7 @@ func TestConfirmMatchOfferUC_Invoke(t *testing.T) {
 			},
 		},
 		{
-			name:  "given no accepted requests when confirming then returns error",
+			name:  "given pending offer with no accepted requests when confirming then creates match with only owner",
 			input: validInput,
 			on: func(t *testing.T, matchRepo *matchmocks.Repository, offerRepo *offermocks.Repository, reqRepo *reqmocks.Repository) {
 				offerRepo.On("Find",
@@ -240,14 +269,37 @@ func TestConfirmMatchOfferUC_Invoke(t *testing.T) {
 				reqRepo.On("Find",
 					mock.MatchedBy(func(c context.Context) bool { return c == ctx }),
 					mock.MatchedBy(func(q domainreq.DomainQuery) bool {
-						return len(q.MatchOfferIDs) == 1 && q.MatchOfferIDs[0] == "offer-1"
+						return len(q.MatchOfferIDs) == 1 && q.MatchOfferIDs[0] == "offer-1" &&
+							len(q.Statuses) == 1 && q.Statuses[0] == domainreq.StatusAccepted
+					}),
+				).Return([]domainreq.Entity{}, nil)
+
+				matchRepo.On("Save",
+					mock.MatchedBy(func(c context.Context) bool { return c == ctx }),
+					mock.MatchedBy(func(m domainmatch.Entity) bool {
+						return len(m.Participants) == 1 && m.Participants[0] == "owner-1"
+					}),
+				).Return(nil)
+
+				offerRepo.On("Save",
+					mock.MatchedBy(func(c context.Context) bool { return c == ctx }),
+					mock.MatchedBy(func(o domainoffer.Entity) bool {
+						return o.ID == "offer-1" && o.Status == domainoffer.StatusConfirmed
+					}),
+				).Return(nil)
+
+				reqRepo.On("Find",
+					mock.MatchedBy(func(c context.Context) bool { return c == ctx }),
+					mock.MatchedBy(func(q domainreq.DomainQuery) bool {
+						return len(q.MatchOfferIDs) == 1 && q.MatchOfferIDs[0] == "offer-1" &&
+							len(q.Statuses) == 1 && q.Statuses[0] == domainreq.StatusPending
 					}),
 				).Return([]domainreq.Entity{}, nil)
 			},
 			then: func(t *testing.T, result *domainmatch.Entity, err error) {
-				assert.Error(t, err)
-				assert.Nil(t, result)
-				assert.Contains(t, err.Error(), "no accepted requests found")
+				assert.NoError(t, err)
+				assert.NotNil(t, result)
+				assert.Equal(t, []string{"owner-1"}, result.Participants)
 			},
 		},
 		{
@@ -303,6 +355,110 @@ func TestConfirmMatchOfferUC_Invoke(t *testing.T) {
 				assert.Error(t, err)
 				assert.Nil(t, result)
 				assert.Contains(t, err.Error(), "match save failed")
+			},
+		},
+		{
+			name:  "given repository error when finding pending requests then confirms match and logs error",
+			input: validInput,
+			on: func(t *testing.T, matchRepo *matchmocks.Repository, offerRepo *offermocks.Repository, reqRepo *reqmocks.Repository) {
+				offerRepo.On("Find",
+					mock.MatchedBy(func(c context.Context) bool { return c == ctx }),
+					mock.MatchedBy(func(q domainoffer.DomainQuery) bool {
+						return len(q.IDs) == 1 && q.IDs[0] == "offer-1"
+					}),
+				).Return(domainoffer.Page{Entities: []domainoffer.Entity{pendingOffer}, Total: 1}, nil)
+
+				reqRepo.On("Find",
+					mock.MatchedBy(func(c context.Context) bool { return c == ctx }),
+					mock.MatchedBy(func(q domainreq.DomainQuery) bool {
+						return len(q.MatchOfferIDs) == 1 && q.MatchOfferIDs[0] == "offer-1" &&
+							len(q.Statuses) == 1 && q.Statuses[0] == domainreq.StatusAccepted
+					}),
+				).Return([]domainreq.Entity{acceptedRequest}, nil)
+
+				matchRepo.On("Save",
+					mock.MatchedBy(func(c context.Context) bool { return c == ctx }),
+					mock.MatchedBy(func(m domainmatch.Entity) bool {
+						return len(m.Participants) == 2
+					}),
+				).Return(nil)
+
+				offerRepo.On("Save",
+					mock.MatchedBy(func(c context.Context) bool { return c == ctx }),
+					mock.MatchedBy(func(o domainoffer.Entity) bool {
+						return o.ID == "offer-1" && o.Status == domainoffer.StatusConfirmed
+					}),
+				).Return(nil)
+
+				reqRepo.On("Find",
+					mock.MatchedBy(func(c context.Context) bool { return c == ctx }),
+					mock.MatchedBy(func(q domainreq.DomainQuery) bool {
+						return len(q.MatchOfferIDs) == 1 && q.MatchOfferIDs[0] == "offer-1" &&
+							len(q.Statuses) == 1 && q.Statuses[0] == domainreq.StatusPending
+					}),
+				).Return(nil, errors.New("db connection error"))
+			},
+			then: func(t *testing.T, result *domainmatch.Entity, err error) {
+				assert.NoError(t, err)
+				assert.NotNil(t, result)
+			},
+		},
+		{
+			name:  "given save all fails when rejecting pending requests then confirms match and logs error",
+			input: validInput,
+			on: func(t *testing.T, matchRepo *matchmocks.Repository, offerRepo *offermocks.Repository, reqRepo *reqmocks.Repository) {
+				offerRepo.On("Find",
+					mock.MatchedBy(func(c context.Context) bool { return c == ctx }),
+					mock.MatchedBy(func(q domainoffer.DomainQuery) bool {
+						return len(q.IDs) == 1 && q.IDs[0] == "offer-1"
+					}),
+				).Return(domainoffer.Page{Entities: []domainoffer.Entity{pendingOffer}, Total: 1}, nil)
+
+				reqRepo.On("Find",
+					mock.MatchedBy(func(c context.Context) bool { return c == ctx }),
+					mock.MatchedBy(func(q domainreq.DomainQuery) bool {
+						return len(q.MatchOfferIDs) == 1 && q.MatchOfferIDs[0] == "offer-1" &&
+							len(q.Statuses) == 1 && q.Statuses[0] == domainreq.StatusAccepted
+					}),
+				).Return([]domainreq.Entity{acceptedRequest}, nil)
+
+				matchRepo.On("Save",
+					mock.MatchedBy(func(c context.Context) bool { return c == ctx }),
+					mock.MatchedBy(func(m domainmatch.Entity) bool {
+						return len(m.Participants) == 2
+					}),
+				).Return(nil)
+
+				offerRepo.On("Save",
+					mock.MatchedBy(func(c context.Context) bool { return c == ctx }),
+					mock.MatchedBy(func(o domainoffer.Entity) bool {
+						return o.ID == "offer-1" && o.Status == domainoffer.StatusConfirmed
+					}),
+				).Return(nil)
+
+				pendingRequest := domainreq.Entity{
+					ID: "AccountId#requester-2#MatchOfferId#offer-1", MatchOfferID: "offer-1",
+					OwnerAccountID: "owner-1", RequesterAccountID: "requester-2",
+					Status: domainreq.StatusPending, CreatedAt: fixedNow,
+				}
+				reqRepo.On("Find",
+					mock.MatchedBy(func(c context.Context) bool { return c == ctx }),
+					mock.MatchedBy(func(q domainreq.DomainQuery) bool {
+						return len(q.MatchOfferIDs) == 1 && q.MatchOfferIDs[0] == "offer-1" &&
+							len(q.Statuses) == 1 && q.Statuses[0] == domainreq.StatusPending
+					}),
+				).Return([]domainreq.Entity{pendingRequest}, nil)
+
+				reqRepo.On("SaveAll",
+					mock.MatchedBy(func(c context.Context) bool { return c == ctx }),
+					mock.MatchedBy(func(entities []domainreq.Entity) bool {
+						return len(entities) == 1 && entities[0].Status == domainreq.StatusRejected
+					}),
+				).Return(errors.New("batch write failed"))
+			},
+			then: func(t *testing.T, result *domainmatch.Entity, err error) {
+				assert.NoError(t, err)
+				assert.NotNil(t, result)
 			},
 		},
 		{

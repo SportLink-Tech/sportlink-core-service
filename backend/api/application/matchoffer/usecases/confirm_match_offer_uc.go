@@ -68,7 +68,31 @@ func (uc *ConfirmMatchOfferUC) Invoke(ctx context.Context, input ConfirmMatchOff
 		return nil, err
 	}
 
+	if err = uc.rejectPendingRequests(ctx, input.MatchOfferID); err != nil {
+		log.GetLogger(ctx).Error(fmt.Sprintf("failed to reject pending requests for offer %s", input.MatchOfferID), err)
+	}
+
 	return &newMatch, nil
+}
+
+func (uc *ConfirmMatchOfferUC) rejectPendingRequests(ctx context.Context, matchOfferID string) error {
+	pending, err := uc.matchRequestRepository.Find(ctx, matchrequest.DomainQuery{
+		MatchOfferIDs: []string{matchOfferID},
+		Statuses:      []matchrequest.Status{matchrequest.StatusPending},
+	})
+	if err != nil {
+		return fmt.Errorf("failed to find pending requests: %w", err)
+	}
+	if len(pending) == 0 {
+		return nil
+	}
+
+	rejected := make([]matchrequest.Entity, len(pending))
+	for i, r := range pending {
+		rejected[i] = r.Reject()
+	}
+
+	return uc.matchRequestRepository.SaveAll(ctx, rejected)
 }
 
 func (uc *ConfirmMatchOfferUC) getMatchOffer(ctx context.Context, matchOfferID string) (*matchoffer.Entity, error) {
@@ -83,17 +107,10 @@ func (uc *ConfirmMatchOfferUC) getMatchOffer(ctx context.Context, matchOfferID s
 }
 
 func (uc *ConfirmMatchOfferUC) getAcceptedRequests(ctx context.Context, matchOfferID string) ([]matchrequest.Entity, error) {
-	requests, err := uc.matchRequestRepository.Find(ctx, matchrequest.DomainQuery{
+	return uc.matchRequestRepository.Find(ctx, matchrequest.DomainQuery{
 		MatchOfferIDs: []string{matchOfferID},
 		Statuses:      []matchrequest.Status{matchrequest.StatusAccepted},
 	})
-	if err != nil {
-		return nil, err
-	}
-	if len(requests) == 0 {
-		return nil, errors.UseCaseExecutionFailed("no accepted requests found for this match offer")
-	}
-	return requests, nil
 }
 
 func buildParticipants(ownerAccountID string, requests []matchrequest.Entity) []string {

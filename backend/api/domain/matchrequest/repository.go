@@ -14,6 +14,7 @@ type DomainQuery struct {
 // Repository defines the persistence operations for match requests
 type Repository interface {
 	Save(ctx context.Context, entity Entity) error
+	SaveAll(ctx context.Context, entities []Entity) error
 	Find(ctx context.Context, query DomainQuery) ([]Entity, error)
 	UpdateStatus(ctx context.Context, id string, ownerAccountID string, newStatus Status) error
 }

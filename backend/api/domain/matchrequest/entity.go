@@ -35,6 +35,11 @@ func (s Entity) Accept() Entity {
 	return s
 }
 
+func (s Entity) Reject() Entity {
+	s.Status = StatusRejected
+	return s
+}
+
 func (s Entity) IsPending() bool {
 	return s.Status == StatusPending
 }

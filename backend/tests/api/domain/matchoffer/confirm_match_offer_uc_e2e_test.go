@@ -2,9 +2,11 @@ package matchoffer_test
 
 import (
 	"context"
+	"github.com/stretchr/testify/assert"
 	usecase "sportlink/api/application/matchoffer/usecases"
 	"sportlink/api/domain/common"
 	dmatch "sportlink/api/domain/match"
+	domain "sportlink/api/domain/matchoffer"
 	"sportlink/api/infrastructure/persistence/account"
 	"sportlink/api/infrastructure/persistence/match"
 	"sportlink/api/infrastructure/persistence/matchoffer"
@@ -15,7 +17,7 @@ import (
 	"testing"
 )
 
-func TestConfirmMatchOfferUC(t *testing.T) {
+func Test_ConfirmMatchOfferUC(t *testing.T) {
 	ctx := context.Background()
 	container := testcontainer.SportLinkContainer(t, ctx)
 	defer container.Terminate(ctx)
@@ -37,25 +39,43 @@ func TestConfirmMatchOfferUC(t *testing.T) {
 		{
 			name: "given a pending offer with accepted requests when confirming then creates match",
 			setup: func(t *testing.T) usecase.ConfirmMatchOfferInput {
-				acc := helper.NewAccountBuilder(t, acRepo).
+				ownerAcc := helper.NewAccountBuilder(t, acRepo).
 					WithEmail("cabrerajjorge@gmail.com").
-					WithNickname("testuser").
+					WithNickname("owner").
+					Build(ctx)
+
+				visitor := helper.NewAccountBuilder(t, acRepo).
+					WithEmail("jocabrera@fi.uba.ar").
+					WithNickname("visitor").
 					Build(ctx)
 
 				offer := helper.NewMatchOfferBuilder(t, moRepo).
 					WithSport(common.Paddle).
-					WithOwnerAccountID(acc.AccountID).
+					WithOwnerAccountID(ownerAcc.AccountID).
 					WithCapacity(2).
+					Build(ctx)
+
+				_ = helper.NewMatchRequestBuilder(t, mrRepo, moRepo).
+					WithMatchOfferID(offer.ID).
+					WithRequesterAccountID(visitor.AccountID).
 					Build(ctx)
 
 				return usecase.ConfirmMatchOfferInput{
 					MatchOfferID:   offer.ID,
-					OwnerAccountID: acc.AccountID,
+					OwnerAccountID: ownerAcc.AccountID,
 				}
+			},
+			then: func(t *testing.T, entity *dmatch.Entity, err error) {
+				assert.Nil(t, err)
+				assert.NotNil(t, entity.ID)
+				assert.Equal(t, entity.Status, dmatch.StatusAccepted)
+				page, _ := moRepo.Find(ctx, domain.DomainQuery{
+					IDs: []string{entity.ID},
+				})
+				assert.Equal(t, domain.StatusConfirmed, page.Entities[0].Status)
 			},
 		},
 	}
-
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			// setup

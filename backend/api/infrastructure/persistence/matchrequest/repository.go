@@ -15,6 +15,7 @@ import (
 // DynamoDBClientInterface defines the interface for DynamoDB operations needed by the repository
 type DynamoDBClientInterface interface {
 	PutItem(ctx context.Context, params *dynamodb.PutItemInput, optFns ...func(*dynamodb.Options)) (*dynamodb.PutItemOutput, error)
+	BatchWriteItem(ctx context.Context, params *dynamodb.BatchWriteItemInput, optFns ...func(*dynamodb.Options)) (*dynamodb.BatchWriteItemOutput, error)
 	Query(ctx context.Context, params *dynamodb.QueryInput, optFns ...func(*dynamodb.Options)) (*dynamodb.QueryOutput, error)
 	UpdateItem(ctx context.Context, params *dynamodb.UpdateItemInput, optFns ...func(*dynamodb.Options)) (*dynamodb.UpdateItemOutput, error)
 }
@@ -239,6 +240,40 @@ func (repo *RepositoryAdapter) findByRequesterAccountID(ctx context.Context, req
 		return []matchrequest.Entity{}, nil
 	}
 	return entities, nil
+}
+
+const batchWriteMaxItems = 25
+
+func (repo *RepositoryAdapter) SaveAll(ctx context.Context, entities []matchrequest.Entity) error {
+	for i := 0; i < len(entities); i += batchWriteMaxItems {
+		end := i + batchWriteMaxItems
+		if end > len(entities) {
+			end = len(entities)
+		}
+		chunk := entities[i:end]
+
+		requests := make([]types.WriteRequest, 0, len(chunk))
+		for _, entity := range chunk {
+			dto := From(entity)
+			av, err := attributevalue.MarshalMap(dto)
+			if err != nil {
+				return fmt.Errorf("failed to marshal match request: %w", err)
+			}
+			requests = append(requests, types.WriteRequest{
+				PutRequest: &types.PutRequest{Item: av},
+			})
+		}
+
+		_, err := repo.dbClient.BatchWriteItem(ctx, &dynamodb.BatchWriteItemInput{
+			RequestItems: map[string][]types.WriteRequest{
+				repo.tableName: requests,
+			},
+		})
+		if err != nil {
+			return fmt.Errorf("failed to batch write match requests: %w", err)
+		}
+	}
+	return nil
 }
 
 func (repo *RepositoryAdapter) UpdateStatus(ctx context.Context, id string, ownerAccountID string, newStatus matchrequest.Status) error {

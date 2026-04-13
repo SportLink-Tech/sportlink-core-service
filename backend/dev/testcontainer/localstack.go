@@ -17,7 +17,7 @@ func containerRequest() testcontainers.ContainerRequest {
 
 	coreDynamoTablePath := filepath.Join(projectRoot, "backend", "dev", "localstack", "cloudformation", "core-dynamo-table.yml")
 	sqsPath := filepath.Join(projectRoot, "backend", "dev", "localstack", "cloudformation", "sqs-queue.yml")
-	initAwsPath := filepath.Join(projectRoot, "backend", "dev", "docker", "scripts")
+	initAwsPath := filepath.Join(projectRoot, "backend", "dev", "docker", "scripts", "init.sh")
 
 	return testcontainers.ContainerRequest{
 		Image:        "localstack/localstack:3.0.2",
@@ -27,12 +27,12 @@ func containerRequest() testcontainers.ContainerRequest {
 			"DEFAULT_REGION": "us-east-1",
 			"AWS_REGION":     "us-east-1",
 		},
-		WaitingFor: wait.ForLog("All services created and database seeded.").
+		WaitingFor: wait.ForLog("All services created.").
 			WithStartupTimeout(2 * time.Minute),
 		Mounts: []testcontainers.ContainerMount{
 			testcontainers.BindMount(sqsPath, "/opt/code/localstack/sqs-queue.yml"),
 			testcontainers.BindMount(coreDynamoTablePath, "/opt/code/localstack/core-dynamo-table.yml"),
-			testcontainers.BindMount(initAwsPath, "/etc/localstack/init/ready.d"),
+			testcontainers.BindMount(initAwsPath, "/etc/localstack/init/ready.d/init.sh"),
 			testcontainers.BindMount("/var/run/docker.sock", "/var/run/docker.sock"),
 		},
 	}
