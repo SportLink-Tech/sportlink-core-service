@@ -51,6 +51,11 @@ func NewMatchOffer(
 	}
 }
 
+// GetTitle returns a human-readable title for this match offer.
+func (s Entity) GetTitle() string {
+	return BuildTitle(s.Sport, s.AdmittedCategories, s.Location)
+}
+
 func (s Entity) Confirm() Entity {
 	s.Status = StatusConfirmed
 	return s

@@ -22,6 +22,7 @@ func locationToResponse(loc matchoffer.Location) response.LocationResponse {
 func EntityToResponse(entity matchoffer.Entity) response.MatchOfferResponse {
 	return response.MatchOfferResponse{
 		ID:       entity.ID,
+		Title:    entity.GetTitle(),
 		TeamName: entity.TeamName,
 		Sport:    string(entity.Sport),
 		Day:      entity.Day,

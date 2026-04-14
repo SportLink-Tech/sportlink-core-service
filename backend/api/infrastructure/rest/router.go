@@ -73,7 +73,7 @@ func Routes(router *gin.Engine) {
 	deleteMatchOffer := umatchoffer.NewDeleteMatchOfferUC(matchOfferRepository)
 
 	// Match Use Cases
-	findMatches := umatch.NewFindMatchesUC(matchRepository)
+	findMatches := umatch.NewFindMatchesUC(matchRepository, matchOfferRepository)
 
 	// Match Offer — Confirm Use Case (creates the match)
 	confirmMatchOffer := umatchoffer.NewConfirmMatchOfferUC(matchRepository, matchOfferRepository, matchRequestRepository)

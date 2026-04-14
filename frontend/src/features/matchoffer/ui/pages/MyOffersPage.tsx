@@ -223,7 +223,7 @@ export function MyOffersPage() {
                         <Stack spacing={2}>
                           <Box display="flex" justifyContent="space-between" alignItems="start">
                             <Box>
-                              <Typography variant="h6" fontWeight={700} gutterBottom>{offer.team_name}</Typography>
+                              <Typography variant="h6" fontWeight={700} gutterBottom>{offer.title ?? offer.team_name}</Typography>
                               <Chip label={offer.sport} icon={<SportsIcon />} size="small" color="primary" variant="outlined" />
                             </Box>
                             <Chip label={getStatusText(offer.status)} size="small" color={getStatusColor(offer.status) as any} />
@@ -288,7 +288,7 @@ export function MyOffersPage() {
       {/* Requests Dialog */}
       <Dialog open={requestsDialogOpen} onClose={() => setRequestsDialogOpen(false)} maxWidth="sm" fullWidth>
         <DialogTitle>
-          Solicitudes — {selectedOffer?.team_name}
+          Solicitudes — {selectedOffer?.title ?? selectedOffer?.team_name}
         </DialogTitle>
         <DialogContent>
           {requestsForOffer.length === 0 ? (
@@ -309,7 +309,7 @@ export function MyOffersPage() {
                     <ListItem sx={{ px: 0 }}>
                       <Stack spacing={1.5} width="100%">
                         <Stack direction="row" spacing={1.5} alignItems="center">
-                          <Avatar src={requester?.Picture} alt={requesterName} sx={{ width: 40, height: 40, flexShrink: 0 }}>
+                          <Avatar src={requester?.Picture} alt={requesterName} imgProps={{ referrerPolicy: 'no-referrer' }} sx={{ width: 40, height: 40, flexShrink: 0 }}>
                             <PersonIcon />
                           </Avatar>
                           <Box>

@@ -3,7 +3,6 @@ package match
 import (
 	"sportlink/api/application"
 	"sportlink/api/application/match/usecases"
-	domainmatch "sportlink/api/domain/match"
 
 	"github.com/gin-gonic/gin"
 )
@@ -13,9 +12,9 @@ type Controller interface {
 }
 
 type DefaultController struct {
-	findMatchesUC application.UseCase[usecases.FindMatchesInput, []domainmatch.Entity]
+	findMatchesUC application.UseCase[usecases.FindMatchesInput, []usecases.MatchWithOffer]
 }
 
-func NewController(findMatchesUC application.UseCase[usecases.FindMatchesInput, []domainmatch.Entity]) Controller {
+func NewController(findMatchesUC application.UseCase[usecases.FindMatchesInput, []usecases.MatchWithOffer]) Controller {
 	return &DefaultController{findMatchesUC: findMatchesUC}
 }

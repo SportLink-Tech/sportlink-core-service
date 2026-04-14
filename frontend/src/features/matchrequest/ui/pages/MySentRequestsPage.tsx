@@ -72,7 +72,8 @@ export function MySentRequestsPage() {
   })
 
   useEffect(() => {
-    findSentMatchRequestsListUseCase.execute(accountId ?? '').then(async (result) => {
+    if (!accountId) return
+    findSentMatchRequestsListUseCase.execute(accountId, ['PENDING', 'ACCEPTED', 'CANCEL']).then(async (result) => {
       if (!result.success) {
         setError(result.error ?? 'Error al cargar las solicitudes')
         setLoading(false)
@@ -94,7 +95,7 @@ export function MySentRequestsPage() {
       setOfferMap(map)
       setLoading(false)
     })
-  }, [])
+  }, [accountId])
 
   const handleCancel = async (requestId: string) => {
     setCancellingId(requestId)
@@ -152,7 +153,7 @@ export function MySentRequestsPage() {
                       <ListItemText
                         primary={
                           <Typography variant="body1" fontWeight={600}>
-                            {offer ? offer.team_name : req.match_offer_id}
+                            {offer ? (offer.title ?? offer.team_name) : 'Publicación eliminada'}
                           </Typography>
                         }
                         secondary={

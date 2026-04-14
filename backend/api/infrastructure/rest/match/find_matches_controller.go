@@ -38,8 +38,8 @@ func (sc *DefaultController) FindMatches(c *gin.Context) {
 	}
 
 	responses := make([]response.MatchResponse, len(*result))
-	for i, e := range *result {
-		responses[i] = mapper.EntityToResponse(e)
+	for i, r := range *result {
+		responses[i] = mapper.EntityToResponse(r.Match, r.Offer)
 	}
 
 	c.JSON(http.StatusOK, responses)

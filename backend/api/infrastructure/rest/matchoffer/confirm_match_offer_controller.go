@@ -22,5 +22,5 @@ func (c *DefaultController) ConfirmMatchOffer(ctx *gin.Context) {
 		return
 	}
 
-	ctx.JSON(http.StatusCreated, matchmapper.EntityToResponse(*result))
+	ctx.JSON(http.StatusCreated, matchmapper.EntityToResponse(*result, nil))
 }

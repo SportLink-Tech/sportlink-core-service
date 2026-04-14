@@ -112,6 +112,45 @@ func Test_FindMatchRequest(t *testing.T) {
 			},
 		},
 		{
+			// Regression test: verifies that findByRequesterAccountID (used by "Solicitudes Enviadas")
+			// returns requests with CANCEL status — the backend path behind
+			// GET /account/:id/match-request?role=requester.
+			name: "given a cancelled match request when find by requester account id then it must be retrieved with CANCEL status",
+			setup: func(t *testing.T) *dmatchrequest.Entity {
+				owner := helper.NewAccountBuilder(t, acRepo).
+					WithEmail("find-cancelled-by-requester-owner@gmail.com").
+					WithNickname("find-cancelled-by-requester-owner").
+					Build(ctx)
+
+				visitor := helper.NewAccountBuilder(t, acRepo).
+					WithEmail("find-cancelled-by-requester-visitor@fi.uba.ar").
+					WithNickname("find-cancelled-by-requester-visitor").
+					Build(ctx)
+
+				matchOffer := helper.NewMatchOfferBuilder(t, moRepo).
+					WithCapacity(2).
+					WithOwnerAccountID(owner.AccountID).
+					Build(ctx)
+
+				entity, _ := createMatchRequestUC.Invoke(ctx, usecase.CreateMatchRequestInput{
+					MatchOfferID:       matchOffer.ID,
+					RequesterAccountID: visitor.AccountID,
+				})
+				cancelMatchRequest(t, ctx, mrRepo, entity)
+				return entity
+			},
+			query: func(entity *dmatchrequest.Entity) dmatchrequest.DomainQuery {
+				return dmatchrequest.DomainQuery{
+					RequesterAccountIDs: []string{entity.RequesterAccountID},
+				}
+			},
+			then: func(t *testing.T, result []dmatchrequest.Entity, err error) {
+				assert.Nil(t, err)
+				assert.Len(t, result, 1)
+				assert.Equal(t, dmatchrequest.StatusCancel, result[0].Status)
+			},
+		},
+		{
 			name: "given a match request created when find by match offer id then it must be retrieved",
 			setup: func(t *testing.T) *dmatchrequest.Entity {
 				owner := helper.NewAccountBuilder(t, acRepo).

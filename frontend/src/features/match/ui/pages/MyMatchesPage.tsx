@@ -8,13 +8,13 @@ import {
   CircularProgress,
   Alert,
   Divider,
-  List,
-  ListItem,
   Avatar,
+  Card,
+  CardContent,
 } from '@mui/material'
 import EmojiEventsIcon from '@mui/icons-material/EmojiEvents'
 import EventIcon from '@mui/icons-material/Event'
-import SportsIcon from '@mui/icons-material/Sports'
+import AccessTimeIcon from '@mui/icons-material/AccessTime'
 import PersonIcon from '@mui/icons-material/Person'
 import { useAuth } from '../../../auth/context/AuthContext'
 import { fetchMatches } from '../../infrastructure/MatchApiAdapter'
@@ -44,6 +44,15 @@ function formatDate(dateString: string): string {
   })
 }
 
+function formatTime(dateTimeString: string): string {
+  const d = new Date(dateTimeString)
+  return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`
+}
+
+function accountDisplayName(acc: Account): string {
+  return `${acc.FirstName} ${acc.LastName}`.trim() || acc.Nickname || acc.Email
+}
+
 export function MyMatchesPage() {
   const { accountId } = useAuth()
 
@@ -59,13 +68,10 @@ export function MyMatchesPage() {
       .then(async (result) => {
         setMatches(result)
 
-        const opponentIds = result.flatMap((m) =>
-          m.participants.filter((id) => id !== accountId)
-        )
-        const uniqueIds = [...new Set(opponentIds)]
+        const allParticipantIds = [...new Set(result.flatMap((m) => m.participants))]
 
         const entries = await Promise.all(
-          uniqueIds.map(async (id) => {
+          allParticipantIds.map(async (id) => {
             try {
               const account = await fetchAccount(id)
               return [id, account] as [string, Account]
@@ -84,21 +90,6 @@ export function MyMatchesPage() {
       .catch((e) => setError(e.message))
       .finally(() => setLoading(false))
   }, [accountId])
-
-  const opponentsOf = (m: Match): Account[] =>
-    m.participants
-      .filter((id) => id !== accountId)
-      .map((id) => accountMap[id])
-      .filter(Boolean) as Account[]
-
-  const opponentNames = (m: Match): string => {
-    const opponentIds = m.participants.filter((id) => id !== accountId)
-    const opponents = opponentsOf(m)
-    if (opponents.length === 0) return opponentIds.join(', ')
-    return opponents
-      .map((acc) => `${acc.FirstName} ${acc.LastName}`.trim() || acc.Nickname || acc.Email)
-      .join(', ')
-  }
 
   return (
     <Box>
@@ -131,57 +122,78 @@ export function MyMatchesPage() {
         )}
 
         {!loading && !error && matches.length > 0 && (
-          <Paper elevation={0} sx={{ borderRadius: 2, border: '1px solid', borderColor: 'divider' }}>
-            <List disablePadding>
-              {matches.map((match, i) => {
-                const opponents = opponentsOf(match)
-                const names = opponentNames(match)
-                return (
-                  <Box key={match.id}>
-                    {i > 0 && <Divider />}
-                    <ListItem sx={{ px: 3, py: 2 }}>
-                      <Stack spacing={1} width="100%">
-                        <Stack direction="row" spacing={2} alignItems="center" justifyContent="space-between">
-                          <Stack direction="row" spacing={2} alignItems="center">
-                            <Stack direction="row" spacing={-1}>
-                              {opponents.length > 0
-                                ? opponents.map((opp, idx) => (
-                                    <Avatar
-                                      key={idx}
-                                      src={opp.Picture}
-                                      alt={`${opp.FirstName} ${opp.LastName}`}
-                                      sx={{ width: 40, height: 40, border: '2px solid white' }}
-                                    >
-                                      <PersonIcon />
-                                    </Avatar>
-                                  ))
-                                : <Avatar sx={{ width: 40, height: 40 }}><PersonIcon /></Avatar>
-                              }
-                            </Stack>
-                            <Typography variant="body1" fontWeight={600}>{names}</Typography>
-                          </Stack>
-                          <Chip label={statusText(match.status)} size="small" color={statusColor(match.status)} />
-                        </Stack>
+          <Stack spacing={3}>
+            {matches.map((match) => (
+              <Card elevation={2} key={match.id}>
+                  <CardContent>
+                    <Stack spacing={2}>
 
-                        <Stack direction="row" spacing={3} pl={7}>
-                          <Stack direction="row" spacing={0.5} alignItems="center">
-                            <EventIcon sx={{ fontSize: 14, color: 'text.secondary' }} />
-                            <Typography variant="caption" color="text.secondary">
-                              {formatDate(match.day)}
-                            </Typography>
-                          </Stack>
-                          <Stack direction="row" spacing={0.5} alignItems="center">
-                            <SportsIcon sx={{ fontSize: 14, color: 'text.secondary' }} />
-                            <Typography variant="caption" color="text.secondary">{match.sport}</Typography>
-                          </Stack>
-                        </Stack>
+                      {/* Header: título + estado */}
+                      <Box display="flex" justifyContent="space-between" alignItems="flex-start">
+                        <Typography variant="h6" fontWeight={700} sx={{ flex: 1, mr: 1 }}>
+                          {match.title || match.sport}
+                        </Typography>
+                        <Chip
+                          label={statusText(match.status)}
+                          size="small"
+                          color={statusColor(match.status)}
+                        />
+                      </Box>
+
+                      <Divider />
+
+                      {/* Fecha */}
+                      <Stack direction="row" spacing={1} alignItems="center">
+                        <EventIcon fontSize="small" color="action" />
+                        <Typography variant="body2" color="text.secondary" fontWeight={600}>
+                          {formatDate(match.day)}
+                        </Typography>
                       </Stack>
-                    </ListItem>
-                  </Box>
-                )
-              })}
-            </List>
-          </Paper>
+
+                      {/* Horario */}
+                      {match.time_slot?.start_time && (
+                        <Stack direction="row" spacing={1} alignItems="center">
+                          <AccessTimeIcon fontSize="small" color="action" />
+                          <Typography variant="body2" color="text.secondary">
+                            {formatTime(match.time_slot.start_time)} - {formatTime(match.time_slot.end_time)}
+                          </Typography>
+                        </Stack>
+                      )}
+
+                      <Divider />
+
+                      {/* Participantes */}
+                      <Stack spacing={1}>
+                        <Typography variant="caption" color="text.secondary" fontWeight={600} textTransform="uppercase">
+                          Participantes
+                        </Typography>
+                        {match.participants.map((pid) => {
+                          const acc = accountMap[pid]
+                          const name = acc ? accountDisplayName(acc) : pid
+                          const isMe = pid === accountId
+                          return (
+                            <Stack key={pid} direction="row" spacing={1.5} alignItems="center">
+                              <Avatar
+                                src={acc?.Picture}
+                                alt={name}
+                                imgProps={{ referrerPolicy: 'no-referrer' }}
+                                sx={{ width: 32, height: 32 }}
+                              >
+                                <PersonIcon fontSize="small" />
+                              </Avatar>
+                              <Typography variant="body2" fontWeight={isMe ? 600 : 400}>
+                                {name}{isMe ? ' (vos)' : ''}
+                              </Typography>
+                            </Stack>
+                          )
+                        })}
+                      </Stack>
+
+                    </Stack>
+                  </CardContent>
+              </Card>
+            ))}
+          </Stack>
         )}
       </Stack>
     </Box>

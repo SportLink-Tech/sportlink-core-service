@@ -8,10 +8,6 @@ export class CreateMatchOfferUseCase {
   async execute(accountId: string, request: CreateMatchOfferRequest): Promise<{ announcement: MatchOffer; success: boolean; error?: string }> {
     try {
       // Validations
-      if (!request.team_name || request.team_name.trim().length === 0) {
-        return { announcement: {} as MatchOffer, success: false, error: 'El nombre del equipo es obligatorio' }
-      }
-
       if (!request.sport || request.sport.trim().length === 0) {
         return { announcement: {} as MatchOffer, success: false, error: 'El deporte es obligatorio' }
       }

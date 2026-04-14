@@ -10,7 +10,6 @@ import {
   Chip,
   CircularProgress,
   Alert,
-  Grid,
   Divider,
   Button,
   Snackbar,
@@ -112,10 +111,10 @@ export function ListMatchOffersPage() {
       })
   }, [findAccountMatchOffersUseCase])
 
-  // Load announcement IDs for which the current user already sent a PENDING request
+  // Load announcement IDs for which the current user already sent a PENDING or ACCEPTED request
   useEffect(() => {
     findSentMatchRequestsUseCase
-      .execute(accountId ?? '', ['PENDING'])
+      .execute(accountId ?? '', ['PENDING', 'ACCEPTED'])
       .then((ids) => setJoinedIds(ids))
   }, [findSentMatchRequestsUseCase])
 
@@ -311,17 +310,16 @@ export function ListMatchOffersPage() {
         {/* Announcements List */}
         {!loading && !error && announcements.length > 0 && (
           <Stack spacing={3}>
-            <Grid container spacing={3}>
+            <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)', md: 'repeat(3, 1fr)' }, gap: 3 }}>
               {announcements.filter((a) => !ownPendingIds.has(a.id ?? '')).map((announcement) => (
-                <Grid item xs={12} sm={6} md={4} lg={4} key={announcement.id}>
-                  <Card elevation={2} sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+                  <Card elevation={2} key={announcement.id} sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
                     <CardContent sx={{ flexGrow: 1 }}>
                       <Stack spacing={2}>
                         {/* Header */}
                         <Box display="flex" justifyContent="space-between" alignItems="start">
                           <Box>
                             <Typography variant="h6" fontWeight={700} gutterBottom>
-                              {announcement.team_name}
+                              {announcement.title ?? announcement.team_name}
                             </Typography>
                             <Chip
                               label={announcement.sport}
@@ -397,9 +395,8 @@ export function ListMatchOffersPage() {
                         </CardActions>
                       )}
                   </Card>
-                </Grid>
               ))}
-            </Grid>
+            </Box>
 
             {/* Pagination */}
             {shouldShowPagination && (

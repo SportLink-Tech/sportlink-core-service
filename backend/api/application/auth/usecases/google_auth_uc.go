@@ -50,10 +50,18 @@ func (uc *GoogleAuthUC) Invoke(ctx context.Context, idToken string) (*GoogleAuth
 		accountID = newAccount.AccountID
 	} else {
 		existing := accounts[0]
+		needsSave := false
 		if existing.AccountID == "" {
 			existing.AccountID = account.GenerateULID()
+			needsSave = true
+		}
+		if existing.Picture != tokenInfo.Picture {
+			existing.Picture = tokenInfo.Picture
+			needsSave = true
+		}
+		if needsSave {
 			if err := uc.accountRepo.Save(ctx, existing); err != nil {
-				return nil, fmt.Errorf("error migrating account: %w", err)
+				return nil, fmt.Errorf("error updating account: %w", err)
 			}
 		}
 		accountID = existing.AccountID

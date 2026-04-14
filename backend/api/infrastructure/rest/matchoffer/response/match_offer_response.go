@@ -5,6 +5,7 @@ import "time"
 // MatchOfferResponse represents the API response for a match offer
 type MatchOfferResponse struct {
 	ID                 string                `json:"id,omitempty"`
+	Title              string                `json:"title"`
 	TeamName           string                `json:"team_name"`
 	Sport              string                `json:"sport"`
 	Day                time.Time             `json:"day"`

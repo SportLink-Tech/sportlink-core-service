@@ -44,6 +44,7 @@ func (uc *CancelMatchRequestUC) Invoke(ctx context.Context, input CancelMatchReq
 	matchOffer, err := getMatchOffer(ctx, uc.matchOfferRepository, matchReq.MatchOfferID)
 	if err != nil {
 		log.GetLogger(ctx).Error(fmt.Sprintf("failed to get match offer %s", matchReq.MatchOfferID), err)
+		return nil, err
 	}
 
 	if matchOffer.IsConfirm() {

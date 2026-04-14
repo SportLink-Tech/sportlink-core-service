@@ -71,7 +71,8 @@ export function MyReceivedRequestsPage() {
   const [snackbar, setSnackbar] = useState<{ open: boolean; message: string; severity: 'success' | 'error' }>({ open: false, message: '', severity: 'success' })
 
   useEffect(() => {
-    findReceivedMatchRequestsUseCase.execute(accountId ?? '', ['PENDING', 'ACCEPTED', 'REJECTED']).then(async (result) => {
+    if (!accountId) return
+    findReceivedMatchRequestsUseCase.execute(accountId, ['ACCEPTED', 'REJECTED']).then(async (result) => {
       if (!result.success) {
         setError(result.error ?? 'Error al cargar las solicitudes')
         setLoading(false)
@@ -115,7 +116,7 @@ export function MyReceivedRequestsPage() {
       setRequesterMap(requesterMap)
       setLoading(false)
     })
-  }, [])
+  }, [accountId])
 
   const handleAccept = async (requestId: string) => {
     setAcceptingId(requestId)
@@ -175,7 +176,7 @@ export function MyReceivedRequestsPage() {
                     <ListItem sx={{ px: 3, py: 2 }}>
                       <Stack spacing={1.5} width="100%">
                         <Stack direction="row" spacing={2} alignItems="center">
-                          <Avatar src={requester?.Picture} alt={requesterName} sx={{ width: 40, height: 40, flexShrink: 0 }}>
+                          <Avatar src={requester?.Picture} alt={requesterName} imgProps={{ referrerPolicy: 'no-referrer' }} sx={{ width: 40, height: 40, flexShrink: 0 }}>
                             <PersonIcon />
                           </Avatar>
                           <Box>

@@ -28,9 +28,10 @@ func matchAccountIDKey(matchID string) string {
 type MatchDto struct {
 	EntityId        string   `dynamodbav:"EntityId"` // "Entity#Match"
 	Id              string   `dynamodbav:"Id"`       // "<ulid>"
+	MatchOfferID    string   `dynamodbav:"MatchOfferId,omitempty"`
 	Participants    []string `dynamodbav:"Participants"`
 	Sport           string   `dynamodbav:"Sport"`
-	Day             int64    `dynamodbav:"Day"`             // Unix timestamp
+	Day             int64    `dynamodbav:"Day"` // Unix timestamp
 	Status          string   `dynamodbav:"Status"`
 	LocalScore      *int     `dynamodbav:"LocalScore"`
 	VisitorScore    *int     `dynamodbav:"VisitorScore"`
@@ -51,6 +52,7 @@ func (d *MatchDto) ToDomain() match.Entity {
 
 	return match.Entity{
 		ID:              strings.TrimPrefix(d.Id, "MatchId#"),
+		MatchOfferID:    d.MatchOfferID,
 		Participants:    d.Participants,
 		Sport:           common.Sport(d.Sport),
 		Day:             time.Unix(d.Day, 0).UTC(),
@@ -73,6 +75,7 @@ func fromEntity(entity match.Entity) (canonical MatchDto, pointers []MatchAccoun
 	canonical = MatchDto{
 		EntityId:        canonicalEntityID,
 		Id:              canonicalIDKey(entity.ID),
+		MatchOfferID:    entity.MatchOfferID,
 		Participants:    entity.Participants,
 		Sport:           string(entity.Sport),
 		Day:             entity.Day.Unix(),

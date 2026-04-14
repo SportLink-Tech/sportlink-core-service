@@ -1,5 +1,6 @@
 export interface MatchOffer {
   id?: string
+  title?: string
   team_name: string
   sport: string
   day: string // ISO date string

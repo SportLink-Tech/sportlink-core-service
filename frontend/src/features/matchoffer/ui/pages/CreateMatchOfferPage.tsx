@@ -246,7 +246,7 @@ export function CreateMatchOfferPage() {
   }
 
   const isFormValid = () => {
-    return teamName && day && startTime && endTime && locality && isTimeSlotValid() &&
+    return day && startTime && endTime && locality && isTimeSlotValid() &&
       (categoryRangeType === 'SPECIFIC' ? selectedCategories.length > 0 : true)
   }
 
@@ -288,16 +288,17 @@ export function CreateMatchOfferPage() {
             <CardContent>
               <form onSubmit={handleSubmit}>
                 <Stack spacing={3}>
-                  {/* Team Name - Select from user's teams */}
-                  <FormControl fullWidth required error={attempted && !teamName}>
-                    <InputLabel>Equipo</InputLabel>
+                  {/* Team Name - Optional select from user's teams */}
+                  <FormControl fullWidth>
+                    <InputLabel>Equipo (opcional)</InputLabel>
                     <Select
                       value={teamName}
                       onChange={(e) => setTeamName(e.target.value)}
-                      label="Equipo"
+                      label="Equipo (opcional)"
                       disabled={loadingTeams}
                       startAdornment={loadingTeams ? <CircularProgress size={20} sx={{ mr: 1 }} /> : null}
                     >
+                      <MenuItem value="">Sin equipo</MenuItem>
                       {userTeams
                         .filter((t) => t.Sport === sport)
                         .map((t) => (
@@ -311,11 +312,6 @@ export function CreateMatchOfferPage() {
                         </MenuItem>
                       )}
                     </Select>
-                    {attempted && !teamName && (
-                      <Typography variant="caption" color="error" sx={{ mt: 0.5, ml: 1.5 }}>
-                        Campo obligatorio
-                      </Typography>
-                    )}
                   </FormControl>
 
                   {/* Sport */}

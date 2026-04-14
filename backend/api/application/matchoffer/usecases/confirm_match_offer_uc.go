@@ -56,7 +56,12 @@ func (uc *ConfirmMatchOfferUC) Invoke(ctx context.Context, input ConfirmMatchOff
 		return nil, err
 	}
 
-	newMatch := match.NewMatch(buildParticipants(input.OwnerAccountID, acceptedRequests), offer.Sport, offer.Day)
+	newMatch := match.NewMatch(
+		offer.ID,
+		buildParticipants(input.OwnerAccountID, acceptedRequests),
+		offer.Sport,
+		offer.Day,
+	)
 
 	if err = uc.matchRepository.Save(ctx, newMatch); err != nil {
 		log.GetLogger(ctx).Error(fmt.Sprintf("failed to save match for offer %s", input.MatchOfferID), err)
