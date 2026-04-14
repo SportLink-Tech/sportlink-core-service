@@ -88,6 +88,7 @@ func Routes(router *gin.Engine) {
 	findMatchRequests := umatchrequest.NewFindMatchRequestsUC(matchRequestRepository)
 	updateMatchRequestStatus := umatchrequest.NewUpdateMatchRequestStatusUC(matchRequestRepository)
 	acceptMatchRequest := umatchrequest.NewAcceptMatchRequestUC(matchRequestRepository, matchOfferRepository, capacityPublisher)
+	cancelMatchRequest := umatchrequest.NewCancelMatchRequestUC(matchRequestRepository, matchOfferRepository)
 
 	// Auth Use Cases
 	googleVerifier := authservice.NewGoogleTokenVerifier(cfg.AuthCfg.GoogleClientID)
@@ -119,11 +120,12 @@ func Routes(router *gin.Engine) {
 	router.GET("/account/:account_id/match-offer", matchOfferController.FindAccountMatchOffers)
 	router.DELETE("/account/:account_id/match-offer/:offer_id", matchOfferController.DeleteMatchOffer)
 
-	matchRequestController := cmatchrequest.NewController(createMatchRequest, findMatchRequests, updateMatchRequestStatus, acceptMatchRequest, customValidator)
+	matchRequestController := cmatchrequest.NewController(createMatchRequest, findMatchRequests, updateMatchRequestStatus, acceptMatchRequest, cancelMatchRequest, customValidator)
 	router.POST("/account/:account_id/match-offer/:offer_id/match-request", matchRequestController.CreateMatchRequest)
 	router.GET("/account/:account_id/match-request", matchRequestController.FindMatchRequests)
 	router.PATCH("/account/:account_id/match-request/:request_id", matchRequestController.UpdateMatchRequestStatus)
 	router.POST("/account/:account_id/match-request/:request_id/accept", matchRequestController.AcceptMatchRequest)
+	router.POST("/account/:account_id/match-request/:request_id/cancel", matchRequestController.CancelMatchRequest)
 
 	router.POST("/account/:account_id/match-offer/:offer_id/confirm", matchOfferController.ConfirmMatchOffer)
 

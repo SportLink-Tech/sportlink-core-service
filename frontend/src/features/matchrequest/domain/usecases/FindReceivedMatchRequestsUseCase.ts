@@ -3,9 +3,9 @@ import { MatchRequest, MatchRequestRepository } from '../ports/MatchRequestRepos
 export class FindReceivedMatchRequestsUseCase {
   constructor(private readonly repository: MatchRequestRepository) {}
 
-  async execute(ownerAccountId: string): Promise<{ success: boolean; requests: MatchRequest[]; error?: string }> {
+  async execute(ownerAccountId: string, statuses?: string[]): Promise<{ success: boolean; requests: MatchRequest[]; error?: string }> {
     try {
-      const requests = await this.repository.findReceived(ownerAccountId)
+      const requests = await this.repository.findReceived(ownerAccountId, statuses)
       return { success: true, requests }
     } catch (error) {
       return {

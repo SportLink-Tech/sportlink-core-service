@@ -15,8 +15,13 @@ export class MatchRequestApiAdapter implements MatchRequestRepository {
     }
   }
 
-  async findReceived(ownerAccountId: string): Promise<MatchRequest[]> {
-    const url = `${API_BASE_URL}/account/${ownerAccountId}/match-request`
+  async findReceived(ownerAccountId: string, statuses?: string[]): Promise<MatchRequest[]> {
+    const queryParams = new URLSearchParams()
+    if (statuses && statuses.length > 0) {
+      queryParams.append('statuses', statuses.join(','))
+    }
+    const queryString = queryParams.toString()
+    const url = `${API_BASE_URL}/account/${ownerAccountId}/match-request${queryString ? `?${queryString}` : ''}`
     const response = await fetch(url)
     if (!response.ok) {
       const data = await response.json().catch(() => ({}))
@@ -27,7 +32,7 @@ export class MatchRequestApiAdapter implements MatchRequestRepository {
 
   async accept(ownerAccountId: string, requestId: string): Promise<void> {
     const response = await fetch(
-      `${API_BASE_URL}/account/${ownerAccountId}/match-request/${requestId}/accept`,
+      `${API_BASE_URL}/account/${ownerAccountId}/match-request/${encodeURIComponent(requestId)}/accept`,
       { method: 'POST' },
     )
     if (!response.ok) {
@@ -36,8 +41,19 @@ export class MatchRequestApiAdapter implements MatchRequestRepository {
     }
   }
 
+  async cancel(requesterAccountId: string, requestId: string): Promise<void> {
+    const response = await fetch(
+      `${API_BASE_URL}/account/${requesterAccountId}/match-request/${encodeURIComponent(requestId)}/cancel`,
+      { method: 'POST' },
+    )
+    if (!response.ok) {
+      const data = await response.json().catch(() => ({}))
+      throw new Error(data.message || 'Error al cancelar la solicitud')
+    }
+  }
+
   async findSent(requesterAccountId: string, statuses?: string[]): Promise<MatchRequest[]> {
-    const queryParams = new URLSearchParams({ sent: 'true' })
+    const queryParams = new URLSearchParams({ role: 'requester' })
     if (statuses && statuses.length > 0) {
       queryParams.append('statuses', statuses.join(','))
     }

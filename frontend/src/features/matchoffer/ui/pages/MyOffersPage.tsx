@@ -68,7 +68,7 @@ export function MyOffersPage() {
       setLoading(false)
     })
 
-    findReceivedMatchRequestsUseCase.execute(accountId ?? '').then(async (result) => {
+    findReceivedMatchRequestsUseCase.execute(accountId ?? '', ['PENDING', 'ACCEPTED']).then(async (result) => {
       if (!result.success) return
       setAllRequests(result.requests)
 
@@ -310,7 +310,7 @@ export function MyOffersPage() {
                       <Stack spacing={1.5} width="100%">
                         <Stack direction="row" spacing={1.5} alignItems="center">
                           <Avatar src={requester?.Picture} alt={requesterName} sx={{ width: 40, height: 40, flexShrink: 0 }}>
-                            {!requester?.Picture && <PersonIcon />}
+                            <PersonIcon />
                           </Avatar>
                           <Box>
                             <Typography variant="body2" fontWeight={600}>{requesterName}</Typography>

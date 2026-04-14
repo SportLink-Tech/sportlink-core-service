@@ -20,6 +20,7 @@ export interface MatchOffer {
     min_level?: number
     max_level?: number
   }
+  capacity?: number // 0 = sin auto-confirmación; >0 = cupos totales (owner + jugadores aceptados)
   status: 'PENDING' | 'CONFIRMED' | 'CANCELLED' | 'EXPIRED'
   created_at: string
   owner_account_id?: string
@@ -46,6 +47,7 @@ export interface CreateMatchOfferRequest {
     min_level?: number
     max_level?: number
   }
+  capacity?: number // 0 = sin auto-confirmación; >0 = cupos totales (owner + jugadores aceptados)
 }
 
 export interface GeoFilter {

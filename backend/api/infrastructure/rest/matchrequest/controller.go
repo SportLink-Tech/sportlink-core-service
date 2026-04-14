@@ -14,6 +14,7 @@ type Controller interface {
 	FindMatchRequests(c *gin.Context)
 	UpdateMatchRequestStatus(c *gin.Context)
 	AcceptMatchRequest(c *gin.Context)
+	CancelMatchRequest(c *gin.Context)
 }
 
 type DefaultController struct {
@@ -21,6 +22,7 @@ type DefaultController struct {
 	findMatchRequestsUC        *usecases.FindMatchRequestsUC
 	updateMatchRequestStatusUC *usecases.UpdateMatchRequestStatusUC
 	acceptMatchRequestUC       application.UseCase[usecases.AcceptMatchRequestInput, matchrequest.Entity]
+	cancelMatchRequestUC       application.UseCase[usecases.CancelMatchRequestInput, matchrequest.Entity]
 	validator                  *validator.Validate
 }
 
@@ -29,6 +31,7 @@ func NewController(
 	findMatchRequestsUC *usecases.FindMatchRequestsUC,
 	updateMatchRequestStatusUC *usecases.UpdateMatchRequestStatusUC,
 	acceptMatchRequestUC application.UseCase[usecases.AcceptMatchRequestInput, matchrequest.Entity],
+	cancelMatchRequestUC application.UseCase[usecases.CancelMatchRequestInput, matchrequest.Entity],
 	validator *validator.Validate,
 ) Controller {
 	return &DefaultController{
@@ -36,6 +39,7 @@ func NewController(
 		findMatchRequestsUC:        findMatchRequestsUC,
 		updateMatchRequestStatusUC: updateMatchRequestStatusUC,
 		acceptMatchRequestUC:       acceptMatchRequestUC,
+		cancelMatchRequestUC:       cancelMatchRequestUC,
 		validator:                  validator,
 	}
 }

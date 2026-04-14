@@ -4,6 +4,7 @@ import { FindSentMatchRequestsUseCase } from '../domain/usecases/FindSentMatchRe
 import { FindSentMatchRequestsListUseCase } from '../domain/usecases/FindSentMatchRequestsListUseCase'
 import { FindReceivedMatchRequestsUseCase } from '../domain/usecases/FindReceivedMatchRequestsUseCase'
 import { AcceptMatchRequestUseCase } from '../domain/usecases/AcceptMatchRequestUseCase'
+import { CancelMatchRequestUseCase } from '../domain/usecases/CancelMatchRequestUseCase'
 import { MatchRequestApiAdapter } from '../infrastructure/adapters/MatchRequestApiAdapter'
 
 interface MatchRequestContextType {
@@ -12,6 +13,7 @@ interface MatchRequestContextType {
   findSentMatchRequestsListUseCase: FindSentMatchRequestsListUseCase
   findReceivedMatchRequestsUseCase: FindReceivedMatchRequestsUseCase
   acceptMatchRequestUseCase: AcceptMatchRequestUseCase
+  cancelMatchRequestUseCase: CancelMatchRequestUseCase
 }
 
 const MatchRequestContext = createContext<MatchRequestContextType | undefined>(undefined)
@@ -23,9 +25,10 @@ export function MatchRequestProvider({ children }: { children: ReactNode }) {
   const findSentMatchRequestsListUseCase = new FindSentMatchRequestsListUseCase(adapter)
   const findReceivedMatchRequestsUseCase = new FindReceivedMatchRequestsUseCase(adapter)
   const acceptMatchRequestUseCase = new AcceptMatchRequestUseCase(adapter)
+  const cancelMatchRequestUseCase = new CancelMatchRequestUseCase(adapter)
 
   return (
-    <MatchRequestContext.Provider value={{ createMatchRequestUseCase, findSentMatchRequestsUseCase, findSentMatchRequestsListUseCase, findReceivedMatchRequestsUseCase, acceptMatchRequestUseCase }}>
+    <MatchRequestContext.Provider value={{ createMatchRequestUseCase, findSentMatchRequestsUseCase, findSentMatchRequestsListUseCase, findReceivedMatchRequestsUseCase, acceptMatchRequestUseCase, cancelMatchRequestUseCase }}>
       {children}
     </MatchRequestContext.Provider>
   )

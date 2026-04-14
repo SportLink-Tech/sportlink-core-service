@@ -68,6 +68,7 @@ export function CreateMatchOfferPage() {
   const [locality, setLocality] = useState('')
   const geo = useGeolocation()
   
+  const [capacity, setCapacity] = useState<number>(0)
   const [categoryRangeType, setCategoryRangeType] = useState<'SPECIFIC' | 'GREATER_THAN' | 'LESS_THAN' | 'BETWEEN'>('SPECIFIC')
   const [selectedCategories, setSelectedCategories] = useState<number[]>([])
   const [minLevel, setMinLevel] = useState<number>(1)
@@ -172,6 +173,7 @@ export function CreateMatchOfferPage() {
           : {}),
       },
       admitted_categories: admittedCategories,
+      capacity,
     })
 
     if (result.success) {
@@ -184,6 +186,7 @@ export function CreateMatchOfferPage() {
       setStartTime(`${String(nextHour.getHours()).padStart(2, '0')}:${String(nextHour.getMinutes()).padStart(2, '0')}`)
       setEndTime('23:59')
       setLocality('')
+      setCapacity(0)
       setSelectedCategories([])
       setAttempted(false)
     } else {
@@ -369,6 +372,25 @@ export function CreateMatchOfferPage() {
                       />
                     </Grid>
                   </Grid>
+
+                  {/* Capacity */}
+                  <TextField
+                    label="Cupos del partido"
+                    type="number"
+                    value={capacity}
+                    onChange={(e) => setCapacity(Math.max(0, Number(e.target.value)))}
+                    fullWidth
+                    InputLabelProps={{ shrink: true }}
+                    inputProps={{ min: 0 }}
+                    helperText={
+                      capacity === 0
+                        ? 'Sin límite de cupos ni confirmación automática'
+                        : `${capacity} cupo${capacity !== 1 ? 's' : ''} en total (incluye al organizador). Al completarse se confirmará automáticamente.`
+                    }
+                    InputProps={{
+                      startAdornment: <GroupsIcon sx={{ mr: 1, color: 'action.active' }} />,
+                    }}
+                  />
 
                   {/* Location */}
                   <Typography variant="subtitle1" fontWeight={600} sx={{ mt: 2 }}>

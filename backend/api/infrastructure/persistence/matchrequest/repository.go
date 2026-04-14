@@ -86,7 +86,7 @@ func (repo *RepositoryAdapter) findByOwnerAccountID(ctx context.Context, ownerAc
 	entityFilter := expression.Equal(expression.Name("EntityId"), expression.Value("Entity#MatchRequest"))
 
 	builder := expression.NewBuilder().WithKeyCondition(keyCond)
-	builder = includeFilters(query, builder).WithFilter(entityFilter)
+	builder = includeFilters(query, builder, entityFilter)
 
 	expr, err := builder.Build()
 	if err != nil {
@@ -363,8 +363,9 @@ func (repo *RepositoryAdapter) findByMatchOfferIDs(ctx context.Context, query ma
 	return entities, nil
 }
 
-func includeFilters(query matchrequest.DomainQuery, builder expression.Builder) expression.Builder {
+func includeFilters(query matchrequest.DomainQuery, builder expression.Builder, extra ...expression.ConditionBuilder) expression.Builder {
 	var filters []expression.ConditionBuilder
+	filters = append(filters, extra...)
 
 	if len(query.RequesterAccountIDs) > 0 {
 		var values []expression.OperandBuilder

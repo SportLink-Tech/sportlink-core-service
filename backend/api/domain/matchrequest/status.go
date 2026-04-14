@@ -7,6 +7,7 @@ type Status string
 const (
 	StatusPending  Status = "PENDING"
 	StatusAccepted Status = "ACCEPTED"
+	StatusCancel   Status = "CANCEL"
 	StatusRejected Status = "REJECTED"
 )
 
@@ -16,7 +17,7 @@ func (s Status) String() string {
 
 func (s Status) IsValid() bool {
 	switch s {
-	case StatusPending, StatusAccepted, StatusRejected:
+	case StatusPending, StatusAccepted, StatusRejected, StatusCancel:
 		return true
 	}
 	return false

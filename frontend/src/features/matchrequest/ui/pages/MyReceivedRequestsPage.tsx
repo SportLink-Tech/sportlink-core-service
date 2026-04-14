@@ -71,7 +71,7 @@ export function MyReceivedRequestsPage() {
   const [snackbar, setSnackbar] = useState<{ open: boolean; message: string; severity: 'success' | 'error' }>({ open: false, message: '', severity: 'success' })
 
   useEffect(() => {
-    findReceivedMatchRequestsUseCase.execute(accountId ?? '').then(async (result) => {
+    findReceivedMatchRequestsUseCase.execute(accountId ?? '', ['PENDING', 'ACCEPTED', 'REJECTED']).then(async (result) => {
       if (!result.success) {
         setError(result.error ?? 'Error al cargar las solicitudes')
         setLoading(false)
@@ -176,7 +176,7 @@ export function MyReceivedRequestsPage() {
                       <Stack spacing={1.5} width="100%">
                         <Stack direction="row" spacing={2} alignItems="center">
                           <Avatar src={requester?.Picture} alt={requesterName} sx={{ width: 40, height: 40, flexShrink: 0 }}>
-                            {!requester?.Picture && <PersonIcon />}
+                            <PersonIcon />
                           </Avatar>
                           <Box>
                             <Typography variant="body1" fontWeight={600}>{requesterName}</Typography>

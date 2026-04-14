@@ -35,7 +35,7 @@ func NewAcceptMatchRequestUC(
 }
 
 func (uc *AcceptMatchRequestUC) Invoke(ctx context.Context, input AcceptMatchRequestInput) (*matchrequest.Entity, error) {
-	matchReq, err := uc.getMatchRequest(ctx, input.MatchRequestId)
+	matchReq, err := getMatchRequest(ctx, uc.matchRequestRepository, input.MatchRequestId)
 	if err != nil {
 		log.GetLogger(ctx).Error(fmt.Sprintf("failed to get match request %s", input.MatchRequestId), err)
 		return nil, err
@@ -51,7 +51,7 @@ func (uc *AcceptMatchRequestUC) Invoke(ctx context.Context, input AcceptMatchReq
 		return nil, err
 	}
 
-	matchOffer, err := uc.getMatchOffer(ctx, matchReq.MatchOfferID)
+	matchOffer, err := getMatchOffer(ctx, uc.matchOfferRepository, matchReq.MatchOfferID)
 	if err != nil {
 		log.GetLogger(ctx).Error(fmt.Sprintf("failed to get match offer %s", matchReq.MatchOfferID), err)
 		return nil, err
@@ -103,8 +103,12 @@ func (uc *AcceptMatchRequestUC) countAcceptedRequests(ctx context.Context, match
 	return len(requests), nil
 }
 
-func (uc *AcceptMatchRequestUC) getMatchRequest(ctx context.Context, matchRequestId string) (*matchrequest.Entity, error) {
-	matchReqs, err := uc.matchRequestRepository.Find(ctx, matchrequest.DomainQuery{IDs: []string{matchRequestId}})
+func getMatchRequest(
+	ctx context.Context,
+	repo matchrequest.Repository,
+	matchRequestId string,
+) (*matchrequest.Entity, error) {
+	matchReqs, err := repo.Find(ctx, matchrequest.DomainQuery{IDs: []string{matchRequestId}})
 	if err != nil {
 		return nil, err
 	}
@@ -114,8 +118,12 @@ func (uc *AcceptMatchRequestUC) getMatchRequest(ctx context.Context, matchReques
 	return &matchReqs[0], nil
 }
 
-func (uc *AcceptMatchRequestUC) getMatchOffer(ctx context.Context, matchOfferID string) (*matchoffer.Entity, error) {
-	matchOffersPage, err := uc.matchOfferRepository.Find(ctx, matchoffer.DomainQuery{IDs: []string{matchOfferID}})
+func getMatchOffer(
+	ctx context.Context,
+	repo matchoffer.Repository,
+	matchOfferID string,
+) (*matchoffer.Entity, error) {
+	matchOffersPage, err := repo.Find(ctx, matchoffer.DomainQuery{IDs: []string{matchOfferID}})
 	if err != nil {
 		return nil, err
 	}

@@ -11,12 +11,15 @@ import {
   List,
   ListItem,
   ListItemText,
+  Button,
+  Snackbar,
 } from '@mui/material'
 import SendIcon from '@mui/icons-material/Send'
 import InboxIcon from '@mui/icons-material/Inbox'
 import EventIcon from '@mui/icons-material/Event'
 import AccessTimeIcon from '@mui/icons-material/AccessTime'
 import LocationOnIcon from '@mui/icons-material/LocationOn'
+import CancelIcon from '@mui/icons-material/Cancel'
 import { useMatchRequestContext } from '../../context/MatchRequestContext'
 import { useMatchOfferContext } from '../../../matchoffer/context/MatchOfferContext'
 import { MatchRequest } from '../../domain/ports/MatchRequestRepository'
@@ -28,6 +31,7 @@ function statusColor(status: string): 'warning' | 'success' | 'error' | 'default
     case 'PENDING': return 'warning'
     case 'ACCEPTED': return 'success'
     case 'REJECTED': return 'error'
+    case 'CANCEL': return 'default'
     default: return 'default'
   }
 }
@@ -37,6 +41,7 @@ function statusText(status: string): string {
     case 'PENDING': return 'Pendiente'
     case 'ACCEPTED': return 'Aceptada'
     case 'REJECTED': return 'Rechazada'
+    case 'CANCEL': return 'Cancelada'
     default: return status
   }
 }
@@ -53,7 +58,7 @@ function formatTime(dateTimeString: string): string {
 }
 
 export function MySentRequestsPage() {
-  const { findSentMatchRequestsListUseCase } = useMatchRequestContext()
+  const { findSentMatchRequestsListUseCase, cancelMatchRequestUseCase } = useMatchRequestContext()
   const { retrieveMatchOfferUseCase } = useMatchOfferContext()
   const { accountId } = useAuth()
 
@@ -61,6 +66,10 @@ export function MySentRequestsPage() {
   const [offerMap, setOfferMap] = useState<Record<string, MatchOffer>>({})
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [cancellingId, setCancellingId] = useState<string | null>(null)
+  const [snackbar, setSnackbar] = useState<{ open: boolean; message: string; severity: 'success' | 'error' }>({
+    open: false, message: '', severity: 'success',
+  })
 
   useEffect(() => {
     findSentMatchRequestsListUseCase.execute(accountId ?? '').then(async (result) => {
@@ -86,6 +95,20 @@ export function MySentRequestsPage() {
       setLoading(false)
     })
   }, [])
+
+  const handleCancel = async (requestId: string) => {
+    setCancellingId(requestId)
+    const result = await cancelMatchRequestUseCase.execute(accountId ?? '', requestId)
+    setCancellingId(null)
+    if (result.success) {
+      setRequests((prev) =>
+        prev.map((r) => (r.id === requestId ? { ...r, status: 'CANCEL' } : r))
+      )
+      setSnackbar({ open: true, message: 'Solicitud cancelada', severity: 'success' })
+    } else {
+      setSnackbar({ open: true, message: result.error ?? 'Error al cancelar la solicitud', severity: 'error' })
+    }
+  }
 
   return (
     <Box>
@@ -159,7 +182,21 @@ export function MySentRequestsPage() {
                           ) : null
                         }
                       />
-                      <Chip label={statusText(req.status)} size="small" color={statusColor(req.status)} />
+                      <Stack direction="column" spacing={1} alignItems="flex-end">
+                        <Chip label={statusText(req.status)} size="small" color={statusColor(req.status)} />
+                        {req.status === 'PENDING' && (
+                          <Button
+                            size="small"
+                            color="error"
+                            variant="outlined"
+                            startIcon={cancellingId === req.id ? <CircularProgress size={14} /> : <CancelIcon />}
+                            disabled={cancellingId === req.id}
+                            onClick={() => handleCancel(req.id)}
+                          >
+                            Cancelar
+                          </Button>
+                        )}
+                      </Stack>
                     </ListItem>
                   </Box>
                 )
@@ -168,6 +205,17 @@ export function MySentRequestsPage() {
           </Paper>
         )}
       </Stack>
+
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={4000}
+        onClose={() => setSnackbar((s) => ({ ...s, open: false }))}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+      >
+        <Alert severity={snackbar.severity} onClose={() => setSnackbar((s) => ({ ...s, open: false }))}>
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
     </Box>
   )
 }

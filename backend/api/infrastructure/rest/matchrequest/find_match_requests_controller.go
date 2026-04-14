@@ -12,30 +12,27 @@ import (
 
 // FindMatchRequests handles GET /account/:account_id/match-request
 // Query params:
-//   - sent=true: returns requests sent BY the account (filters by RequesterAccountID)
-//   - statuses=pending,accepted: optional status filter (only applied when sent=true)
-//
-// Default: returns requests received by the account (filters by OwnerAccountID)
+//   - role=requester: returns requests sent by the account (filters by RequesterAccountID)
+//   - role=owner (default): returns requests received by the account (filters by OwnerAccountID)
+//   - statuses=PENDING,ACCEPTED: optional comma-separated status filter
 func (sc *DefaultController) FindMatchRequests(c *gin.Context) {
 	accountID := c.Param("account_id")
 
 	query := domain.DomainQuery{}
 
-	if c.Query("sent") == "true" {
+	if c.Query("role") == "requester" {
 		query.RequesterAccountIDs = []string{accountID}
-
-		if raw := c.Query("statuses"); raw != "" {
-			for _, s := range strings.Split(raw, ",") {
-				status, err := domain.ParseStatus(strings.TrimSpace(s))
-				if err != nil {
-					c.Error(errors.RequestValidationFailed("invalid status: " + s))
-					return
-				}
-				query.Statuses = append(query.Statuses, status)
-			}
-		}
 	} else {
 		query.OwnerAccountIDs = []string{accountID}
+	}
+
+	if raw := c.Query("statuses"); raw != "" {
+		statuses, err := parseStatuses(raw)
+		if err != nil {
+			c.Error(errors.RequestValidationFailed("invalid status: " + raw))
+			return
+		}
+		query.Statuses = statuses
 	}
 
 	entities, err := sc.findMatchRequestsUC.Invoke(c.Request.Context(), query)
@@ -45,4 +42,16 @@ func (sc *DefaultController) FindMatchRequests(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, restmapper.EntitiesToResponses(entities))
+}
+
+func parseStatuses(raw string) ([]domain.Status, error) {
+	var statuses []domain.Status
+	for _, s := range strings.Split(raw, ",") {
+		status, err := domain.ParseStatus(strings.TrimSpace(s))
+		if err != nil {
+			return nil, err
+		}
+		statuses = append(statuses, status)
+	}
+	return statuses, nil
 }

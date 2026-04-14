@@ -56,6 +56,10 @@ func (s Entity) Confirm() Entity {
 	return s
 }
 
+func (s Entity) IsConfirm() bool {
+	return s.Status == StatusConfirmed
+}
+
 func (s Entity) IsPending() bool {
 	loc, _ := time.LoadLocation("America/New_York")
 	if s.IsExpire(loc) {
