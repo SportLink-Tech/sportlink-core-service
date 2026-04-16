@@ -13,7 +13,7 @@ import (
 
 type Controller interface {
 	CreateMatchOffer(c *gin.Context)
-	FindMatchOffers(c *gin.Context)
+	SearchMatchOffers(c *gin.Context)
 	FindAccountMatchOffers(c *gin.Context)
 	RetrieveMatchOffer(c *gin.Context)
 	DeleteMatchOffer(c *gin.Context)
@@ -21,24 +21,35 @@ type Controller interface {
 }
 
 type DefaultController struct {
-	createMatchOfferUC   application.UseCase[matchoffer.Entity, matchoffer.Entity]
-	findMatchOffersUC    application.UseCase[matchoffer.DomainQuery, usecases.FindMatchOfferResult]
-	retrieveMatchOfferUC *usecases.RetrieveMatchOfferUC
-	deleteMatchOfferUC   *usecases.DeleteMatchOfferUC
-	confirmMatchOfferUC  application.UseCase[usecases.ConfirmMatchOfferInput, domainmatch.Entity]
-	validator            *validator.Validate
-	queryParser          parser.QueryParser
+	createMatchOfferUC       application.UseCase[matchoffer.Entity, matchoffer.Entity]
+	findAccountMatchOffersUC application.UseCase[matchoffer.DomainQuery, usecases.FindAccountMatchOffersResult]
+	searchMatchOffersUC      application.UseCase[usecases.SearchMatchOffersInput, usecases.FindMatchOfferResult]
+	retrieveMatchOfferUC     *usecases.RetrieveMatchOfferUC
+	deleteMatchOfferUC       *usecases.DeleteMatchOfferUC
+	confirmMatchOfferUC      application.UseCase[usecases.ConfirmMatchOfferInput, domainmatch.Entity]
+	validator                *validator.Validate
+	queryParser              parser.QueryParser
 }
 
 func NewController(
 	createMatchOfferUC application.UseCase[matchoffer.Entity, matchoffer.Entity],
-	findMatchOffersUC application.UseCase[matchoffer.DomainQuery, usecases.FindMatchOfferResult],
+	findAccountMatchOffersUC application.UseCase[matchoffer.DomainQuery, usecases.FindAccountMatchOffersResult],
+	searchMatchOffersUC application.UseCase[usecases.SearchMatchOffersInput, usecases.FindMatchOfferResult],
 	retrieveMatchOfferUC *usecases.RetrieveMatchOfferUC,
 	deleteMatchOfferUC *usecases.DeleteMatchOfferUC,
 	confirmMatchOfferUC application.UseCase[usecases.ConfirmMatchOfferInput, domainmatch.Entity],
 	validator *validator.Validate,
 ) Controller {
-	return NewControllerWithParser(createMatchOfferUC, findMatchOffersUC, retrieveMatchOfferUC, deleteMatchOfferUC, confirmMatchOfferUC, validator, nil)
+	return NewControllerWithParser(
+		createMatchOfferUC,
+		findAccountMatchOffersUC,
+		searchMatchOffersUC,
+		retrieveMatchOfferUC,
+		deleteMatchOfferUC,
+		confirmMatchOfferUC,
+		validator,
+		nil,
+	)
 }
 
 // NewControllerWithParser creates a controller with an optional query parser.
@@ -46,7 +57,8 @@ func NewController(
 // This allows for dependency injection in tests.
 func NewControllerWithParser(
 	createMatchOfferUC application.UseCase[matchoffer.Entity, matchoffer.Entity],
-	findMatchOffersUC application.UseCase[matchoffer.DomainQuery, usecases.FindMatchOfferResult],
+	findAccountMatchOffersUC application.UseCase[matchoffer.DomainQuery, usecases.FindAccountMatchOffersResult],
+	searchMatchOffersUC application.UseCase[usecases.SearchMatchOffersInput, usecases.FindMatchOfferResult],
 	retrieveMatchOfferUC *usecases.RetrieveMatchOfferUC,
 	deleteMatchOfferUC *usecases.DeleteMatchOfferUC,
 	confirmMatchOfferUC application.UseCase[usecases.ConfirmMatchOfferInput, domainmatch.Entity],
@@ -57,12 +69,13 @@ func NewControllerWithParser(
 		queryParser = parser.NewQueryParser()
 	}
 	return &DefaultController{
-		createMatchOfferUC:   createMatchOfferUC,
-		findMatchOffersUC:    findMatchOffersUC,
-		retrieveMatchOfferUC: retrieveMatchOfferUC,
-		deleteMatchOfferUC:   deleteMatchOfferUC,
-		confirmMatchOfferUC:  confirmMatchOfferUC,
-		validator:            validator,
-		queryParser:          queryParser,
+		createMatchOfferUC:       createMatchOfferUC,
+		findAccountMatchOffersUC: findAccountMatchOffersUC,
+		searchMatchOffersUC:      searchMatchOffersUC,
+		retrieveMatchOfferUC:     retrieveMatchOfferUC,
+		deleteMatchOfferUC:       deleteMatchOfferUC,
+		confirmMatchOfferUC:      confirmMatchOfferUC,
+		validator:                validator,
+		queryParser:              queryParser,
 	}
 }

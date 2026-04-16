@@ -19,6 +19,7 @@ import (
 // DynamoDBClientInterface defines the interface for DynamoDB operations needed by the repository
 type DynamoDBClientInterface interface {
 	PutItem(ctx context.Context, params *dynamodb.PutItemInput, optFns ...func(*dynamodb.Options)) (*dynamodb.PutItemOutput, error)
+	BatchWriteItem(ctx context.Context, params *dynamodb.BatchWriteItemInput, optFns ...func(*dynamodb.Options)) (*dynamodb.BatchWriteItemOutput, error)
 	Query(ctx context.Context, params *dynamodb.QueryInput, optFns ...func(*dynamodb.Options)) (*dynamodb.QueryOutput, error)
 	DeleteItem(ctx context.Context, params *dynamodb.DeleteItemInput, optFns ...func(*dynamodb.Options)) (*dynamodb.DeleteItemOutput, error)
 }
@@ -75,6 +76,50 @@ func (repo *RepositoryAdapter) Save(ctx context.Context, entity matchoffer.Entit
 		Item:      av,
 	})
 	return err
+}
+
+const batchWriteSize = 25
+
+func (repo *RepositoryAdapter) SaveAll(ctx context.Context, entities []matchoffer.Entity) (int, error) {
+	saved := 0
+	for i := 0; i < len(entities); i += batchWriteSize {
+		end := i + batchWriteSize
+		if end > len(entities) {
+			end = len(entities)
+		}
+		batch := entities[i:end]
+
+		requests := make([]types.WriteRequest, 0, len(batch))
+		for _, entity := range batch {
+			dto, err := From(entity)
+			if err != nil {
+				return saved, err
+			}
+			av, err := attributevalue.MarshalMap(dto)
+			if err != nil {
+				return saved, err
+			}
+			requests = append(requests, types.WriteRequest{
+				PutRequest: &types.PutRequest{Item: av},
+			})
+		}
+
+		out, err := repo.dbClient.BatchWriteItem(ctx, &dynamodb.BatchWriteItemInput{
+			RequestItems: map[string][]types.WriteRequest{
+				repo.tableName: requests,
+			},
+		})
+		if err != nil {
+			return saved, err
+		}
+
+		unprocessed := 0
+		if out != nil {
+			unprocessed = len(out.UnprocessedItems[repo.tableName])
+		}
+		saved += len(requests) - unprocessed
+	}
+	return saved, nil
 }
 
 const (

@@ -15,6 +15,7 @@ type Page struct {
 // Repository defines the persistence operations for match offers
 type Repository interface {
 	Save(ctx context.Context, entity Entity) error
+	SaveAll(ctx context.Context, entities []Entity) (int, error)
 	Find(ctx context.Context, query DomainQuery) (Page, error)
 	Delete(ctx context.Context, offerID string) error
 }

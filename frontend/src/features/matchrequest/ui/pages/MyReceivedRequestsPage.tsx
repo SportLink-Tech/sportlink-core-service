@@ -72,7 +72,7 @@ export function MyReceivedRequestsPage() {
 
   useEffect(() => {
     if (!accountId) return
-    findReceivedMatchRequestsUseCase.execute(accountId, ['ACCEPTED', 'REJECTED']).then(async (result) => {
+    findReceivedMatchRequestsUseCase.execute(accountId, ['PENDING', 'ACCEPTED', 'REJECTED']).then(async (result) => {
       if (!result.success) {
         setError(result.error ?? 'Error al cargar las solicitudes')
         setLoading(false)

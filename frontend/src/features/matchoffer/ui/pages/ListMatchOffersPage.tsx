@@ -28,12 +28,11 @@ import { useAuth } from '../../../auth/context/AuthContext'
 const ITEMS_PER_PAGE = 9 // 3 filas x 3 columnas
 
 export function ListMatchOffersPage() {
-  const { findMatchOffersUseCase, findAccountMatchOffersUseCase } = useMatchOfferContext()
-  const { createMatchRequestUseCase, findSentMatchRequestsUseCase } = useMatchRequestContext()
+  const { findMatchOffersUseCase } = useMatchOfferContext()
+  const { createMatchRequestUseCase } = useMatchRequestContext()
   const { accountId } = useAuth()
 
   const [announcements, setAnnouncements] = useState<MatchOffer[]>([])
-  const [ownPendingIds, setOwnPendingIds] = useState<Set<string>>(new Set())
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [currentPage, setCurrentPage] = useState(1)
@@ -78,7 +77,7 @@ export function ListMatchOffersPage() {
       query.geoFilter = geoFilter
     }
 
-    const result = await findMatchOffersUseCase.execute(query)
+    const result = await findMatchOffersUseCase.execute(accountId ?? '', query)
 
     if (result.success) {
       setAnnouncements(result.announcements)
@@ -94,29 +93,12 @@ export function ListMatchOffersPage() {
     }
 
     setLoading(false)
-  }, [currentPage, findMatchOffersUseCase, selectedSports, fromDate, toDate, geoFilter])
+  }, [accountId, currentPage, findMatchOffersUseCase, selectedSports, fromDate, toDate, geoFilter])
 
   useEffect(() => {
     loadAnnouncements()
   }, [loadAnnouncements])
 
-  // Load the current user's PENDING announcements once on mount to exclude them from results
-  useEffect(() => {
-    findAccountMatchOffersUseCase
-      .execute(accountId ?? '', ['PENDING'])
-      .then((result) => {
-        if (result.success) {
-          setOwnPendingIds(result.offerIds)
-        }
-      })
-  }, [findAccountMatchOffersUseCase])
-
-  // Load announcement IDs for which the current user already sent a PENDING or ACCEPTED request
-  useEffect(() => {
-    findSentMatchRequestsUseCase
-      .execute(accountId ?? '', ['PENDING', 'ACCEPTED'])
-      .then((ids) => setJoinedIds(ids))
-  }, [findSentMatchRequestsUseCase])
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString)
@@ -311,7 +293,7 @@ export function ListMatchOffersPage() {
         {!loading && !error && announcements.length > 0 && (
           <Stack spacing={3}>
             <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)', md: 'repeat(3, 1fr)' }, gap: 3 }}>
-              {announcements.filter((a) => !ownPendingIds.has(a.id ?? '')).map((announcement) => (
+              {announcements.map((announcement) => (
                   <Card elevation={2} key={announcement.id} sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
                     <CardContent sx={{ flexGrow: 1 }}>
                       <Stack spacing={2}>

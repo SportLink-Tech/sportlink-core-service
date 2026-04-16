@@ -38,7 +38,7 @@ export class MatchOfferApiAdapter implements MatchOfferRepository {
     }
   }
 
-  async find(query: FindMatchOffersQuery): Promise<{ data: PaginatedMatchOffersResponse; status: number }> {
+  async search(accountId: string, query: FindMatchOffersQuery): Promise<{ data: PaginatedMatchOffersResponse; status: number }> {
     const queryParams = new URLSearchParams()
 
     if (query.sports && query.sports.length > 0) {
@@ -86,15 +86,9 @@ export class MatchOfferApiAdapter implements MatchOfferRepository {
     }
 
     const queryString = queryParams.toString()
-    const url = `${API_BASE_URL}/match-offer${queryString ? `?${queryString}` : ''}`
+    const url = `${API_BASE_URL}/account/${encodeURIComponent(accountId)}/match-offer/search${queryString ? `?${queryString}` : ''}`
 
-    const response = await fetch(url, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    })
-
+    const response = await fetch(url, { method: 'GET', headers: { 'Content-Type': 'application/json' } })
     const data = await response.json()
 
     if (!response.ok) {
@@ -102,10 +96,7 @@ export class MatchOfferApiAdapter implements MatchOfferRepository {
       throw new Error(error.message || 'Error finding match announcements')
     }
 
-    return {
-      data,
-      status: response.status,
-    }
+    return { data, status: response.status }
   }
 
   async findByAccount(accountId: string, statuses?: string[]): Promise<{ data: MatchOffer[]; status: number }> {

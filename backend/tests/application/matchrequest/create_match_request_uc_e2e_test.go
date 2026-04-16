@@ -4,7 +4,7 @@ import (
 	"context"
 	"github.com/stretchr/testify/assert"
 	dmatchrequest "sportlink/api/domain/matchrequest"
-	"sportlink/tests/api/helper"
+	"sportlink/tests/helper"
 
 	usecase "sportlink/api/application/matchrequest/usecases"
 	"sportlink/api/infrastructure/persistence/account"

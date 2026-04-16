@@ -11,7 +11,7 @@ import (
 	"sportlink/api/infrastructure/persistence/matchoffer"
 	"sportlink/api/infrastructure/persistence/matchrequest"
 	"sportlink/dev/testcontainer"
-	"sportlink/tests/api/helper"
+	"sportlink/tests/helper"
 	"testing"
 )
 
